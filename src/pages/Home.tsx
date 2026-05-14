@@ -329,13 +329,7 @@ return (
                   </p>
                 </div>
               </CardContent>
-              <CardFooter className="bg-white/[0.03] p-10 border-t border-white/[0.08] flex flex-col gap-6">
-                <Button
-                  className="modern-button h-16 text-lg w-full"
-                  onClick={() => setSuccessData(null)}
-                >
-                  Fazer Nova Inscrição
-                </Button>
+              <CardFooter className="bg-white/[0.03] p-10 border-t border-white/[0.08] flex justify-center">
                 <div className="flex items-center justify-center gap-3 text-[10px] text-white/30 font-bold uppercase tracking-[0.2em]">
                   <Download className="w-4 h-4" /> Recomenda-se salvar uma foto
                 </div>
