@@ -34,16 +34,27 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
+    const cleanEmail = email.trim().toLowerCase();
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: cleanEmail,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message === 'Invalid login credentials') {
+          toast.error('Credenciais inválidas. Verifique seu e-mail e senha.');
+        } else if (error.message === 'Email not confirmed') {
+          toast.error('E-mail não confirmado. Verifique sua caixa de entrada.');
+        } else {
+          toast.error(error.message);
+        }
+        throw error;
+      }
 
       if (data.user && !isAdmin(data.user.email)) {
-        toast.error('Acesso restrito. Sua conta não tem permissões de administrador.');
+        toast.error(`Acesso restrito. Sua conta (${data.user.email}) não tem permissões de administrador.`);
         await supabase.auth.signOut();
         return;
       }
@@ -52,7 +63,6 @@ export default function Login() {
       navigate('/admin');
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error('Erro ao realizar login. Verifique suas credenciais.');
     } finally {
       setLoading(false);
     }
