@@ -78,7 +78,7 @@ export default function Home() {
 
       console.log('Error structure:', { message, details, hint });
 
-    } else if (message.includes('relation "participantes" does not exist')) {
+      if (message.includes('relation "participantes" does not exist')) {
       toast.error('Banco de dados incompleto', {
         description: 'A tabela "participantes" não foi encontrada. Por favor, execute o script SQL fornecido no seu painel Supabase.',
         duration: 6000,
