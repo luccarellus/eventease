@@ -1,0 +1,8 @@
+{
+  "name": "Olhar Jovem - Gestão de Eventos",
+  "description": "Plataforma moderna para gestão de presença e check-in de eventos para o projeto Olhar Jovem.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}
