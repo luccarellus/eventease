@@ -1,6 +1,6 @@
 
 export const ADMIN_EMAILS = [
-  "lucashybriah@gmail.com", // Administrador Principal
+  "lucashybriah@gmail.com", "presidente@olharjovem.org"// Administrador Principal
   // Para adicionar novos admins, basta colocar o e-mail abaixo (sempre em letras minúsculas):
   // "outro-email@exemplo.com",
 ];

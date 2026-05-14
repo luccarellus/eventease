@@ -13,6 +13,53 @@ import { Html5Qrcode } from 'html5-qrcode';
 
 import { isAdmin } from '@/constants';
 
+// Componente do Scanner para garantir que o elemento DOM esteja pronto
+function QRScanner({ onScan, onClose }: { onScan: (text: string) => void; onClose: () => void }) {
+  useEffect(() => {
+    let html5QrCode: Html5Qrcode | null = null;
+
+    const start = async () => {
+      try {
+        html5QrCode = new Html5Qrcode("reader");
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+          },
+          (decodedText) => {
+            onScan(decodedText);
+          },
+          () => {} // Ignorar erros de leitura contínua
+        );
+      } catch (err) {
+        console.error("Erro ao iniciar scanner:", err);
+        toast.error("Erro ao acessar a câmera. Verifique se deu permissão.");
+        onClose();
+      }
+    };
+
+    start();
+
+    return () => {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(err => console.error("Erro ao parar scanner:", err));
+      }
+    };
+  }, [onScan, onClose]);
+
+  return (
+    <div className="relative w-full aspect-square bg-black overflow-hidden flex items-center justify-center">
+      <div id="reader" className="w-full h-full" />
+      {/* Overlay de scanner */}
+      <div className="absolute inset-0 border-[2px] border-primary/30 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-primary rounded-3xl" />
+        <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-primary/50 animate-pulse shadow-[0_0_15px_rgba(0,191,165,0.8)]" />
+      </div>
+    </div>
+  );
+}
+
 export default function Confirm() {
   const [codigo, setCodigo] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,7 +67,6 @@ export default function Confirm() {
   const [scannerActive, setScannerActive] = useState(false);
   const [result, setResult] = useState<{ status: 'success' | 'already' | 'notfound'; data?: Participante } | null>(null);
   const navigate = useNavigate();
-  const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -48,55 +94,7 @@ export default function Confirm() {
       }
     };
     checkAuth();
-
-    return () => {
-      if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch(console.error);
-      }
-    };
   }, [navigate]);
-
-  const startScanner = async () => {
-    setScannerActive(true);
-    setTimeout(async () => {
-      try {
-        const scanner = new Html5Qrcode("reader");
-        scannerRef.current = scanner;
-        await scanner.start(
-          { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-          },
-          (decodedText) => {
-            // Sucesso no scan
-            setCodigo(decodedText);
-            stopScanner();
-            handleManualCheckin(undefined, decodedText);
-          },
-          (errorMessage) => {
-            // Erros de leitura são comuns, ignoramos para não poluir
-          }
-        );
-      } catch (err) {
-        console.error("Erro ao iniciar scanner:", err);
-        toast.error("Não foi possível acessar a câmera.");
-        setScannerActive(false);
-      }
-    }, 100);
-  };
-
-  const stopScanner = async () => {
-    if (scannerRef.current && scannerRef.current.isScanning) {
-      try {
-        await scannerRef.current.stop();
-        scannerRef.current = null;
-      } catch (err) {
-        console.error("Erro ao parar scanner:", err);
-      }
-    }
-    setScannerActive(false);
-  };
 
   if (authLoading) {
     return (
@@ -116,7 +114,6 @@ export default function Confirm() {
 
     setLoading(true);
     try {
-      // 1. Buscar participante
       const { data, error } = await supabase
         .from('participantes')
         .select('*')
@@ -127,12 +124,6 @@ export default function Confirm() {
         if (error.message.includes('Invalid path') || error.code === 'PGRST125') {
           toast.error('Configuração de URL Inválida', {
             description: 'A URL do Supabase está incorreta. Remova o /rest/v1 da URL no painel Vercel.',
-          });
-          return;
-        }
-        if (error.message.includes('relation "participantes" does not exist')) {
-          toast.error('Banco de dados incompleto', {
-            description: 'Execute o script SQL no Supabase.',
           });
           return;
         }
@@ -149,14 +140,12 @@ export default function Confirm() {
 
       const participante = data as Participante;
 
-      // 2. Verificar se já está confirmado
       if (participante.presente) {
         setResult({ status: 'already', data: participante });
         toast.info('Presença já havia sido registrada.');
         return;
       }
 
-      // 3. Confirmar presença
       const { error: updateError } = await supabase
         .from('participantes')
         .update({ presente: true, confirmado_em: new Date().toISOString() })
@@ -172,6 +161,12 @@ export default function Confirm() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const onScanSuccess = (decodedText: string) => {
+    setScannerActive(false);
+    setCodigo(decodedText);
+    handleManualCheckin(undefined, decodedText);
   };
 
   const reset = () => {
@@ -200,18 +195,23 @@ export default function Confirm() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="max-w-md mx-auto relative"
+              className="max-w-md mx-auto relative px-2 md:px-0"
             >
               <Card className="glass-card overflow-hidden border-white/20 rounded-[2rem] shadow-3xl bg-black">
                 <div className="p-4 flex items-center justify-between border-b border-white/10">
-                  <span className="text-white font-bold text-xs uppercase tracking-widest">Scanner Ativo</span>
-                  <Button variant="ghost" size="icon" onClick={stopScanner} className="rounded-full hover:bg-white/10 text-white">
+                  <span className="text-white font-bold text-xs uppercase tracking-widest">Leitor de QR Code</span>
+                  <Button variant="ghost" size="icon" onClick={() => setScannerActive(false)} className="rounded-full hover:bg-white/10 text-white">
                     <X className="w-5 h-5" />
                   </Button>
                 </div>
-                <div id="reader" className="w-full aspect-square overflow-hidden" />
+                
+                <QRScanner 
+                  onScan={onScanSuccess} 
+                  onClose={() => setScannerActive(false)} 
+                />
+
                 <div className="p-6 text-center">
-                  <p className="text-white/40 text-xs font-medium">Aponte a câmera para o QR Code da credencial.</p>
+                  <p className="text-white/40 text-xs font-medium">Acesso à câmera necessário.</p>
                 </div>
               </Card>
             </motion.div>
@@ -258,7 +258,7 @@ export default function Confirm() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={startScanner}
+                  onClick={() => setScannerActive(true)}
                   className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-10 md:h-12 px-6 md:px-8 font-bold text-[10px] md:text-xs uppercase tracking-widest"
                 >
                   <QrCode className="w-4 h-4 md:w-5 md:h-5 mr-1" /> Ativar Scanner

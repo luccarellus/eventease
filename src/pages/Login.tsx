@@ -106,8 +106,8 @@ export default function Login() {
                   />
                 </div>
               </div>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="modern-button w-full h-14 text-base shadow-2xl"
                 disabled={loading}
               >
@@ -122,9 +122,9 @@ export default function Login() {
             </p>
           </CardFooter>
         </Card>
-        
+
         {/* Helper for Configuration */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
@@ -134,7 +134,7 @@ export default function Login() {
             <div className="w-1 h-1 rounded-full bg-primary" /> Sugestão de Setup
           </p>
           <p className="text-white/30 text-xs leading-relaxed font-medium">
-            Utilize o dashboard do Supabase para gerenciar administradores. O acesso é protegido por políticas RLS de nível empresarial.
+            O acesso é protegido por políticas RLS de nível empresarial.
           </p>
         </motion.div>
       </motion.div>
