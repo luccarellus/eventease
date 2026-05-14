@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
-import { UserCheck, QrCode, Search, CheckCircle2, AlertCircle, Clock, MapPin, User, Building, RefreshCcw } from 'lucide-react';
+import { UserCheck, QrCode, Search, CheckCircle2, AlertCircle, Clock, MapPin, User, Building, RefreshCcw, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Participante } from '@/types/index';
+import { Html5Qrcode } from 'html5-qrcode';
 
 import { isAdmin } from '@/constants';
 
@@ -16,8 +17,10 @@ export default function Confirm() {
   const [codigo, setCodigo] = useState('');
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [scannerActive, setScannerActive] = useState(false);
   const [result, setResult] = useState<{ status: 'success' | 'already' | 'notfound'; data?: Participante } | null>(null);
   const navigate = useNavigate();
+  const scannerRef = useRef<Html5Qrcode | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -45,7 +48,55 @@ export default function Confirm() {
       }
     };
     checkAuth();
+
+    return () => {
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(console.error);
+      }
+    };
   }, [navigate]);
+
+  const startScanner = async () => {
+    setScannerActive(true);
+    setTimeout(async () => {
+      try {
+        const scanner = new Html5Qrcode("reader");
+        scannerRef.current = scanner;
+        await scanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+          },
+          (decodedText) => {
+            // Sucesso no scan
+            setCodigo(decodedText);
+            stopScanner();
+            handleManualCheckin(undefined, decodedText);
+          },
+          (errorMessage) => {
+            // Erros de leitura são comuns, ignoramos para não poluir
+          }
+        );
+      } catch (err) {
+        console.error("Erro ao iniciar scanner:", err);
+        toast.error("Não foi possível acessar a câmera.");
+        setScannerActive(false);
+      }
+    }, 100);
+  };
+
+  const stopScanner = async () => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      try {
+        await scannerRef.current.stop();
+        scannerRef.current = null;
+      } catch (err) {
+        console.error("Erro ao parar scanner:", err);
+      }
+    }
+    setScannerActive(false);
+  };
 
   if (authLoading) {
     return (
@@ -58,9 +109,10 @@ export default function Confirm() {
     );
   }
 
-  const handleManualCheckin = async (e?: React.FormEvent) => {
+  const handleManualCheckin = async (e?: React.FormEvent, codeOverride?: string) => {
     if (e) e.preventDefault();
-    if (!codigo) return;
+    const finalCode = codeOverride || codigo;
+    if (!finalCode) return;
 
     setLoading(true);
     try {
@@ -68,7 +120,7 @@ export default function Confirm() {
       const { data, error } = await supabase
         .from('participantes')
         .select('*')
-        .eq('codigo', codigo.toUpperCase().trim())
+        .eq('codigo', finalCode.toUpperCase().trim())
         .single();
 
       if (error) {
@@ -142,7 +194,28 @@ export default function Confirm() {
       </div>
 
         <AnimatePresence mode="wait">
-          {!result ? (
+          {scannerActive ? (
+            <motion.div
+              key="scanner"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="max-w-md mx-auto relative"
+            >
+              <Card className="glass-card overflow-hidden border-white/20 rounded-[2rem] shadow-3xl bg-black">
+                <div className="p-4 flex items-center justify-between border-b border-white/10">
+                  <span className="text-white font-bold text-xs uppercase tracking-widest">Scanner Ativo</span>
+                  <Button variant="ghost" size="icon" onClick={stopScanner} className="rounded-full hover:bg-white/10 text-white">
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+                <div id="reader" className="w-full aspect-square overflow-hidden" />
+                <div className="p-6 text-center">
+                  <p className="text-white/40 text-xs font-medium">Aponte a câmera para o QR Code da credencial.</p>
+                </div>
+              </Card>
+            </motion.div>
+          ) : !result ? (
             <motion.div
               key="search"
               initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
@@ -182,7 +255,12 @@ export default function Confirm() {
               </CardContent>
               <CardFooter className="bg-white/[0.01] p-8 md:p-10 flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 border-t border-white/[0.08]">
                 <span className="text-[9px] md:text-[10px] text-white/20 uppercase tracking-[0.3em] font-black">Módulo de Escaneamento</span>
-                <Button variant="outline" size="sm" className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-10 md:h-12 px-6 md:px-8 font-bold text-[10px] md:text-xs uppercase tracking-widest">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={startScanner}
+                  className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-10 md:h-12 px-6 md:px-8 font-bold text-[10px] md:text-xs uppercase tracking-widest"
+                >
                   <QrCode className="w-4 h-4 md:w-5 md:h-5 mr-1" /> Ativar Scanner
                 </Button>
               </CardFooter>
