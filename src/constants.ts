@@ -1,12 +1,12 @@
 
-export const ADMIN_EMAILS = [
-  "lucashybriah@gmail.com",
-  "presidente@olharjovem.org",
-  "lucassantos.-@outlook.com"
-];
-
+/**
+ * Verifica se um usuário tem permissões de administrador.
+ * 
+ * ATUALIZAÇÃO: Agora, qualquer usuário que esteja cadastrado e autenticado 
+ * no seu painel do Supabase é tratado automaticamente como administrador.
+ * Não é mais necessário listar os e-mails manualmente aqui.
+ */
 export const isAdmin = (email: string | undefined | null): boolean => {
-  if (!email) return false;
-  const normalizedEmail = email.trim().toLowerCase();
-  return ADMIN_EMAILS.some(admin => admin.trim().toLowerCase() === normalizedEmail);
+  // Se o usuário possui um e-mail (está autenticado), ele é considerado admin
+  return !!email;
 };
