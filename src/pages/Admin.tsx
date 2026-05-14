@@ -93,9 +93,13 @@ export default function Admin() {
       }
 
       fetchData();
-    } catch (e) {
+    } catch (e: any) {
       console.error('Auth check error:', e);
-      toast.error('Erro ao verificar permissões de acesso.');
+      if (e.message?.includes('Invalid path') || e.code === 'PGRST125') {
+        toast.error('Erro de Configuração Supabase (URL Inválida)');
+      } else {
+        toast.error('Erro ao verificar permissões de acesso.');
+      }
       navigate('/login');
     }
   };
@@ -112,7 +116,13 @@ export default function Admin() {
       setParticipantes(data || []);
     } catch (error: any) {
       console.error('Error fetching data:', error);
-      toast.error('Erro ao carregar participantes.');
+      if (error.message?.includes('Invalid path') || error.code === 'PGRST125') {
+        toast.error('Erro de Configuração Supabase', {
+          description: 'URL do API inválida. Remova o /rest/v1 da URL no Vercel.'
+        });
+      } else {
+        toast.error('Erro ao carregar participantes.');
+      }
     } finally {
       setLoading(false);
     }

@@ -71,7 +71,25 @@ export default function Confirm() {
         .eq('codigo', codigo.toUpperCase().trim())
         .single();
 
-      if (error || !data) {
+      if (error) {
+        if (error.message.includes('Invalid path') || error.code === 'PGRST125') {
+          toast.error('Configuração de URL Inválida', {
+            description: 'A URL do Supabase está incorreta. Remova o /rest/v1 da URL no painel Vercel.',
+          });
+          return;
+        }
+        if (error.message.includes('relation "participantes" does not exist')) {
+          toast.error('Banco de dados incompleto', {
+            description: 'Execute o script SQL no Supabase.',
+          });
+          return;
+        }
+        setResult({ status: 'notfound' });
+        toast.error('Código não encontrado.');
+        return;
+      }
+
+      if (!data) {
         setResult({ status: 'notfound' });
         toast.error('Código não encontrado.');
         return;

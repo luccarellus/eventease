@@ -78,7 +78,7 @@ export default function Home() {
       
       console.log('Error structure:', { message, details, hint });
 
-      if (message.includes('relation "participantes" does not exist')) {
+      } else if (message.includes('relation "participantes" does not exist')) {
         toast.error('Banco de dados incompleto', {
           description: 'A tabela "participantes" não foi encontrada. Por favor, execute o script SQL fornecido no seu painel Supabase.',
           duration: 6000,
@@ -87,7 +87,13 @@ export default function Home() {
             onClick: () => window.open('https://supabase.com', '_blank')
           }
         });
+      } else if (message.includes('Invalid path') || message.includes('PGRST125')) {
+        toast.error('Configuração de URL Inválida', {
+          description: 'A URL do Supabase parece estar incorreta no painel da Vercel. Certifique-se de que a URL NÃO termina com /rest/v1.',
+          duration: 8000
+        });
       } else if (message.includes('duplicate key value') || message.includes('already exists')) {
+
         toast.error('Registro Duplicado', {
           description: 'Este e-mail ou código já está registrado no sistema.',
         });
