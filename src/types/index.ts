@@ -23,3 +23,24 @@ export enum OperationType {
   GET = 'get',
   WRITE = 'write',
 }
+
+export interface Evento {
+  id: string;
+  titulo: string;
+  descricao?: string;
+  data: string;
+  local: string;
+  publicado: boolean;
+  created_at: string;
+}
+
+export interface InscricaoEvento {
+  id: string;
+  evento_id: string;
+  participante_id: string;
+  presente: boolean;
+  confirmado_em?: string;
+  created_at: string;
+  participantes?: Participante;
+}
+

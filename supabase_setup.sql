@@ -48,3 +48,70 @@ USING (true);
 -- Índices para performance
 CREATE INDEX IF NOT EXISTS idx_participantes_codigo ON participantes(codigo);
 CREATE INDEX IF NOT EXISTS idx_participantes_email ON participantes(email);
+
+-- =========================================================================
+-- MULTI-EVENT SYSTEM EXTENSION
+-- =========================================================================
+
+-- 1. Tabela de eventos
+CREATE TABLE IF NOT EXISTS eventos (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  titulo TEXT NOT NULL,
+  descricao TEXT,
+  data TIMESTAMPTZ NOT NULL,
+  local TEXT NOT NULL,
+  publicado BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 2. Tabela de inscrições de eventos
+CREATE TABLE IF NOT EXISTS inscricoes_evento (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  evento_id UUID REFERENCES eventos(id) ON DELETE CASCADE NOT NULL,
+  participante_id UUID REFERENCES participantes(id) ON DELETE CASCADE NOT NULL,
+  presente BOOLEAN DEFAULT false,
+  confirmado_em TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  CONSTRAINT unique_evento_participante UNIQUE (evento_id, participante_id)
+);
+
+-- Habilitar RLS
+ALTER TABLE eventos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inscricoes_evento ENABLE ROW LEVEL SECURITY;
+
+-- Políticas para Eventos
+CREATE POLICY "Permitir leitura pública de eventos publicados" 
+ON eventos FOR SELECT 
+USING (publicado = true OR auth.role() = 'authenticated');
+
+CREATE POLICY "Admin: Controle total de eventos" 
+ON eventos FOR ALL 
+TO authenticated 
+USING (true)
+WITH CHECK (true);
+
+-- Políticas para Inscrições de Eventos
+CREATE POLICY "Permitir leitura pública de inscricoes" 
+ON inscricoes_evento FOR SELECT 
+USING (true);
+
+CREATE POLICY "Permitir inscricao pública em eventos" 
+ON inscricoes_evento FOR INSERT 
+WITH CHECK (true);
+
+CREATE POLICY "Permitir confirmar presenca em evento por codigo" 
+ON inscricoes_evento FOR UPDATE 
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Admin: Controle total de inscricoes" 
+ON inscricoes_evento FOR ALL 
+TO authenticated 
+USING (true)
+WITH CHECK (true);
+
+-- Índices
+CREATE INDEX IF NOT EXISTS idx_inscricoes_evento_evento_id ON inscricoes_evento(evento_id);
+CREATE INDEX IF NOT EXISTS idx_inscricoes_evento_participante_id ON inscricoes_evento(participante_id);
+CREATE INDEX IF NOT EXISTS idx_eventos_publicado ON eventos(publicado);
+

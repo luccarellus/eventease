@@ -6,9 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
-import { UserCheck, QrCode, Search, CheckCircle2, AlertCircle, Clock, MapPin, User, Building, RefreshCcw, X } from 'lucide-react';
+import { UserCheck, QrCode, Search, CheckCircle2, AlertCircle, Clock, MapPin, User, Building, RefreshCcw, X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Participante } from '@/types/index';
+import { Participante, Evento } from '@/types/index';
 import { Html5Qrcode } from 'html5-qrcode';
 
 import { isAdmin } from '@/constants';
@@ -65,8 +65,27 @@ export default function Confirm() {
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [scannerActive, setScannerActive] = useState(false);
-  const [result, setResult] = useState<{ status: 'success' | 'already' | 'notfound'; data?: Participante } | null>(null);
+  const [result, setResult] = useState<{ status: 'success' | 'already' | 'notfound'; data?: Participante; eventTitle?: string } | null>(null);
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [selectedEventoId, setSelectedEventoId] = useState<string>('');
   const navigate = useNavigate();
+
+  const fetchEvents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('eventos')
+        .select('*')
+        .order('data', { ascending: false });
+      if (error) throw error;
+      setEventos(data || []);
+      if (data && data.length > 0) {
+        setSelectedEventoId(data[0].id);
+      }
+    } catch (err) {
+      console.error('Error fetching events in Confirm:', err);
+      toast.error('Erro ao carregar eventos.');
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -86,6 +105,7 @@ export default function Confirm() {
           return;
         }
 
+        await fetchEvents();
         setAuthLoading(false);
       } catch (e) {
         console.error('Auth check error in Confirm:', e);
@@ -112,49 +132,94 @@ export default function Confirm() {
     const finalCode = codeOverride || codigo;
     if (!finalCode) return;
 
+    if (!selectedEventoId) {
+      toast.warning('Selecione um evento antes de realizar o check-in.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // 1. Obter o participante pelo código
+      const { data: participante, error: partError } = await supabase
         .from('participantes')
         .select('*')
         .eq('codigo', finalCode.toUpperCase().trim())
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        if (error.message.includes('Invalid path') || error.code === 'PGRST125') {
+      if (partError) {
+        if (partError.message.includes('Invalid path') || partError.code === 'PGRST125') {
           toast.error('Configuração de URL Inválida', {
             description: 'A URL do Supabase está incorreta. Remova o /rest/v1 da URL no painel Vercel.',
           });
           return;
         }
+        throw partError;
+      }
+
+      if (!participante) {
         setResult({ status: 'notfound' });
-        toast.error('Código não encontrado.');
+        toast.error('Código de participante não encontrado.');
         return;
       }
 
-      if (!data) {
-        setResult({ status: 'notfound' });
-        toast.error('Código não encontrado.');
-        return;
+      const selectedEvent = eventos.find(evt => evt.id === selectedEventoId);
+      const eventTitle = selectedEvent ? selectedEvent.titulo : 'Evento selecionado';
+
+      // 2. Verificar inscrição/presença no evento selecionado
+      const { data: inscricao, error: inscError } = await supabase
+        .from('inscricoes_evento')
+        .select('*')
+        .eq('evento_id', selectedEventoId)
+        .eq('participante_id', participante.id)
+        .maybeSingle();
+
+      if (inscError) throw inscError;
+
+      if (inscricao) {
+        if (inscricao.presente) {
+          setResult({ 
+            status: 'already', 
+            data: participante,
+            eventTitle: eventTitle
+          });
+          toast.info('Presença já havia sido registrada para este evento.');
+          return;
+        }
+
+        // Fazer check-in
+        const { error: updateError } = await supabase
+          .from('inscricoes_evento')
+          .update({ presente: true, confirmado_em: new Date().toISOString() })
+          .eq('id', inscricao.id);
+
+        if (updateError) throw updateError;
+
+        setResult({ 
+          status: 'success', 
+          data: { ...participante, presente: true, confirmado_em: new Date().toISOString() },
+          eventTitle: eventTitle
+        });
+        toast.success(`Check-in realizado para ${participante.nome}!`);
+      } else {
+        // Se não tiver inscrição, fazemos a auto-inscrição e check-in
+        const { error: insertError } = await supabase
+          .from('inscricoes_evento')
+          .insert([{
+            evento_id: selectedEventoId,
+            participante_id: participante.id,
+            presente: true,
+            confirmado_em: new Date().toISOString()
+          }]);
+
+        if (insertError) throw insertError;
+
+        setResult({ 
+          status: 'success', 
+          data: { ...participante, presente: true, confirmado_em: new Date().toISOString() },
+          eventTitle: eventTitle
+        });
+        toast.success(`Inscrição e Check-in automáticos para ${participante.nome}!`);
       }
-
-      const participante = data as Participante;
-
-      if (participante.presente) {
-        setResult({ status: 'already', data: participante });
-        toast.info('Presença já havia sido registrada.');
-        return;
-      }
-
-      const { error: updateError } = await supabase
-        .from('participantes')
-        .update({ presente: true, confirmado_em: new Date().toISOString() })
-        .eq('id', participante.id);
-
-      if (updateError) throw updateError;
-
-      setResult({ status: 'success', data: { ...participante, presente: true, confirmado_em: new Date().toISOString() } });
-      toast.success(`Check-in realizado para ${participante.nome}!`);
     } catch (error: any) {
       console.error('Check-in error:', error);
       toast.error('Erro ao realizar check-in.');
@@ -233,6 +298,24 @@ export default function Confirm() {
               </CardHeader>
               <CardContent className="p-8 md:p-12 pb-6 md:pb-8">
                 <form onSubmit={handleManualCheckin} className="space-y-6 md:space-y-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Selecione o Evento</label>
+                    {eventos.length === 0 ? (
+                      <div className="text-sm text-red-400 pl-1 font-medium">Nenhum evento criado. Crie um evento no Dashboard antes de realizar check-in.</div>
+                    ) : (
+                      <select
+                        value={selectedEventoId}
+                        onChange={(e) => setSelectedEventoId(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-base focus:outline-none focus:border-primary transition-all duration-300"
+                      >
+                        {eventos.map((evt) => (
+                          <option key={evt.id} value={evt.id} className="bg-neutral-900 text-white">
+                            {evt.titulo} - {new Date(evt.data).toLocaleDateString('pt-BR')}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
                   <div className="relative group">
                     <Search className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 w-6 h-6 md:w-8 md:h-8 text-white/10 transition-colors group-focus-within:text-primary" />
                     <Input
@@ -327,12 +410,17 @@ export default function Confirm() {
                 {result.data && (
                   <div className="w-full grid grid-cols-1 gap-4 mt-8 border-t border-white/5 pt-12">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {result.eventTitle && (
+                        <div className="sm:col-span-2">
+                          <InfoRow icon={<Sparkles className="w-5 h-5 text-yellow-400" />} label="Evento" value={result.eventTitle} />
+                        </div>
+                      )}
                       <InfoRow icon={<User className="w-5 h-5 text-teal-400" />} label="Participante" value={result.data.nome} />
                       <InfoRow icon={<Building className="w-5 h-5 text-emerald-400" />} label="Instituição" value={result.data.escola} />
                       <InfoRow icon={<MapPin className="w-5 h-5 text-orange-400" />} label="Cidade Base" value={result.data.cidade} />
                       <InfoRow 
                         icon={<Clock className="w-5 h-5 text-purple-400" />} 
-                        label="Data/Hora Registro" 
+                        label="Data/Hora Check-in" 
                         value={result.data.confirmado_em ? new Date(result.data.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-'} 
                       />
                     </div>

@@ -10,10 +10,11 @@ import Home from '@/pages/Home';
 import Confirm from '@/pages/Confirm';
 import Admin from '@/pages/Admin';
 import Login from '@/pages/Login';
+import Events from '@/pages/Events';
 import { supabase } from '@/lib/supabase';
 import { isAdmin } from '@/constants';
 import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, UserCheck, LayoutDashboard, LogIn, ShieldCheck, LogOut } from 'lucide-react';
+import { Calendar, UserCheck, LayoutDashboard, LogIn, ShieldCheck, LogOut, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -51,7 +52,10 @@ function Navbar() {
         
         <div className="hidden md:flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
           {!userIsAdmin && (
-            <NavLink to="/" icon={<Calendar className="w-4 h-4" />} label="Cadastro" active={location.pathname === '/'} />
+            <>
+              <NavLink to="/" icon={<UserPlus className="w-4 h-4" />} label="Cadastro" active={location.pathname === '/'} />
+              <NavLink to="/eventos" icon={<Calendar className="w-4 h-4" />} label="Eventos" active={location.pathname === '/eventos'} />
+            </>
           )}
           
           {userIsAdmin && (
@@ -105,7 +109,10 @@ function BottomNav() {
         className="bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-2 flex items-center justify-around shadow-[0_20px_50px_rgba(0,0,0,0.5)] pointer-events-auto"
       >
         {!userIsAdmin && (
-          <MobileNavLink to="/" icon={<Calendar className="w-6 h-6" />} active={location.pathname === '/'} />
+          <>
+            <MobileNavLink to="/" icon={<UserPlus className="w-6 h-6" />} active={location.pathname === '/'} />
+            <MobileNavLink to="/eventos" icon={<Calendar className="w-6 h-6" />} active={location.pathname === '/eventos'} />
+          </>
         )}
         
         {userIsAdmin && (
@@ -178,6 +185,7 @@ export default function App() {
         <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/eventos" element={<Events />} />
             <Route path="/confirmar" element={<Confirm />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/login" element={<Login />} />
