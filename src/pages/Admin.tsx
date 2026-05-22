@@ -477,6 +477,7 @@ export default function Admin() {
   }, [participantes, inscritosEvento, selectedEvento, searchStudentForEvent]);
 
   // --- Exportação CSV ---
+  // --- Exportação CSV ---
   const exportEventCSV = (type: 'all' | 'present' = 'all') => {
     if (!selectedEvento) return;
     const filteredList = type === 'all' 
@@ -493,9 +494,10 @@ export default function Admin() {
         Escola: p?.escola || '',
         Grêmio: p?.gremio || 'N/A',
         Código: p?.codigo || '',
-        Presente: i.presente ? 'Sim' : 'Não',
-        Confirmado_Em: i.confirmado_em ? format(new Date(i.confirmado_em), 'dd/MM/yyyy HH:mm:ss') : '',
-        Inscrito_Em: format(new Date(i.created_at), 'dd/MM/yyyy HH:mm:ss')
+        Status: i.presente ? 'Confirmado' : 'Inscrito',
+        'Confirmou Presença': i.presente ? 'Sim' : 'Não',
+        'Data de Confirmação': i.confirmado_em ? format(new Date(i.confirmado_em), 'dd/MM/yyyy HH:mm:ss') : 'Não Confirmado',
+        'Data de Inscrição': format(new Date(i.created_at), 'dd/MM/yyyy HH:mm:ss')
       };
     });
 
@@ -504,13 +506,43 @@ export default function Admin() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    const fileName = type === 'all' ? 'inscritos' : 'presentes';
+    const fileName = type === 'all' ? 'inscritos' : 'confirmados';
     link.setAttribute('download', `relatorio_${fileName}_${selectedEvento.titulo.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success(`Relatório de ${type === 'all' ? 'inscritos' : 'presenças'} gerado com sucesso!`);
+    toast.success(`Relatório de ${type === 'all' ? 'todos os inscritos' : 'alunos confirmados'} gerado com sucesso!`);
+  };
+
+  const exportAllStudentsCSV = () => {
+    if (participantes.length === 0) {
+      toast.error('Nenhum aluno cadastrado para exportar.');
+      return;
+    }
+
+    const dataToExport = participantes.map(p => ({
+      Nome: p.nome,
+      Email: p.email,
+      Telefone: p.telefone,
+      Cidade: p.cidade,
+      Escola: p.escola,
+      Grêmio: p.gremio || 'N/A',
+      Código: p.codigo,
+      'Data de Cadastro': format(new Date(p.created_at), 'dd/MM/yyyy HH:mm:ss')
+    }));
+
+    const csv = Papa.unparse(dataToExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `base_geral_alunos_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Planilha da Base Geral de Alunos exportada com sucesso!');
   };
 
   const chartData = [
@@ -732,6 +764,14 @@ export default function Admin() {
                           />
                         </div>
                         <Button 
+                          onClick={exportAllStudentsCSV}
+                          variant="outline"
+                          className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-11 px-4 text-xs font-bold uppercase tracking-widest"
+                        >
+                          <Download className="w-4 h-4 text-primary" />
+                          Planilha Geral
+                        </Button>
+                        <Button 
                           onClick={() => setShowAddStudentModal(true)}
                           className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-6 shadow-lg shadow-primary/20 text-xs uppercase tracking-widest"
                         >
@@ -891,8 +931,8 @@ export default function Admin() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-2xl border-white/10 shadow-3xl bg-black/90 p-2 min-w-[160px]">
                           <DropdownMenuItem onClick={() => setFilter('all')} className="rounded-xl focus:bg-white/10 focus:text-white transition-all px-4 py-2 cursor-pointer font-medium text-xs text-white/80">Todos</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setFilter('present')} className="rounded-xl focus:bg-emerald-500/20 focus:text-emerald-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-emerald-400/80">Presentes</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setFilter('absent')} className="rounded-xl focus:bg-orange-500/20 focus:text-orange-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-orange-400/80">Pendentes</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setFilter('present')} className="rounded-xl focus:bg-emerald-500/20 focus:text-emerald-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-emerald-400/80">Confirmados</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setFilter('absent')} className="rounded-xl focus:bg-blue-500/20 focus:text-blue-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-blue-400/80">Apenas Inscritos</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
 
@@ -951,10 +991,10 @@ export default function Admin() {
                                   "inline-flex items-center gap-2 px-3 py-1 rounded-full text-[8.5px] md:text-[9px] font-bold uppercase tracking-[0.2em] shadow-sm border",
                                   i.presente 
                                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
-                                    : "bg-orange-500/10 text-orange-400 border-orange-500/20"
+                                    : "bg-blue-500/10 text-blue-400 border-blue-500/20"
                                 )}>
-                                  <div className={cn("w-1.5 h-1.5 rounded-full", i.presente ? "bg-emerald-400 animate-pulse" : "bg-orange-400")} />
-                                  {i.presente ? 'Confirmado' : 'Pendente'}
+                                  <div className={cn("w-1.5 h-1.5 rounded-full", i.presente ? "bg-emerald-400 animate-pulse" : "bg-blue-400")} />
+                                  {i.presente ? 'Confirmado' : 'Inscrito'}
                                 </div>
                               </TableCell>
                               <TableCell className="px-6 md:px-10">
@@ -1007,15 +1047,15 @@ export default function Admin() {
                   <div className="text-3xl font-display font-bold text-white mt-1">{statsEvento.total}</div>
                 </div>
                 <div className="glass-card bg-white/[0.01] border-white/[0.08] p-5 rounded-2xl">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Presentes</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Confirmados</span>
                   <div className="text-3xl font-display font-bold text-emerald-400 mt-1">{statsEvento.presentes}</div>
                 </div>
                 <div className="glass-card bg-white/[0.01] border-white/[0.08] p-5 rounded-2xl">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Ausentes</span>
-                  <div className="text-3xl font-display font-bold text-orange-400 mt-1">{statsEvento.ausentes}</div>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Apenas Inscritos</span>
+                  <div className="text-3xl font-display font-bold text-blue-400 mt-1">{statsEvento.ausentes}</div>
                 </div>
                 <div className="glass-card bg-white/[0.01] border-white/[0.08] p-5 rounded-2xl">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Presença</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Frequência</span>
                   <div className="text-3xl font-display font-bold text-primary mt-1">{statsEvento.porcentagem.toFixed(0)}%</div>
                 </div>
               </div>
@@ -1048,8 +1088,8 @@ export default function Admin() {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="flex justify-center gap-4 text-[9px] uppercase tracking-widest font-bold mt-2">
-                       <span className="text-primary">Presentes ({statsEvento.presentes})</span>
-                       <span className="text-white/20">Ausentes ({statsEvento.ausentes})</span>
+                       <span className="text-primary">Confirmados ({statsEvento.presentes})</span>
+                       <span className="text-white/25">Apenas Inscritos ({statsEvento.ausentes})</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -1077,7 +1117,7 @@ export default function Admin() {
                       onClick={() => exportEventCSV('present')} 
                       className="w-full bg-emerald-500 text-white hover:bg-emerald-600 font-bold rounded-xl h-10 shadow-md border border-white/20 text-[10px] uppercase tracking-widest"
                     >
-                       2. Apenas Presentes
+                       2. Apenas Confirmados
                     </Button>
                   </div>
                 </CardHeader>

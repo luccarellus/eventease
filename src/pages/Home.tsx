@@ -49,6 +49,11 @@ export default function Home() {
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showCredentialModal, setShowCredentialModal] = useState(false);
+  const [credentialEmail, setCredentialEmail] = useState('');
+  const [credentialData, setCredentialData] = useState<{ nome: string; codigo: string } | null>(null);
+  const [searchingCredential, setSearchingCredential] = useState(false);
+  const [credentialError, setCredentialError] = useState('');
 
   const fetchHomeEvents = async () => {
     try {
@@ -190,12 +195,39 @@ export default function Home() {
     }
   };
 
-const copyCode = () => {
-  if (successData) {
-    navigator.clipboard.writeText(successData.codigo);
+  const copyText = (text: string) => {
+    navigator.clipboard.writeText(text);
     toast.info('Código copiado!');
-  }
-};
+  };
+
+  const handleSearchCredential = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!credentialEmail.trim()) return;
+
+    setSearchingCredential(true);
+    setCredentialError('');
+
+    try {
+      const { data, error } = await supabase
+        .from('participantes')
+        .select('nome, codigo')
+        .eq('email', credentialEmail.trim().toLowerCase())
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setCredentialData(data);
+      } else {
+        setCredentialError('Nenhum cadastro encontrado para este e-mail. Verifique e tente novamente ou realize sua inscrição ao lado.');
+      }
+    } catch (err: any) {
+      console.error('Error searching credential:', err);
+      setCredentialError('Erro ao buscar credencial. Tente novamente mais tarde.');
+    } finally {
+      setSearchingCredential(false);
+    }
+  };
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -388,7 +420,7 @@ return (
                   <span className="font-display text-6xl font-black tracking-tighter text-white drop-shadow-lg">
                     {successData.codigo}
                   </span>
-                  <Button variant="ghost" size="sm" onClick={copyCode} className="text-white/60 hover:text-white hover:bg-white/10 rounded-2xl gap-2 text-xs font-bold transition-all px-6 h-10 mt-4 border border-white/5">
+                  <Button variant="ghost" size="sm" onClick={() => successData && copyText(successData.codigo)} className="text-white/60 hover:text-white hover:bg-white/10 rounded-2xl gap-2 text-xs font-bold transition-all px-6 h-10 mt-4 border border-white/5">
                     <Copy className="w-4 h-4" /> Copiar Código
                   </Button>
                 </div>
@@ -423,8 +455,15 @@ return (
         <BentoItem
           icon={<Mail className="w-6 h-6 text-teal-400" />}
           title="Credencial Digital"
-          description="Receba sua credencial e a salve para apresentar no dia do evento."
+          description="Consulte sua credencial digital e QR Code a qualquer momento informando seu e-mail."
           color="bg-teal-500/10"
+          onClick={() => {
+            setCredentialEmail('');
+            setCredentialData(null);
+            setCredentialError('');
+            setShowCredentialModal(true);
+          }}
+          isClickable={true}
         />
         <BentoItem
           icon={<Building2 className="w-6 h-6 text-emerald-400" />}
@@ -547,6 +586,178 @@ return (
                 </Button>
               </div>
             </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    <AnimatePresence>
+      {showCredentialModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-lg z-50 flex items-center justify-center p-4"
+          onClick={() => setShowCredentialModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, y: 20, opacity: 0 }}
+            animate={{ scale: 1, y: 0, opacity: 1 }}
+            exit={{ scale: 0.95, y: 20, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            className="w-full max-w-lg glass-card overflow-hidden border border-white/10 rounded-[2.5rem] shadow-3xl bg-neutral-950/90 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="h-3 bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-500" />
+            <button
+              onClick={() => setShowCredentialModal(false)}
+              className="absolute top-6 right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <AnimatePresence mode="wait">
+              {!credentialData ? (
+                <motion.div
+                  key="search-form"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-8 md:p-10 space-y-6"
+                >
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-teal-400 pl-1">
+                      Acesso Restrito
+                    </span>
+                    <h3 className="font-display font-bold text-2xl md:text-3xl text-white mt-1 tracking-tight">
+                      Consultar Credencial
+                    </h3>
+                    <p className="text-white/40 text-sm mt-2 font-medium">
+                      Informe o e-mail cadastrado para visualizar seu código de acesso e QR Code exclusivo.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleSearchCredential} className="space-y-5">
+                    <div className="space-y-2">
+                      <Label htmlFor="cred-email" className="text-white/60 font-bold text-[10px] md:text-xs uppercase tracking-widest pl-1">
+                        E-mail Cadastrado
+                      </Label>
+                      <Input
+                        id="cred-email"
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={credentialEmail}
+                        onChange={(e) => setCredentialEmail(e.target.value)}
+                        className="liquid-input h-12 md:h-14 tracking-wide"
+                        required
+                        disabled={searchingCredential}
+                      />
+                    </div>
+
+                    {credentialError && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-4 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-3"
+                      >
+                        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-red-300 font-medium leading-relaxed">
+                          {credentialError}
+                        </p>
+                      </motion.div>
+                    )}
+
+                    <div className="flex gap-4 pt-2">
+                      <Button
+                        type="submit"
+                        disabled={searchingCredential}
+                        className="modern-button h-12 flex-1 text-sm"
+                      >
+                        {searchingCredential ? 'Buscando...' : 'Verificar Credencial'}
+                        {!searchingCredential && <ArrowRight className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowCredentialModal(false)}
+                        className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6"
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </form>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="credential-result"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="p-8 md:p-10 text-center space-y-6"
+                >
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-emerald-400">
+                      Credencial Encontrada
+                    </span>
+                    <h3 className="font-display font-bold text-2xl text-white mt-1 truncate">
+                      Olá, {credentialData.nome}!
+                    </h3>
+                    <p className="text-white/40 text-xs mt-1.5 font-medium">
+                      Aqui está o seu passe de acesso aos eventos.
+                    </p>
+                  </div>
+
+                  <div className="p-6 bg-white/[0.02] rounded-2xl border border-white/5 flex flex-col items-center space-y-3">
+                    <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/30">
+                      Código da Credencial
+                    </p>
+                    <span className="font-display text-4xl font-black tracking-tight text-white">
+                      {credentialData.codigo}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyText(credentialData.codigo)}
+                      className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl gap-2 text-[10px] font-bold tracking-wider uppercase px-4 h-8 border border-white/5 mt-1"
+                    >
+                      <Copy className="w-3.5 h-3.5" /> Copiar Código
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl w-48 h-48 mx-auto shadow-xl border-4 border-white/5">
+                    <QRCodeSVG
+                      value={credentialData.codigo}
+                      size={144}
+                      level="H"
+                      fgColor="#000000"
+                      bgColor="#ffffff"
+                    />
+                  </div>
+
+                  <p className="text-xs text-white/40 max-w-xs mx-auto leading-relaxed">
+                    Mostre este QR Code ou informe o código acima no credenciamento físico dos eventos.
+                  </p>
+
+                  <div className="flex gap-4 pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCredentialData(null)}
+                      className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-xs flex-1"
+                    >
+                      Consultar Outro E-mail
+                    </Button>
+                    <Button
+                      onClick={() => setShowCredentialModal(false)}
+                      className="modern-button h-12 flex-1 text-xs"
+                    >
+                      Concluído
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </motion.div>
       )}
