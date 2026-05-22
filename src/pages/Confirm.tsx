@@ -307,6 +307,8 @@ export default function Confirm() {
                         value={selectedEventoId}
                         onChange={(e) => setSelectedEventoId(e.target.value)}
                         className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-base focus:outline-none focus:border-primary transition-all duration-300"
+                        title="Selecione o Evento"
+                        aria-label="Selecione o Evento para validação de ingresso"
                       >
                         {eventos.map((evt) => (
                           <option key={evt.id} value={evt.id} className="bg-neutral-900 text-white">

@@ -99,8 +99,6 @@ function BottomNav() {
 
   const userIsAdmin = session ? isAdmin(session.user?.email) : false;
 
-  if (!userIsAdmin && location.pathname === '/') return null;
-
   return (
     <div className="md:hidden fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
       <motion.div 

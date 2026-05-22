@@ -255,7 +255,7 @@ export default function Events() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-lg bg-neutral-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
             >
-              <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+              <div className="p-6 sm:p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
                   <h3 className="text-xl font-display font-bold text-white">Inscrição no Evento</h3>
                   <p className="text-white/40 text-xs mt-1 truncate max-w-[300px]">{selectedEvent.titulo}</p>
@@ -275,7 +275,7 @@ export default function Events() {
                   <motion.form 
                     key="form"
                     onSubmit={handleSubscribe} 
-                    className="p-8 space-y-6"
+                    className="p-6 sm:p-8 space-y-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -290,6 +290,9 @@ export default function Events() {
                         onChange={(e) => setStudentCode(e.target.value.toUpperCase())}
                         className="liquid-input h-14 text-center font-display text-xl font-bold tracking-widest placeholder:text-white/10"
                         autoFocus
+                        autoCapitalize="characters"
+                        autoCorrect="off"
+                        spellCheck="false"
                       />
                       <p className="text-[11px] text-white/30 leading-relaxed pl-1">
                         Informe o código alfanumérico que você salvou ao realizar seu cadastro inicial.
@@ -320,7 +323,7 @@ export default function Events() {
                 ) : (
                   <motion.div 
                     key="success"
-                    className="p-8 text-center space-y-6"
+                    className="p-6 sm:p-8 text-center space-y-6"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0 }}

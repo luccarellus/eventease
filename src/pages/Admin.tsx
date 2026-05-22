@@ -766,17 +766,17 @@ export default function Admin() {
                         <Button 
                           onClick={exportAllStudentsCSV}
                           variant="outline"
-                          className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-11 px-4 text-xs font-bold uppercase tracking-widest"
+                          className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-11 px-3 sm:px-4 text-xs font-bold uppercase tracking-widest"
                         >
                           <Download className="w-4 h-4 text-primary" />
-                          Planilha Geral
+                          <span className="hidden sm:inline">Planilha Geral</span>
                         </Button>
                         <Button 
                           onClick={() => setShowAddStudentModal(true)}
-                          className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-6 shadow-lg shadow-primary/20 text-xs uppercase tracking-widest"
+                          className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-3 sm:px-6 shadow-lg shadow-primary/20 text-xs uppercase tracking-widest"
                         >
                           <Plus className="w-4 h-4" />
-                          Cadastrar
+                          <span className="hidden sm:inline">Cadastrar</span>
                         </Button>
                       </div>
                     </div>
@@ -785,37 +785,42 @@ export default function Admin() {
                     <Table className="min-w-[700px]">
                       <TableHeader className="bg-white/[0.02] border-b border-white/[0.08] sticky top-0 z-10 font-bold uppercase text-[10px] tracking-[0.2em]">
                         <TableRow className="hover:bg-transparent border-none">
-                          <TableHead className="py-6 px-8 md:px-10 text-white/30">Participante</TableHead>
-                          <TableHead className="py-6 px-8 md:px-10 text-center text-white/30">Código</TableHead>
-                          <TableHead className="py-6 px-8 md:px-10 text-white/30">WhatsApp</TableHead>
-                          <TableHead className="w-[80px]"></TableHead>
+                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Nome</TableHead>
+                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Escola</TableHead>
+                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Cidade</TableHead>
+                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Grêmio</TableHead>
+                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-center text-white/30">Código</TableHead>
+                          <TableHead className="w-[60px] md:w-[80px]"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredAlunos.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={4} className="h-48 text-center text-white/20 font-medium">
+                            <TableCell colSpan={6} className="h-48 text-center text-white/20 font-medium">
                               Nenhum participante encontrado.
                             </TableCell>
                           </TableRow>
                         ) : (
                           filteredAlunos.map((p) => (
                             <TableRow key={p.id} className="hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] group text-sm">
-                              <TableCell className="py-5 md:py-6 px-8 md:px-10">
-                                <div className="flex flex-col">
-                                  <span className="font-bold text-white text-base mb-0.5">{p.nome}</span>
-                                  <span className="text-[10px] md:text-xs text-white/30 font-medium">{p.email} • {p.cidade} • {p.escola}</span>
-                                </div>
+                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 font-bold text-white text-sm md:text-base">
+                                {p.nome}
                               </TableCell>
-                              <TableCell className="py-5 md:py-6 px-8 md:px-10 text-center">
-                                <code className="text-[10px] md:text-[11px] font-black bg-white/5 text-white/80 border border-white/10 rounded-xl px-2.5 py-1.5 shadow-sm uppercase tracking-wider">
+                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 text-white/60 text-xs md:text-sm">
+                                {p.escola}
+                              </TableCell>
+                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 text-white/60 text-xs md:text-sm">
+                                {p.cidade}
+                              </TableCell>
+                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 text-white/60 text-xs md:text-sm">
+                                {p.gremio || '-'}
+                              </TableCell>
+                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 text-center">
+                                <code className="text-[9px] md:text-[11px] font-black bg-white/5 text-white/80 border border-white/10 rounded-xl px-2 md:px-2.5 py-1 md:py-1.5 shadow-sm uppercase tracking-wider">
                                   {p.codigo}
                                 </code>
                               </TableCell>
-                              <TableCell className="py-5 md:py-6 px-8 md:px-10 text-white/60">
-                                {p.telefone}
-                              </TableCell>
-                              <TableCell className="px-6 md:px-10">
+                              <TableCell className="px-3 md:px-10">
                                 <Button 
                                   variant="ghost" 
                                   size="icon" 
@@ -926,7 +931,7 @@ export default function Admin() {
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" className="h-10 rounded-xl bg-white/5 border-white/10 gap-2 px-3 shadow-sm hover:bg-white/10 transition-all font-bold text-[9px] uppercase tracking-widest text-white/60">
                             <Filter className="w-3.5 h-3.5" />
-                            Filtro
+                            <span className="hidden sm:inline">Filtro</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-2xl border-white/10 shadow-3xl bg-black/90 p-2 min-w-[160px]">
@@ -938,10 +943,10 @@ export default function Admin() {
 
                       <Button 
                         onClick={() => setShowAddStudentToEventModal(true)}
-                        className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 px-4 shadow-lg shadow-primary/20 text-xs"
+                        className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 px-3 sm:px-4 shadow-lg shadow-primary/20 text-xs"
                       >
                         <Plus className="w-4 h-4" />
-                        Adicionar
+                        <span className="hidden sm:inline">Adicionar</span>
                       </Button>
                     </div>
                   </div>
@@ -950,10 +955,10 @@ export default function Admin() {
                   <Table className="min-w-[700px]">
                     <TableHeader className="bg-white/[0.02] border-b border-white/[0.08] sticky top-0 z-10 font-bold uppercase text-[10px] tracking-[0.2em]">
                       <TableRow className="hover:bg-transparent border-none">
-                        <TableHead className="py-6 px-8 md:px-10 text-white/30">Participante</TableHead>
-                        <TableHead className="py-6 px-8 md:px-10 text-center text-white/30">Código</TableHead>
-                        <TableHead className="py-6 px-8 md:px-10 text-white/30">Status</TableHead>
-                        <TableHead className="w-[80px]"></TableHead>
+                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Participante</TableHead>
+                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-center text-white/30">Código</TableHead>
+                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Status</TableHead>
+                        <TableHead className="w-[60px] md:w-[80px]"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -975,29 +980,29 @@ export default function Admin() {
                           if (!p) return null;
                           return (
                             <TableRow key={i.id} className="hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] group text-sm">
-                              <TableCell className="py-5 md:py-6 px-8 md:px-10">
+                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10">
                                 <div className="flex flex-col">
-                                  <span className="font-bold text-white text-base mb-0.5">{p.nome}</span>
-                                  <span className="text-[10px] md:text-xs text-white/30 font-medium">{p.email} • {p.cidade} • {p.escola}</span>
+                                  <span className="font-bold text-white text-sm md:text-base mb-0.5">{p.nome}</span>
+                                  <span className="text-[9px] md:text-xs text-white/30 font-medium">{p.cidade} • {p.escola}</span>
                                 </div>
                               </TableCell>
-                              <TableCell className="py-5 md:py-6 px-8 md:px-10 text-center">
-                                <code className="text-[10px] md:text-[11px] font-black bg-white/5 text-white/80 border border-white/10 rounded-xl px-2.5 py-1.5 shadow-sm uppercase tracking-wider">
+                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 text-center">
+                                <code className="text-[9px] md:text-[11px] font-black bg-white/5 text-white/80 border border-white/10 rounded-xl px-2.5 py-1.5 shadow-sm uppercase tracking-wider">
                                   {p.codigo}
                                 </code>
                               </TableCell>
-                              <TableCell className="py-5 md:py-6 px-8 md:px-10">
+                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10">
                                 <div className={cn(
-                                  "inline-flex items-center gap-2 px-3 py-1 rounded-full text-[8.5px] md:text-[9px] font-bold uppercase tracking-[0.2em] shadow-sm border",
+                                  "inline-flex items-center gap-2 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] shadow-sm border",
                                   i.presente 
                                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
                                     : "bg-blue-500/10 text-blue-400 border-blue-500/20"
                                 )}>
-                                  <div className={cn("w-1.5 h-1.5 rounded-full", i.presente ? "bg-emerald-400 animate-pulse" : "bg-blue-400")} />
+                                  <div className={cn("w-1 h-1 md:w-1.5 md:h-1.5 rounded-full", i.presente ? "bg-emerald-400 animate-pulse" : "bg-blue-400")} />
                                   {i.presente ? 'Confirmado' : 'Inscrito'}
                                 </div>
                               </TableCell>
-                              <TableCell className="px-6 md:px-10">
+                              <TableCell className="px-3 md:px-10">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-9 w-9 opacity-40 group-hover:opacity-100 transition-all rounded-xl hover:bg-white/10">
@@ -1139,7 +1144,7 @@ export default function Admin() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-2xl bg-neutral-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-3xl"
             >
-              <div className="p-8 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+              <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
                   <h3 className="text-2xl font-display font-bold text-white">Cadastrar Aluno</h3>
                   <p className="text-white/40 text-sm mt-1">Criação de participante na base permanente do sistema.</p>
@@ -1154,7 +1159,7 @@ export default function Admin() {
                 </Button>
               </div>
               
-              <form onSubmit={handleAddStudentSubmit} className="p-8 md:p-10 space-y-6">
+              <form onSubmit={handleAddStudentSubmit} className="p-6 md:p-10 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Nome Completo</label>
@@ -1244,7 +1249,7 @@ export default function Admin() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-xl bg-neutral-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-3xl"
             >
-              <div className="p-8 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+              <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
                   <h3 className="text-2xl font-display font-bold text-white">Criar Evento</h3>
                   <p className="text-white/40 text-sm mt-1">Insira os dados do próximo encontro/fórum.</p>
@@ -1259,7 +1264,7 @@ export default function Admin() {
                 </Button>
               </div>
 
-              <form onSubmit={handleCreateEventSubmit} className="p-8 md:p-10 space-y-6">
+              <form onSubmit={handleCreateEventSubmit} className="p-6 md:p-10 space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Título do Evento</label>
@@ -1348,7 +1353,7 @@ export default function Admin() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-xl bg-neutral-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-3xl flex flex-col max-h-[85vh]"
             >
-              <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
                   <h3 className="text-xl font-display font-bold text-white">Inscrever Aluno no Evento</h3>
                   <p className="text-white/40 text-xs mt-1">Inscreva participantes já cadastrados no evento selecionado.</p>
@@ -1364,7 +1369,7 @@ export default function Admin() {
               </div>
 
               {/* Filtro de Busca */}
-              <div className="p-6 border-b border-white/5">
+              <div className="p-5 border-b border-white/5">
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                   <Input 
@@ -1378,7 +1383,7 @@ export default function Admin() {
               </div>
 
               {/* Lista de Alunos Elegíveis */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-3 min-h-[200px]">
+              <div className="flex-1 overflow-y-auto p-5 space-y-3 min-h-[200px]">
                 {studentsNotSubscribed.length === 0 ? (
                   <div className="text-center py-10 text-white/30 text-sm font-medium">
                     {searchStudentForEvent ? 'Nenhum aluno correspondente encontrado.' : 'Todos os alunos cadastrados já estão inscritos.'}
@@ -1404,7 +1409,7 @@ export default function Admin() {
                 )}
               </div>
 
-              <div className="p-6 border-t border-white/5 bg-white/[0.01] flex justify-end">
+              <div className="p-5 border-t border-white/5 bg-white/[0.01] flex justify-end">
                 <Button 
                   onClick={() => { setShowAddStudentToEventModal(false); setSearchStudentForEvent(''); }}
                   variant="outline"
