@@ -265,7 +265,7 @@ export default function Home() {
           initial={{ opacity: 0, scale: 0.9, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 text-primary text-xs md:text-sm font-semibold mb-6 border border-white/10 backdrop-blur-sm shadow-xl"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.03] text-primary text-xs font-bold uppercase tracking-wider mb-6 border border-white/10 backdrop-blur-md shadow-lg shadow-black/40"
         >
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
@@ -277,18 +277,22 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="heading-display text-4xl md:text-7xl mb-6 md:mb-8 text-white leading-[1.1] md:leading-[1.05] tracking-tight"
+          className="heading-display text-4xl md:text-7xl mb-6 md:mb-8 tracking-tight font-extrabold leading-[1.1] md:leading-[1.05]"
         >
-          <br /> <span className="bg-gradient-to-r from-emerald-400 to-teal-600 bg-clip-text text-transparent">EventEase - Olhar Jovem</span>
+          <span className="text-white drop-shadow-sm">Event</span>
+          <span className="text-primary font-black drop-shadow-[0_2px_10px_rgba(0,191,165,0.2)]">Ease</span>
+          <span className="mx-4 text-white/15 font-light text-3xl md:text-5xl align-middle">/</span>
+          <span className="bg-gradient-to-r from-emerald-400 via-primary to-teal-300 bg-clip-text text-transparent font-black tracking-tighter">
+            Olhar Jovem
+          </span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="text-white/60 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed"
+          className="text-white/50 text-base md:text-lg max-w-2xl mx-auto font-medium leading-relaxed px-4"
         >
-          Seu futuro acadêmico começa aqui. Cadastre-se agora para garantir sua confirmação online e acessar sua credencial digital exclusiva para os eventos oficiais
-          realizados pelo Instituto Olhar Jovem.
+          Seu futuro acadêmico começa aqui. Cadastre-se para obter sua <span className="text-white font-semibold">credencial digital exclusiva</span> e garantir sua confirmação online nos eventos oficiais do <span className="text-primary font-semibold">Instituto Olhar Jovem</span>.
         </motion.p>
       </div>
 
