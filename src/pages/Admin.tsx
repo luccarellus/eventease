@@ -707,7 +707,7 @@ export default function Admin() {
                               variant="outline" 
                               className="flex-1 rounded-xl bg-white/5 border-white/10 text-white hover:bg-white/10 h-10 text-xs font-bold uppercase tracking-wider"
                             >
-                              Inscritos & Stats
+                              Inscritos & Estatísticas
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
