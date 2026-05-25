@@ -6,32 +6,32 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import { 
-  Download, 
-  Search, 
-  Users, 
-  UserCheck, 
-  UserMinus, 
-  MoreVertical, 
-  Filter, 
-  BarChart3, 
+import {
+  Download,
+  Search,
+  Users,
+  UserCheck,
+  UserMinus,
+  MoreVertical,
+  Filter,
+  BarChart3,
   RefreshCcw,
   LogOut,
   TrendingUp,
@@ -49,11 +49,11 @@ import {
   EyeOff,
   UserPlus
 } from 'lucide-react';
-import { 
-  PieChart, 
-  Pie, 
+import {
+  PieChart,
+  Pie,
   Cell,
-  ResponsiveContainer, 
+  ResponsiveContainer,
   Tooltip
 } from 'recharts';
 import Papa from 'papaparse';
@@ -67,7 +67,7 @@ export default function Admin() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'eventos' | 'alunos'>('eventos');
-  
+
   // Evento selecionado para exibição de detalhes/inscritos
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
   const [inscritosEvento, setInscritosEvento] = useState<InscricaoEvento[]>([]);
@@ -252,7 +252,7 @@ export default function Admin() {
       codigo += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     const finalCode = `EVT-${codigo}`;
-    
+
     try {
       const { error } = await supabase
         .from('participantes')
@@ -263,7 +263,7 @@ export default function Admin() {
         }]);
 
       if (error) throw error;
-      
+
       toast.success('Participante cadastrado com sucesso!');
       setShowAddStudentModal(false);
       setNewStudent({
@@ -355,9 +355,9 @@ export default function Admin() {
     try {
       const { error } = await supabase
         .from('inscricoes_evento')
-        .update({ 
-          presente: newPresence, 
-          confirmado_em: newPresence ? new Date().toISOString() : null 
+        .update({
+          presente: newPresence,
+          confirmado_em: newPresence ? new Date().toISOString() : null
         })
         .eq('id', inscricao.id);
 
@@ -449,14 +449,14 @@ export default function Admin() {
       const p = i.participantes;
       if (!p) return false;
 
-      const matchesSearch = 
+      const matchesSearch =
         p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.codigo.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesFilter = 
-        filter === 'all' || 
-        (filter === 'present' && i.presente) || 
+
+      const matchesFilter =
+        filter === 'all' ||
+        (filter === 'present' && i.presente) ||
         (filter === 'absent' && !i.presente);
 
       return matchesSearch && matchesFilter;
@@ -469,7 +469,7 @@ export default function Admin() {
     const subscribedIds = new Set(inscritosEvento.map(i => i.participante_id));
     return participantes.filter(p => {
       const isNotSubscribed = !subscribedIds.has(p.id);
-      const matchesSearch = 
+      const matchesSearch =
         p.nome.toLowerCase().includes(searchStudentForEvent.toLowerCase()) ||
         p.codigo.toLowerCase().includes(searchStudentForEvent.toLowerCase());
       return isNotSubscribed && matchesSearch;
@@ -480,8 +480,8 @@ export default function Admin() {
   // --- Exportação CSV ---
   const exportEventCSV = (type: 'all' | 'present' = 'all') => {
     if (!selectedEvento) return;
-    const filteredList = type === 'all' 
-      ? inscritosEvento 
+    const filteredList = type === 'all'
+      ? inscritosEvento
       : inscritosEvento.filter(p => p.presente);
 
     const dataToExport = filteredList.map(i => {
@@ -567,14 +567,14 @@ export default function Admin() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-8 md:mb-12 px-2 md:px-0">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-primary text-[9px] md:text-[10px] font-bold uppercase tracking-widest mb-4">
-             Controle Administrativo
+            Controle Administrativo
           </div>
           <h1 className="heading-display text-3xl md:text-4xl mb-2 text-white leading-tight">
             Painel de <span className="text-primary italic">Liderança</span>
           </h1>
           <p className="text-white/40 text-base md:text-lg font-medium">Gestão integrada de múltiplos eventos, inscrições e base de alunos.</p>
         </motion.div>
-        
+
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-wrap items-center gap-3">
           <Button variant="outline" size="sm" onClick={fetchData} className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-10 md:h-12 px-4 md:px-6 text-xs font-bold">
             <RefreshCcw className="w-4 h-4" />
@@ -592,22 +592,22 @@ export default function Admin() {
         <>
           {/* Stats Globais */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <StatCard 
-              title="Total de Alunos" 
-              value={statsGlobal.totalAlunos} 
-              icon={<Users className="w-5 h-5 text-teal-400" />} 
+            <StatCard
+              title="Total de Alunos"
+              value={statsGlobal.totalAlunos}
+              icon={<Users className="w-5 h-5 text-teal-400" />}
               description="Cadastrados no sistema"
             />
-            <StatCard 
-              title="Total de Eventos" 
-              value={statsGlobal.totalEventos} 
-              icon={<Calendar className="w-5 h-5 text-emerald-400" />} 
+            <StatCard
+              title="Total de Eventos"
+              value={statsGlobal.totalEventos}
+              icon={<Calendar className="w-5 h-5 text-emerald-400" />}
               description="Gerenciados"
             />
-            <StatCard 
-              title="Eventos Ativos" 
-              value={statsGlobal.eventosPublicados} 
-              icon={<Sparkles className="w-5 h-5 text-purple-400" />} 
+            <StatCard
+              title="Eventos Ativos"
+              value={statsGlobal.eventosPublicados}
+              icon={<Sparkles className="w-5 h-5 text-purple-400" />}
               description="Publicados para os alunos"
             />
           </div>
@@ -618,8 +618,8 @@ export default function Admin() {
               onClick={() => { setActiveTab('eventos'); setSearchTerm(''); }}
               className={cn(
                 "px-6 py-3 font-bold text-xs uppercase tracking-widest border-b-2 transition-all",
-                activeTab === 'eventos' 
-                  ? "border-primary text-white" 
+                activeTab === 'eventos'
+                  ? "border-primary text-white"
                   : "border-transparent text-white/40 hover:text-white/60"
               )}
             >
@@ -629,8 +629,8 @@ export default function Admin() {
               onClick={() => { setActiveTab('alunos'); setSearchTerm(''); }}
               className={cn(
                 "px-6 py-3 font-bold text-xs uppercase tracking-widest border-b-2 transition-all",
-                activeTab === 'alunos' 
-                  ? "border-primary text-white" 
+                activeTab === 'alunos'
+                  ? "border-primary text-white"
                   : "border-transparent text-white/40 hover:text-white/60"
               )}
             >
@@ -653,7 +653,7 @@ export default function Admin() {
                     <h2 className="text-xl font-bold text-white">Eventos Cadastrados</h2>
                     <p className="text-white/40 text-xs mt-1">Crie e gerencie as datas dos fóruns.</p>
                   </div>
-                  <Button 
+                  <Button
                     onClick={() => setShowCreateEventModal(true)}
                     className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-6 shadow-lg shadow-primary/20"
                   >
@@ -671,8 +671,8 @@ export default function Admin() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {eventos.map((evt) => (
-                      <Card 
-                        key={evt.id} 
+                      <Card
+                        key={evt.id}
                         className={cn(
                           "glass-card border-white/[0.08] bg-white/[0.01] hover:bg-white/[0.03] transition-all duration-300 rounded-[2rem] flex flex-col justify-between overflow-hidden",
                           !evt.publicado && "opacity-75 border-dashed border-white/20"
@@ -682,8 +682,8 @@ export default function Admin() {
                           <div className="flex justify-between items-start mb-3">
                             <span className={cn(
                               "px-2.5 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest border",
-                              evt.publicado 
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                              evt.publicado
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                 : "bg-white/5 text-white/40 border-white/10"
                             )}>
                               {evt.publicado ? 'Publicado' : 'Rascunho'}
@@ -702,9 +702,9 @@ export default function Admin() {
                             {evt.descricao || 'Sem descrição.'}
                           </p>
                           <div className="flex gap-2">
-                            <Button 
+                            <Button
                               onClick={() => setSelectedEvento(evt)}
-                              variant="outline" 
+                              variant="outline"
                               className="flex-1 rounded-xl bg-white/5 border-white/10 text-white hover:bg-white/10 h-10 text-xs font-bold uppercase tracking-wider"
                             >
                               Inscritos & Estatísticas
@@ -721,7 +721,7 @@ export default function Admin() {
                                   {evt.publicado ? 'Despublicar' : 'Publicar'}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator className="bg-white/5" />
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   onClick={() => handleDeleteEvent(evt.id, evt.titulo)}
                                   className="text-xs font-bold text-red-400 rounded-xl px-4 py-2.5 focus:bg-red-500/10 cursor-pointer"
                                 >
@@ -756,14 +756,14 @@ export default function Admin() {
                       <div className="flex items-center gap-3 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64">
                           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                          <Input 
-                            placeholder="Buscar aluno..." 
+                          <Input
+                            placeholder="Buscar aluno..."
                             className="liquid-input h-11 w-full text-sm pl-11"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                           />
                         </div>
-                        <Button 
+                        <Button
                           onClick={exportAllStudentsCSV}
                           variant="outline"
                           className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-11 px-3 sm:px-4 text-xs font-bold uppercase tracking-widest"
@@ -771,7 +771,7 @@ export default function Admin() {
                           <Download className="w-4 h-4 text-primary" />
                           <span className="hidden sm:inline">Planilha Geral</span>
                         </Button>
-                        <Button 
+                        <Button
                           onClick={() => setShowAddStudentModal(true)}
                           className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-3 sm:px-6 shadow-lg shadow-primary/20 text-xs uppercase tracking-widest"
                         >
@@ -821,9 +821,9 @@ export default function Admin() {
                                 </code>
                               </TableCell>
                               <TableCell className="px-3 md:px-10">
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() => handleDeleteStudent(p.id, p.nome)}
                                   className="h-9 w-9 text-white/30 hover:text-red-400 rounded-xl hover:bg-red-500/10"
                                 >
@@ -857,9 +857,9 @@ export default function Admin() {
         >
           {/* Botão Voltar */}
           <div className="flex justify-between items-center">
-            <Button 
+            <Button
               onClick={() => { setSelectedEvento(null); setFilter('all'); setSearchTerm(''); }}
-              variant="ghost" 
+              variant="ghost"
               className="rounded-xl text-white/60 hover:text-white hover:bg-white/5 gap-2 px-3 h-10"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -868,8 +868,8 @@ export default function Admin() {
 
             <span className={cn(
               "px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest border",
-              selectedEvento.publicado 
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+              selectedEvento.publicado
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                 : "bg-white/5 text-white/40 border-white/10"
             )}>
               {selectedEvento.publicado ? 'Evento Publicado' : 'Evento em Rascunho'}
@@ -878,7 +878,7 @@ export default function Admin() {
 
           {/* Dados do Evento e Stats */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
+
             {/* Info Evento */}
             <div className="lg:col-span-8 space-y-6">
               <Card className="glass-card border-white/[0.08] bg-white/[0.01] p-8 rounded-[2rem] space-y-6 relative overflow-hidden">
@@ -888,7 +888,7 @@ export default function Admin() {
                     {selectedEvento.descricao || 'Sem descrição.'}
                   </p>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-white/5 text-xs text-white/50 font-bold uppercase tracking-wider">
                   <div className="flex items-center gap-3">
                     <Calendar className="w-5 h-5 text-emerald-400" />
@@ -919,14 +919,14 @@ export default function Admin() {
                     <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
                       <div className="relative flex-1 md:w-48">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                        <Input 
-                          placeholder="Buscar..." 
+                        <Input
+                          placeholder="Buscar..."
                           className="liquid-input h-10 w-full text-xs pl-11"
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                         />
                       </div>
-                      
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" className="h-10 rounded-xl bg-white/5 border-white/10 gap-2 px-3 shadow-sm hover:bg-white/10 transition-all font-bold text-[9px] uppercase tracking-widest text-white/60">
@@ -941,7 +941,7 @@ export default function Admin() {
                         </DropdownMenuContent>
                       </DropdownMenu>
 
-                      <Button 
+                      <Button
                         onClick={() => setShowAddStudentToEventModal(true)}
                         className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 px-3 sm:px-4 shadow-lg shadow-primary/20 text-xs"
                       >
@@ -994,8 +994,8 @@ export default function Admin() {
                               <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10">
                                 <div className={cn(
                                   "inline-flex items-center gap-2 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] shadow-sm border",
-                                  i.presente 
-                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+                                  i.presente
+                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                     : "bg-blue-500/10 text-blue-400 border-blue-500/20"
                                 )}>
                                   <div className={cn("w-1 h-1 md:w-1.5 md:h-1.5 rounded-full", i.presente ? "bg-emerald-400 animate-pulse" : "bg-blue-400")} />
@@ -1015,7 +1015,7 @@ export default function Admin() {
                                       {i.presente ? 'Cancelar Check-in' : 'Fazer Check-in'}
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator className="bg-white/5" />
-                                    <DropdownMenuItem 
+                                    <DropdownMenuItem
                                       onClick={() => handleRemoveFromEvent(i.id)}
                                       className="text-xs font-bold text-red-400 rounded-xl px-4 py-2.5 focus:bg-red-500/10 cursor-pointer"
                                     >
@@ -1036,7 +1036,7 @@ export default function Admin() {
                   <span>{filteredInscritos.length} de {inscritosEvento.length} inscritos exibidos</span>
                   <span className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    Sincronizado via Supabase
+                    Sincronização em tempo real
                   </span>
                 </div>
               </Card>
@@ -1044,7 +1044,7 @@ export default function Admin() {
 
             {/* Sidebar Evento: Stats & Export */}
             <div className="lg:col-span-4 space-y-6 h-full">
-              
+
               {/* Mini Stats Card */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="glass-card bg-white/[0.01] border-white/[0.08] p-5 rounded-2xl">
@@ -1087,14 +1087,14 @@ export default function Admin() {
                           <Cell fill="var(--color-primary)" />
                           <Cell fill="rgba(255,255,255,0.05)" />
                         </Pie>
-                        <Tooltip 
+                        <Tooltip
                           contentStyle={{ borderRadius: '15px', border: 'none', backgroundColor: '#000', color: '#fff', fontSize: '10px' }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="flex justify-center gap-4 text-[9px] uppercase tracking-widest font-bold mt-2">
-                       <span className="text-primary">Confirmados ({statsEvento.presentes})</span>
-                       <span className="text-white/25">Apenas Inscritos ({statsEvento.ausentes})</span>
+                      <span className="text-primary">Confirmados ({statsEvento.presentes})</span>
+                      <span className="text-white/25">Apenas Inscritos ({statsEvento.ausentes})</span>
                     </div>
                   </CardContent>
                 </Card>
@@ -1112,17 +1112,17 @@ export default function Admin() {
                   <CardTitle className="font-display text-lg tracking-tight mb-1">Relatórios CSV</CardTitle>
                   <CardDescription className="text-white/70 font-medium text-xs mb-4">Exportar planilhas deste evento.</CardDescription>
                   <div className="flex flex-col gap-2">
-                    <Button 
-                      onClick={() => exportEventCSV('all')} 
+                    <Button
+                      onClick={() => exportEventCSV('all')}
                       className="w-full bg-white text-primary hover:bg-neutral-100 font-bold rounded-xl h-10 shadow-md text-[10px] uppercase tracking-widest"
                     >
-                       1. Todos os Inscritos
+                      1. Todos os Inscritos
                     </Button>
-                    <Button 
-                      onClick={() => exportEventCSV('present')} 
+                    <Button
+                      onClick={() => exportEventCSV('present')}
                       className="w-full bg-emerald-500 text-white hover:bg-emerald-600 font-bold rounded-xl h-10 shadow-md border border-white/20 text-[10px] uppercase tracking-widest"
                     >
-                       2. Apenas Confirmados
+                      2. Apenas Confirmados
                     </Button>
                   </div>
                 </CardHeader>
@@ -1138,7 +1138,7 @@ export default function Admin() {
       <AnimatePresence>
         {showAddStudentModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1149,85 +1149,85 @@ export default function Admin() {
                   <h3 className="text-2xl font-display font-bold text-white">Cadastrar Aluno</h3>
                   <p className="text-white/40 text-sm mt-1">Criação de participante na base permanente do sistema.</p>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setShowAddStudentModal(false)}
                   className="rounded-full hover:bg-white/10 text-white/40 hover:text-white"
                 >
                   <X className="w-6 h-6" />
                 </Button>
               </div>
-              
+
               <form onSubmit={handleAddStudentSubmit} className="p-6 md:p-10 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Nome Completo</label>
-                    <Input 
-                      required 
-                      className="liquid-input h-12" 
+                    <Input
+                      required
+                      className="liquid-input h-12"
                       value={newStudent.nome}
-                      onChange={e => setNewStudent({...newStudent, nome: e.target.value})}
+                      onChange={e => setNewStudent({ ...newStudent, nome: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">E-mail</label>
-                    <Input 
-                      type="email" 
-                      required 
-                      className="liquid-input h-12" 
+                    <Input
+                      type="email"
+                      required
+                      className="liquid-input h-12"
                       value={newStudent.email}
-                      onChange={e => setNewStudent({...newStudent, email: e.target.value})}
+                      onChange={e => setNewStudent({ ...newStudent, email: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Telefone</label>
-                    <Input 
-                      required 
-                      className="liquid-input h-12" 
+                    <Input
+                      required
+                      className="liquid-input h-12"
                       value={newStudent.telefone}
-                      onChange={e => setNewStudent({...newStudent, telefone: e.target.value})}
+                      onChange={e => setNewStudent({ ...newStudent, telefone: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Cidade</label>
-                    <Input 
-                      required 
-                      className="liquid-input h-12" 
+                    <Input
+                      required
+                      className="liquid-input h-12"
                       value={newStudent.cidade}
-                      onChange={e => setNewStudent({...newStudent, cidade: e.target.value})}
+                      onChange={e => setNewStudent({ ...newStudent, cidade: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Escola</label>
-                    <Input 
-                      required 
-                      className="liquid-input h-12" 
+                    <Input
+                      required
+                      className="liquid-input h-12"
                       value={newStudent.escola}
-                      onChange={e => setNewStudent({...newStudent, escola: e.target.value})}
+                      onChange={e => setNewStudent({ ...newStudent, escola: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Grêmio Estudantil (Opcional)</label>
-                    <Input 
-                      className="liquid-input h-12" 
+                    <Input
+                      className="liquid-input h-12"
                       value={newStudent.gremio}
-                      onChange={e => setNewStudent({...newStudent, gremio: e.target.value})}
+                      onChange={e => setNewStudent({ ...newStudent, gremio: e.target.value })}
                     />
                   </div>
                 </div>
-                
+
                 <div className="flex gap-4 pt-4 border-t border-white/5">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => setShowAddStudentModal(false)}
                     className="flex-1 h-12 rounded-2xl border-white/10 text-white font-bold"
                   >
                     Cancelar
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold"
                   >
                     Confirmar Cadastro
@@ -1243,7 +1243,7 @@ export default function Admin() {
       <AnimatePresence>
         {showCreateEventModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1254,9 +1254,9 @@ export default function Admin() {
                   <h3 className="text-2xl font-display font-bold text-white">Criar Evento</h3>
                   <p className="text-white/40 text-sm mt-1">Insira os dados do próximo encontro/fórum.</p>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setShowCreateEventModal(false)}
                   className="rounded-full hover:bg-white/10 text-white/40 hover:text-white"
                 >
@@ -1268,52 +1268,52 @@ export default function Admin() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Título do Evento</label>
-                    <Input 
-                      required 
+                    <Input
+                      required
                       className="liquid-input h-12"
                       placeholder="Ex: I Fórum de Liderança Olhar Jovem"
                       value={newEvent.titulo}
-                      onChange={e => setNewEvent({...newEvent, titulo: e.target.value})}
+                      onChange={e => setNewEvent({ ...newEvent, titulo: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Descrição</label>
-                    <textarea 
+                    <textarea
                       className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-primary transition-all duration-300 min-h-[100px] placeholder:text-white/10"
                       placeholder="Informações adicionais sobre o cronograma, palestrantes, etc..."
                       value={newEvent.descricao}
-                      onChange={e => setNewEvent({...newEvent, descricao: e.target.value})}
+                      onChange={e => setNewEvent({ ...newEvent, descricao: e.target.value })}
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Data & Hora</label>
-                      <Input 
+                      <Input
                         type="datetime-local"
-                        required 
+                        required
                         className="liquid-input h-12 text-white/60"
                         value={newEvent.data}
-                        onChange={e => setNewEvent({...newEvent, data: e.target.value})}
+                        onChange={e => setNewEvent({ ...newEvent, data: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Localização</label>
-                      <Input 
-                        required 
+                      <Input
+                        required
                         className="liquid-input h-12"
                         placeholder="Ex: Auditório Municipal"
                         value={newEvent.local}
-                        onChange={e => setNewEvent({...newEvent, local: e.target.value})}
+                        onChange={e => setNewEvent({ ...newEvent, local: e.target.value })}
                       />
                     </div>
                   </div>
                   <div className="flex items-center gap-3 pl-1 pt-2">
-                    <input 
+                    <input
                       type="checkbox"
                       id="publish-checkbox"
                       className="w-5 h-5 rounded border-white/15 bg-white/5 text-primary focus:ring-primary accent-primary"
                       checked={newEvent.publicado}
-                      onChange={e => setNewEvent({...newEvent, publicado: e.target.checked})}
+                      onChange={e => setNewEvent({ ...newEvent, publicado: e.target.checked })}
                     />
                     <label htmlFor="publish-checkbox" className="text-xs text-white/70 font-bold uppercase tracking-wider cursor-pointer">
                       Publicar evento imediatamente para os alunos
@@ -1322,16 +1322,16 @@ export default function Admin() {
                 </div>
 
                 <div className="flex gap-4 pt-4 border-t border-white/5">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => setShowCreateEventModal(false)}
                     className="flex-1 h-12 rounded-2xl border-white/10 text-white font-bold"
                   >
                     Cancelar
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold"
                   >
                     Criar Evento
@@ -1347,7 +1347,7 @@ export default function Admin() {
       <AnimatePresence>
         {showAddStudentToEventModal && selectedEvento && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1358,9 +1358,9 @@ export default function Admin() {
                   <h3 className="text-xl font-display font-bold text-white">Inscrever Aluno no Evento</h3>
                   <p className="text-white/40 text-xs mt-1">Inscreva participantes já cadastrados no evento selecionado.</p>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => { setShowAddStudentToEventModal(false); setSearchStudentForEvent(''); }}
                   className="rounded-full hover:bg-white/10 text-white/40 hover:text-white"
                 >
@@ -1372,8 +1372,8 @@ export default function Admin() {
               <div className="p-5 border-b border-white/5">
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                  <Input 
-                    placeholder="Buscar participante por nome ou código..." 
+                  <Input
+                    placeholder="Buscar participante por nome ou código..."
                     className="liquid-input h-11 w-full text-sm pl-11"
                     value={searchStudentForEvent}
                     onChange={(e) => setSearchStudentForEvent(e.target.value)}
@@ -1390,7 +1390,7 @@ export default function Admin() {
                   </div>
                 ) : (
                   studentsNotSubscribed.map(student => (
-                    <div 
+                    <div
                       key={student.id}
                       className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-all"
                     >
@@ -1410,7 +1410,7 @@ export default function Admin() {
               </div>
 
               <div className="p-5 border-t border-white/5 bg-white/[0.01] flex justify-end">
-                <Button 
+                <Button
                   onClick={() => { setShowAddStudentToEventModal(false); setSearchStudentForEvent(''); }}
                   variant="outline"
                   className="rounded-xl border-white/10 text-white/60 hover:text-white text-xs h-10 px-6 font-bold"
@@ -1426,19 +1426,19 @@ export default function Admin() {
   );
 }
 
-function StatCard({ 
-  title, 
-  value, 
-  icon, 
+function StatCard({
+  title,
+  value,
+  icon,
   description
-}: { 
-  title: string; 
-  value: string | number; 
-  icon: React.ReactNode; 
+}: {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
   description: string;
 }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -3 }}

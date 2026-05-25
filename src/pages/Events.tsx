@@ -227,7 +227,7 @@ export default function Events() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="p-8 pt-0">
+                <CardFooter className="p-8 pt-0 border-none bg-transparent">
                   <Button 
                     onClick={() => setSelectedEvent(evento)}
                     className="modern-button w-full h-12 text-sm uppercase tracking-wider font-bold"
