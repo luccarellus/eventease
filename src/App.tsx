@@ -36,7 +36,7 @@ function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const userIsAdmin = session ? isAdmin(session.user?.email) : false;
+  const userIsAdmin = session ? isAdmin(session.user) : false;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-xl">
@@ -97,7 +97,7 @@ function BottomNav() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const userIsAdmin = session ? isAdmin(session.user?.email) : false;
+  const userIsAdmin = session ? isAdmin(session.user) : false;
 
   return (
     <div className="md:hidden fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
@@ -174,7 +174,7 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const userIsAdmin = session ? isAdmin(session.user?.email) : false;
+  const userIsAdmin = session ? isAdmin(session.user) : false;
 
   return (
     <Router>

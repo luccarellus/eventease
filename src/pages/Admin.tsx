@@ -113,7 +113,7 @@ export default function Admin() {
         return;
       }
 
-      if (!isAdmin(session.user?.email)) {
+      if (!isAdmin(session.user)) {
         toast.error('Você não tem permissão de administrador.');
         await supabase.auth.signOut();
         navigate('/login');

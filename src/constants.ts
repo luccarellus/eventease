@@ -1,5 +1,6 @@
-export const isAdmin = (email: string | undefined | null): boolean => {
-  // Retorna true para qualquer usuário autenticado (que tenha e-mail),
-  // tornando todos os usuários cadastrados em administradores.
-  return !!email;
+import { User } from '@supabase/supabase-js';
+
+export const isAdmin = (user: User | null | undefined): boolean => {
+  return user?.app_metadata?.role === 'admin';
 };
+

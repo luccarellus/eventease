@@ -20,7 +20,7 @@ export default function Login() {
     const checkLogged = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session && isAdmin(session.user?.email)) {
+        if (session && isAdmin(session.user)) {
           navigate('/admin');
         }
       } catch (e) {
@@ -53,7 +53,7 @@ export default function Login() {
         throw error;
       }
 
-      if (data.user && !isAdmin(data.user.email)) {
+      if (data.user && !isAdmin(data.user)) {
         toast.error(`Acesso restrito. Sua conta (${data.user.email}) não tem permissões de administrador.`);
         await supabase.auth.signOut();
         return;

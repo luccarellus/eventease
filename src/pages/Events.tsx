@@ -52,14 +52,14 @@ export default function Events() {
     try {
       const cleanedCode = studentCode.toUpperCase().trim();
 
-      // 1. Buscar o participante pelo código
-      const { data: participante, error: partError } = await supabase
-        .from('participantes')
-        .select('*')
-        .eq('codigo', cleanedCode)
+      // 1. Buscar o participante pelo código via RPC
+      const { data: rawParticipante, error: partError } = await supabase
+        .rpc('get_participant_by_code', { p_code: cleanedCode })
         .maybeSingle();
 
       if (partError) throw partError;
+
+      const participante = rawParticipante as { id: string; nome: string } | null;
 
       if (!participante) {
         toast.error('Código não encontrado', {
@@ -69,17 +69,13 @@ export default function Events() {
         return;
       }
 
-      // 2. Verificar se já existe a inscrição
-      const { data: inscricaoExistente, error: checkError } = await supabase
-        .from('inscricoes_evento')
-        .select('*')
-        .eq('evento_id', selectedEvent.id)
-        .eq('participante_id', participante.id)
-        .maybeSingle();
+      // 2. Verificar se já existe a inscrição via RPC
+      const { data: registrationExists, error: checkError } = await supabase
+        .rpc('check_event_registration', { p_event_id: selectedEvent.id, p_participant_id: participante.id });
 
       if (checkError) throw checkError;
 
-      if (inscricaoExistente) {
+      if (registrationExists) {
         toast.info('Inscrição já realizada!', {
           description: 'Você já está inscrito neste evento. Basta apresentar o seu código no check-in no dia.',
         });

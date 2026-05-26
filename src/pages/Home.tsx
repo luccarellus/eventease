@@ -127,14 +127,14 @@ export default function Home() {
   const onSubmit = async (data: RegistrationData) => {
     setLoading(true);
     try {
-      // Verificar se o e-mail já existe para recuperar o cadastro e a credencial do aluno
-      const { data: existing, error: findError } = await supabase
-        .from('participantes')
-        .select('*')
-        .eq('email', data.email.trim().toLowerCase())
+      // Verificar se o e-mail já existe para recuperar o cadastro e a credencial do aluno via RPC
+      const { data: rawExisting, error: findError } = await supabase
+        .rpc('get_participant_by_email', { p_email: data.email.trim().toLowerCase() })
         .maybeSingle();
 
       if (findError) throw findError;
+
+      const existing = rawExisting as { nome: string; codigo: string } | null;
 
       if (existing) {
         setSuccessData({ nome: existing.nome, codigo: existing.codigo });
@@ -218,9 +218,7 @@ export default function Home() {
 
     try {
       const { data, error } = await supabase
-        .from('participantes')
-        .select('nome, codigo')
-        .eq('email', credentialEmail.trim().toLowerCase())
+        .rpc('get_participant_by_email', { p_email: credentialEmail.trim().toLowerCase() })
         .maybeSingle();
 
       if (error) throw error;
@@ -839,14 +837,14 @@ function UpcomingEventsWidget({ events, loading }: { events: any[]; loading: boo
     try {
       const cleanedCode = studentCode.toUpperCase().trim();
 
-      // 1. Buscar o participante pelo código
-      const { data: participante, error: partError } = await supabase
-        .from('participantes')
-        .select('*')
-        .eq('codigo', cleanedCode)
+      // 1. Buscar o participante pelo código via RPC
+      const { data: rawParticipante, error: partError } = await supabase
+        .rpc('get_participant_by_code', { p_code: cleanedCode })
         .maybeSingle();
 
       if (partError) throw partError;
+
+      const participante = rawParticipante as { id: string; nome: string } | null;
 
       if (!participante) {
         toast.error('Código não encontrado', {
@@ -856,17 +854,13 @@ function UpcomingEventsWidget({ events, loading }: { events: any[]; loading: boo
         return;
       }
 
-      // 2. Verificar se já existe a inscrição
-      const { data: inscricaoExistente, error: checkError } = await supabase
-        .from('inscricoes_evento')
-        .select('*')
-        .eq('evento_id', eventId)
-        .eq('participante_id', participante.id)
-        .maybeSingle();
+      // 2. Verificar se já existe a inscrição via RPC
+      const { data: registrationExists, error: checkError } = await supabase
+        .rpc('check_event_registration', { p_event_id: eventId, p_participant_id: participante.id });
 
       if (checkError) throw checkError;
 
-      if (inscricaoExistente) {
+      if (registrationExists) {
         toast.info('Inscrição já realizada!', {
           description: 'Você já está inscrito neste evento.',
         });
