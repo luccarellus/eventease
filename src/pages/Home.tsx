@@ -290,7 +290,7 @@ export default function Home() {
           transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           className="text-white/50 text-base md:text-lg max-w-2xl mx-auto font-medium leading-relaxed px-4"
         >
-          Seu futuro acadêmico começa aqui. Cadastre-se para obter sua <span className="text-white font-semibold">credencial digital exclusiva</span> e garantir sua confirmação online nos eventos oficiais do <span className="text-primary font-semibold">Instituto Olhar Jovem</span>.
+          Cadastre-se para obter sua <span className="text-white font-semibold">credencial digital exclusiva</span> e garantir sua confirmação online nos eventos oficiais do <span className="text-primary font-semibold">Instituto Olhar Jovem</span>.
         </motion.p>
       </div>
 
