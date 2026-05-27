@@ -122,7 +122,7 @@ export default function Events() {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: any = {
     hidden: { opacity: 0, y: 30, filter: 'blur(5px)' },
     visible: {
       opacity: 1,
@@ -184,9 +184,9 @@ export default function Events() {
           <p className="text-white/40 text-sm mb-6 leading-relaxed">
             No momento não há eventos com inscrições abertas. Fique atento às nossas redes sociais para novas divulgações!
           </p>
-          <Button asChild className="rounded-2xl border border-white/10 bg-white/5 text-white hover:bg-white/10">
-            <Link to="/">Fazer Meu Cadastro</Link>
-          </Button>
+          <Link to="/" className="inline-flex h-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-6 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+            Fazer Meu Cadastro
+          </Link>
         </motion.div>
       ) : (
         <motion.div
@@ -208,7 +208,7 @@ export default function Events() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-8 pt-0 pb-8 flex-grow">
-                  <p className="text-sm text-white/50 leading-relaxed font-medium mb-6 line-clamp-4">
+                  <p className="text-sm text-white/50 leading-relaxed font-medium mb-6 whitespace-pre-wrap">
                     {evento.descricao || 'Sem descrição fornecida.'}
                   </p>
                   
