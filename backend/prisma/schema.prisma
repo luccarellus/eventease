@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+// Exemplo de model para autenticação e LGPD
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  fullName      String?
+  role          String    @default("USER")
+  
+  // LGPD Fields
+  acceptedTerms Boolean   @default(false)
+  termsAcceptedAt DateTime?
+  dataConsent   Boolean   @default(false)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("users")
+}

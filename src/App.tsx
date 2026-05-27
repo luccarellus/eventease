@@ -14,9 +14,10 @@ import Events from '@/pages/Events';
 import { supabase } from '@/lib/supabase';
 import { isAdmin } from '@/constants';
 import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, UserCheck, LayoutDashboard, LogIn, ShieldCheck, LogOut, UserPlus } from 'lucide-react';
+import { Calendar, UserCheck, LayoutDashboard, LogIn, ShieldCheck, LogOut, UserPlus, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 function Navbar() {
   const location = useLocation();
@@ -65,8 +66,20 @@ function Navbar() {
               <Button 
                 variant="ghost" 
                 size="sm" 
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('sync-data'));
+                  toast.success('Dados sincronizados!');
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all text-white/40 hover:text-white hover:bg-white/5 h-auto bg-transparent hover:bg-white/5 active:scale-95"
+              >
+                <RefreshCcw className="w-4 h-4" />
+                <span className="hidden sm:inline">Sincronizar</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
                 onClick={() => supabase.auth.signOut()}
-                className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl flex items-center gap-2"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all text-white/50 hover:text-red-400 hover:bg-red-500/10 h-auto active:scale-95"
               >
                 <LogOut className="w-4 h-4" />
                 Sair

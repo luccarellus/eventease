@@ -209,8 +209,14 @@ export default function Admin() {
       )
       .subscribe();
 
+    const handleSync = () => {
+      fetchData();
+    };
+    window.addEventListener('sync-data', handleSync);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('sync-data', handleSync);
     };
   }, []);
 
@@ -573,17 +579,6 @@ export default function Admin() {
             Painel de <span className="text-primary italic">Liderança</span>
           </h1>
           <p className="text-white/40 text-base md:text-lg font-medium">Gestão integrada de múltiplos eventos, inscrições e base de alunos.</p>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-wrap items-center gap-3">
-          <Button variant="outline" size="sm" onClick={fetchData} className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-10 md:h-12 px-4 md:px-6 text-xs font-bold">
-            <RefreshCcw className="w-4 h-4" />
-            Sincronizar
-          </Button>
-          <Button onClick={handleLogout} variant="ghost" size="sm" className="rounded-2xl gap-2 text-white/50 hover:text-red-400 hover:bg-red-500/10 transition-all h-10 md:h-12 px-4 md:px-6 text-xs font-bold">
-            <LogOut className="w-4 h-4" />
-            Sair
-          </Button>
         </motion.div>
       </div>
 
