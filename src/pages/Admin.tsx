@@ -742,15 +742,19 @@ export default function Admin() {
               >
                 {/* Tabela de Alunos Geral */}
                 <Card className="glass-card overflow-hidden border-white/[0.08] shadow-3xl rounded-[2rem] md:rounded-[2.5rem]">
-                  <CardHeader className="p-8 md:p-10 border-b border-white/[0.08] bg-white/[0.02]">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                      <div>
-                        <CardTitle className="font-display font-bold text-2xl text-white leading-none mb-2">Base Geral de Alunos</CardTitle>
-                        <CardDescription className="text-white/40 text-xs md:text-sm font-medium">Lista de todos os alunos registrados no sistema.</CardDescription>
+                  <CardHeader className="p-6 md:p-8 lg:p-10 border-b border-white/[0.08] bg-white/[0.02]">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                      <div className="space-y-1">
+                        <CardTitle className="font-display font-bold text-2xl text-white tracking-tight leading-tight">
+                          Base Geral de Alunos
+                        </CardTitle>
+                        <CardDescription className="text-white/40 text-xs md:text-sm font-medium">
+                          Lista de todos os alunos registrados no sistema.
+                        </CardDescription>
                       </div>
-                      <div className="flex items-center gap-3 w-full md:w-auto">
-                        <div className="relative flex-1 md:w-64">
-                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
+                        <div className="relative w-full sm:w-64">
+                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                           <Input
                             placeholder="Buscar aluno..."
                             className="liquid-input h-11 w-full text-sm pl-11"
@@ -758,21 +762,23 @@ export default function Admin() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                           />
                         </div>
-                        <Button
-                          onClick={exportAllStudentsCSV}
-                          variant="outline"
-                          className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-11 px-3 sm:px-4 text-xs font-bold uppercase tracking-widest"
-                        >
-                          <Download className="w-4 h-4 text-primary" />
-                          <span className="hidden sm:inline">Planilha Geral</span>
-                        </Button>
-                        <Button
-                          onClick={() => setShowAddStudentModal(true)}
-                          className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-3 sm:px-6 shadow-lg shadow-primary/20 text-xs uppercase tracking-widest"
-                        >
-                          <Plus className="w-4 h-4" />
-                          <span className="hidden sm:inline">Cadastrar</span>
-                        </Button>
+                        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                          <Button
+                            onClick={exportAllStudentsCSV}
+                            variant="outline"
+                            className="flex-1 sm:flex-none rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-11 px-4 text-xs font-bold uppercase tracking-wider"
+                          >
+                            <Download className="w-4 h-4 text-primary" />
+                            <span>Planilha Geral</span>
+                          </Button>
+                          <Button
+                            onClick={() => setShowAddStudentModal(true)}
+                            className="flex-1 sm:flex-none rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-5 shadow-lg shadow-primary/20 text-xs uppercase tracking-wider"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span>Cadastrar</span>
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
@@ -905,15 +911,15 @@ export default function Admin() {
 
               {/* Tabela de Inscritos neste Evento */}
               <Card className="glass-card overflow-hidden border-white/[0.08] shadow-3xl rounded-[2rem] md:rounded-[2.5rem]">
-                <CardHeader className="p-8 md:p-10 border-b border-white/[0.08] bg-white/[0.02]">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div>
-                      <CardTitle className="font-display font-bold text-2xl text-white leading-none mb-2">Lista de Inscritos</CardTitle>
+                <CardHeader className="p-6 md:p-8 border-b border-white/[0.08] bg-white/[0.02]">
+                  <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+                    <div className="space-y-1">
+                      <CardTitle className="font-display font-bold text-2xl text-white tracking-tight leading-tight">Lista de Inscritos</CardTitle>
                       <CardDescription className="text-white/40 text-xs md:text-sm font-medium">Controle de inscrições e presenças para este evento.</CardDescription>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                      <div className="relative flex-1 md:w-48">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full xl:w-auto">
+                      <div className="relative w-full sm:w-48">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                         <Input
                           placeholder="Buscar..."
                           className="liquid-input h-10 w-full text-xs pl-11"
@@ -922,27 +928,29 @@ export default function Admin() {
                         />
                       </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" className="h-10 rounded-xl bg-white/5 border-white/10 gap-2 px-3 shadow-sm hover:bg-white/10 transition-all font-bold text-[9px] uppercase tracking-widest text-white/60">
-                            <Filter className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Filtro</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-2xl border-white/10 shadow-3xl bg-black/90 p-2 min-w-[160px]">
-                          <DropdownMenuItem onClick={() => setFilter('all')} className="rounded-xl focus:bg-white/10 focus:text-white transition-all px-4 py-2 cursor-pointer font-medium text-xs text-white/80">Todos</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setFilter('present')} className="rounded-xl focus:bg-emerald-500/20 focus:text-emerald-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-emerald-400/80">Confirmados</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setFilter('absent')} className="rounded-xl focus:bg-blue-500/20 focus:text-blue-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-blue-400/80">Apenas Inscritos</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="flex-1 sm:flex-none h-10 rounded-xl bg-white/5 border-white/10 gap-2 px-4 shadow-sm hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-wider text-white/60">
+                              <Filter className="w-3.5 h-3.5" />
+                              <span>Filtro</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="rounded-2xl border-white/10 shadow-3xl bg-black/90 p-2 min-w-[160px]">
+                            <DropdownMenuItem onClick={() => setFilter('all')} className="rounded-xl focus:bg-white/10 focus:text-white transition-all px-4 py-2 cursor-pointer font-medium text-xs text-white/80">Todos</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilter('present')} className="rounded-xl focus:bg-emerald-500/20 focus:text-emerald-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-emerald-400/80">Confirmados</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilter('absent')} className="rounded-xl focus:bg-blue-500/20 focus:text-blue-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-blue-400/80">Apenas Inscritos</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
 
-                      <Button
-                        onClick={() => setShowAddStudentToEventModal(true)}
-                        className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 px-3 sm:px-4 shadow-lg shadow-primary/20 text-xs"
-                      >
-                        <Plus className="w-4 h-4" />
-                        <span className="hidden sm:inline">Adicionar</span>
-                      </Button>
+                        <Button
+                          onClick={() => setShowAddStudentToEventModal(true)}
+                          className="flex-1 sm:flex-none rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 px-4 shadow-lg shadow-primary/20 text-xs uppercase tracking-wider"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>Adicionar</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
