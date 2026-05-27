@@ -743,17 +743,39 @@ export default function Admin() {
                 {/* Tabela de Alunos Geral */}
                 <Card className="glass-card overflow-hidden border-white/[0.08] shadow-3xl rounded-[2rem] md:rounded-[2.5rem]">
                   <CardHeader className="p-6 md:p-8 lg:p-10 border-b border-white/[0.08] bg-white/[0.02]">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                      <div className="space-y-1">
-                        <CardTitle className="font-display font-bold text-2xl text-white tracking-tight leading-tight">
-                          Base Geral de Alunos
-                        </CardTitle>
-                        <CardDescription className="text-white/40 text-xs md:text-sm font-medium">
-                          Lista de todos os alunos registrados no sistema.
-                        </CardDescription>
+                    <div className="space-y-6">
+                      {/* Linha 1: Título e Botões de Ação */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <CardTitle className="font-display font-bold text-2xl md:text-3xl text-white tracking-tight leading-tight sm:whitespace-nowrap">
+                            Base Geral de Alunos
+                          </CardTitle>
+                          <CardDescription className="text-white/40 text-xs md:text-sm font-medium">
+                            Lista de todos os alunos registrados no sistema.
+                          </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Button
+                            onClick={exportAllStudentsCSV}
+                            variant="outline"
+                            className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-11 px-4 text-xs font-bold uppercase tracking-wider"
+                          >
+                            <Download className="w-4 h-4 text-primary" />
+                            <span>Planilha Geral</span>
+                          </Button>
+                          <Button
+                            onClick={() => setShowAddStudentModal(true)}
+                            className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-5 shadow-lg shadow-primary/20 text-xs uppercase tracking-wider"
+                          >
+                            <Plus className="w-4 h-4" />
+                            <span>Cadastrar</span>
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
-                        <div className="relative w-full sm:w-64">
+                      
+                      {/* Linha 2: Busca e Filtros */}
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 border-t border-white/5">
+                        <div className="relative w-full sm:w-80">
                           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                           <Input
                             placeholder="Buscar aluno..."
@@ -762,22 +784,8 @@ export default function Admin() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                           />
                         </div>
-                        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                          <Button
-                            onClick={exportAllStudentsCSV}
-                            variant="outline"
-                            className="flex-1 sm:flex-none rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-11 px-4 text-xs font-bold uppercase tracking-wider"
-                          >
-                            <Download className="w-4 h-4 text-primary" />
-                            <span>Planilha Geral</span>
-                          </Button>
-                          <Button
-                            onClick={() => setShowAddStudentModal(true)}
-                            className="flex-1 sm:flex-none rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-5 shadow-lg shadow-primary/20 text-xs uppercase tracking-wider"
-                          >
-                            <Plus className="w-4 h-4" />
-                            <span>Cadastrar</span>
-                          </Button>
+                        <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider hidden sm:block">
+                          Total: {filteredAlunos.length} cadastrados
                         </div>
                       </div>
                     </div>
@@ -912,13 +920,25 @@ export default function Admin() {
               {/* Tabela de Inscritos neste Evento */}
               <Card className="glass-card overflow-hidden border-white/[0.08] shadow-3xl rounded-[2rem] md:rounded-[2.5rem]">
                 <CardHeader className="p-6 md:p-8 border-b border-white/[0.08] bg-white/[0.02]">
-                  <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
-                    <div className="space-y-1">
-                      <CardTitle className="font-display font-bold text-2xl text-white tracking-tight leading-tight">Lista de Inscritos</CardTitle>
-                      <CardDescription className="text-white/40 text-xs md:text-sm font-medium">Controle de inscrições e presenças para este evento.</CardDescription>
+                  <div className="space-y-6">
+                    {/* Linha 1: Título e Botão de Ação */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <CardTitle className="font-display font-bold text-2xl text-white tracking-tight leading-tight sm:whitespace-nowrap">Lista de Inscritos</CardTitle>
+                        <CardDescription className="text-white/40 text-xs md:text-sm font-medium">Controle de inscrições e presenças para este evento.</CardDescription>
+                      </div>
+                      <Button
+                        onClick={() => setShowAddStudentToEventModal(true)}
+                        className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 px-5 shadow-lg shadow-primary/20 text-xs uppercase tracking-wider"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Adicionar Aluno</span>
+                      </Button>
                     </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full xl:w-auto">
-                      <div className="relative w-full sm:w-48">
+
+                    {/* Linha 2: Busca e Filtro */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-white/5">
+                      <div className="relative w-full sm:w-64">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                         <Input
                           placeholder="Buscar..."
@@ -942,14 +962,6 @@ export default function Admin() {
                             <DropdownMenuItem onClick={() => setFilter('absent')} className="rounded-xl focus:bg-blue-500/20 focus:text-blue-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-blue-400/80">Apenas Inscritos</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-
-                        <Button
-                          onClick={() => setShowAddStudentToEventModal(true)}
-                          className="flex-1 sm:flex-none rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 px-4 shadow-lg shadow-primary/20 text-xs uppercase tracking-wider"
-                        >
-                          <Plus className="w-4 h-4" />
-                          <span>Adicionar</span>
-                        </Button>
                       </div>
                     </div>
                   </div>
