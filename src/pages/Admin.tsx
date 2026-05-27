@@ -81,6 +81,7 @@ export default function Admin() {
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showAddStudentToEventModal, setShowAddStudentToEventModal] = useState(false);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
 
   // States dos formulários
   const [newStudent, setNewStudent] = useState({
@@ -290,20 +291,37 @@ export default function Admin() {
   const handleCreateEventSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { error } = await supabase
-        .from('eventos')
-        .insert([{
-          titulo: newEvent.titulo,
-          descricao: newEvent.descricao,
-          data: new Date(newEvent.data).toISOString(),
-          local: newEvent.local,
-          publicado: newEvent.publicado
-        }]);
+      if (editingEventId) {
+        const { error } = await supabase
+          .from('eventos')
+          .update({
+            titulo: newEvent.titulo,
+            descricao: newEvent.descricao,
+            data: new Date(newEvent.data).toISOString(),
+            local: newEvent.local,
+            publicado: newEvent.publicado
+          })
+          .eq('id', editingEventId);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success('Evento atualizado com sucesso!');
+      } else {
+        const { error } = await supabase
+          .from('eventos')
+          .insert([{
+            titulo: newEvent.titulo,
+            descricao: newEvent.descricao,
+            data: new Date(newEvent.data).toISOString(),
+            local: newEvent.local,
+            publicado: newEvent.publicado
+          }]);
 
-      toast.success('Evento criado com sucesso!');
+        if (error) throw error;
+        toast.success('Evento criado com sucesso!');
+      }
+
       setShowCreateEventModal(false);
+      setEditingEventId(null);
       setNewEvent({
         titulo: '',
         descricao: '',
@@ -313,8 +331,8 @@ export default function Admin() {
       });
       fetchData();
     } catch (error) {
-      console.error('Error creating event:', error);
-      toast.error('Erro ao criar evento.');
+      console.error('Error saving event:', error);
+      toast.error('Erro ao salvar evento.');
     }
   };
 
@@ -649,7 +667,17 @@ export default function Admin() {
                     <p className="text-white/40 text-xs mt-1">Crie e gerencie as datas dos fóruns.</p>
                   </div>
                   <Button
-                    onClick={() => setShowCreateEventModal(true)}
+                    onClick={() => {
+                      setEditingEventId(null);
+                      setNewEvent({
+                        titulo: '',
+                        descricao: '',
+                        data: '',
+                        local: '',
+                        publicado: false
+                      });
+                      setShowCreateEventModal(true);
+                    }}
                     className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-6 shadow-lg shadow-primary/20"
                   >
                     <Plus className="w-4 h-4" />
@@ -712,6 +740,23 @@ export default function Admin() {
                                 <DropdownMenuItem onClick={() => handleTogglePublish(evt)} className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer">
                                   {evt.publicado ? <EyeOff className="w-3.5 h-3.5 mr-2" /> : <Eye className="w-3.5 h-3.5 mr-2" />}
                                   {evt.publicado ? 'Despublicar' : 'Publicar'}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setEditingEventId(evt.id);
+                                    setNewEvent({
+                                      titulo: evt.titulo,
+                                      descricao: evt.descricao || '',
+                                      data: evt.data.slice(0, 16),
+                                      local: evt.local,
+                                      publicado: evt.publicado
+                                    });
+                                    setShowCreateEventModal(true);
+                                  }}
+                                  className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer"
+                                >
+                                  <Edit className="w-3.5 h-3.5 mr-2" />
+                                  Editar
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator className="bg-white/5" />
                                 <DropdownMenuItem
@@ -1260,8 +1305,8 @@ export default function Admin() {
             >
               <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
-                  <h3 className="text-2xl font-display font-bold text-white">Criar Evento</h3>
-                  <p className="text-white/40 text-sm mt-1">Insira os dados do próximo encontro/fórum.</p>
+                  <h3 className="text-2xl font-display font-bold text-white">{editingEventId ? 'Editar Evento' : 'Criar Evento'}</h3>
+                  <p className="text-white/40 text-sm mt-1">{editingEventId ? 'Modifique os dados do evento.' : 'Insira os dados do próximo encontro/fórum.'}</p>
                 </div>
                 <Button
                   variant="ghost"
@@ -1343,7 +1388,7 @@ export default function Admin() {
                     type="submit"
                     className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold"
                   >
-                    Criar Evento
+                    {editingEventId ? 'Salvar Alterações' : 'Criar Evento'}
                   </Button>
                 </div>
               </form>
