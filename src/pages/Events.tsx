@@ -169,7 +169,7 @@ export default function Events() {
           transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           className="text-white/60 text-lg md:text-xl max-w-2xl mx-auto font-medium leading-relaxed"
         >
-          Encontre os fóruns e encontros mais próximos de você e garanta a sua inscrição utilizando a sua credencial.
+          Encontre os eventos mais próximos de você e garanta a sua inscrição utilizando a sua credencial.
         </motion.p>
       </div>
 
@@ -208,10 +208,10 @@ export default function Events() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-8 pt-0 pb-8 flex-grow">
-                  <p className="text-sm text-white/50 leading-relaxed font-medium mb-6 whitespace-pre-wrap">
+                  <p className="text-sm text-white/50 leading-relaxed font-medium mb-6 line-clamp-3">
                     {evento.descricao || 'Sem descrição fornecida.'}
                   </p>
-                  
+
                   <div className="space-y-3 border-t border-white/5 pt-6 text-xs text-white/40 font-bold uppercase tracking-wider">
                     <div className="flex items-center gap-3">
                       <Clock className="w-4 h-4 text-emerald-400" />
@@ -224,7 +224,7 @@ export default function Events() {
                   </div>
                 </CardContent>
                 <CardFooter className="p-8 pt-0 border-none bg-transparent">
-                  <Button 
+                  <Button
                     onClick={() => setSelectedEvent(evento)}
                     className="modern-button w-full h-12 text-sm uppercase tracking-wider font-bold"
                   >
@@ -232,7 +232,7 @@ export default function Events() {
                     <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </CardFooter>
-                
+
                 {/* Efeito decorativo */}
                 <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-primary/5 transition-all" />
               </Card>
@@ -256,9 +256,9 @@ export default function Events() {
                   <h3 className="text-xl font-display font-bold text-white">Inscrição no Evento</h3>
                   <p className="text-white/40 text-xs mt-1 truncate max-w-[300px]">{selectedEvent.titulo}</p>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={closeRegistration}
                   className="rounded-full hover:bg-white/10 text-white/40 hover:text-white"
                 >
@@ -268,14 +268,23 @@ export default function Events() {
 
               <AnimatePresence mode="wait">
                 {!registrationSuccess ? (
-                  <motion.form 
+                  <motion.form
                     key="form"
-                    onSubmit={handleSubscribe} 
+                    onSubmit={handleSubscribe}
                     className="p-6 sm:p-8 space-y-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
+                    {selectedEvent.descricao && (
+                      <div className="bg-white/[0.02] p-5 rounded-2xl border border-white/5">
+                        <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-2">Sobre o evento</h4>
+                        <p className="text-xs sm:text-sm text-white/70 whitespace-pre-wrap leading-relaxed">
+                          {selectedEvent.descricao}
+                        </p>
+                      </div>
+                    )}
+
                     <div className="space-y-3">
                       <Label htmlFor="code" className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Código da Credencial (Permanente)</Label>
                       <Input
@@ -296,18 +305,18 @@ export default function Events() {
                     </div>
 
                     <div className="flex flex-col gap-3 pt-4">
-                      <Button 
-                        type="submit" 
+                      <Button
+                        type="submit"
                         disabled={submitting || !studentCode.trim()}
                         className="h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold"
                       >
                         {submitting ? 'Confirmando Inscrição...' : 'Confirmar Inscrição'}
                       </Button>
-                      
+
                       <div className="text-center mt-2 border-t border-white/5 pt-4">
                         <span className="text-xs text-white/20">Não possui um código ainda? </span>
-                        <Link 
-                          to="/" 
+                        <Link
+                          to="/"
                           onClick={closeRegistration}
                           className="text-xs text-primary hover:underline font-bold"
                         >
@@ -317,7 +326,7 @@ export default function Events() {
                     </div>
                   </motion.form>
                 ) : (
-                  <motion.div 
+                  <motion.div
                     key="success"
                     className="p-6 sm:p-8 text-center space-y-6"
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -333,7 +342,7 @@ export default function Events() {
                         Sua vaga para <strong>{selectedEvent.titulo}</strong> foi reservada. Use sua credencial no dia para check-in.
                       </p>
                     </div>
-                    <Button 
+                    <Button
                       onClick={closeRegistration}
                       className="h-12 w-full max-w-xs rounded-2xl bg-white text-black hover:bg-neutral-200 font-bold"
                     >
