@@ -371,18 +371,6 @@ export default function Home() {
                         {errors.email && <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider pl-1">{errors.email.message}</p>}
                       </motion.div>
                       <motion.div variants={itemVariants} className="space-y-2 md:space-y-3">
-                        <Label htmlFor="telefone" className="text-white/60 font-bold text-[10px] md:text-xs uppercase tracking-widest pl-1">WhatsApp</Label>
-                        <Input
-                          id="telefone"
-                          type="tel"
-                          inputMode="tel"
-                          placeholder="(00) 00000-0000"
-                          {...register('telefone')}
-                          className={cn("liquid-input h-12 md:h-14 transition-all duration-300 focus:scale-[1.01]", errors.telefone && "border-red-500/50 focus:border-red-500/50")}
-                        />
-                        {errors.telefone && <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider pl-1">{errors.telefone.message}</p>}
-                      </motion.div>
-                      <motion.div variants={itemVariants} className="space-y-2 md:space-y-3">
                         <Label htmlFor="cidade" className="text-white/60 font-bold text-[10px] md:text-xs uppercase tracking-widest pl-1">Cidade</Label>
                         <div className="relative">
                           <select
@@ -445,6 +433,18 @@ export default function Home() {
                           {...register('gremio')}
                           className="liquid-input h-12 md:h-14 transition-all duration-300 focus:scale-[1.01] shadow-inner"
                         />
+                      </motion.div>
+                      <motion.div variants={itemVariants} className="space-y-2 md:space-y-3">
+                        <Label htmlFor="telefone" className="text-white/60 font-bold text-[10px] md:text-xs uppercase tracking-widest pl-1">WhatsApp</Label>
+                        <Input
+                          id="telefone"
+                          type="tel"
+                          inputMode="tel"
+                          placeholder="(00) 00000-0000"
+                          {...register('telefone')}
+                          className={cn("liquid-input h-12 md:h-14 transition-all duration-300 focus:scale-[1.01]", errors.telefone && "border-red-500/50 focus:border-red-500/50")}
+                        />
+                        {errors.telefone && <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider pl-1">{errors.telefone.message}</p>}
                       </motion.div>
                     </div>
                   </motion.form>
