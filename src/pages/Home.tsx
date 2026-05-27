@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -26,8 +26,10 @@ import {
   RefreshCcw,
   X,
   ExternalLink,
-  MapPin
+  MapPin,
+  ChevronDown
 } from 'lucide-react';
+import schoolsData from '@/data/schools.json';
 import { cn } from '@/lib/utils';
 
 const registrationSchema = z.object({
@@ -110,10 +112,32 @@ export default function Home() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<RegistrationData>({
     resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      nome: '',
+      email: '',
+      telefone: '',
+      cidade: '',
+      escola: '',
+      gremio: '',
+    }
   });
+
+  const selectedCity = watch('cidade');
+
+  const citiesList = useMemo(() => {
+    return Object.keys(schoolsData).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, []);
+
+  const availableSchools = useMemo(() => {
+    if (!selectedCity) return [];
+    const schools = schoolsData[selectedCity as keyof typeof schoolsData] || [];
+    return [...schools].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, [selectedCity]);
 
   const generateCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -224,7 +248,7 @@ export default function Home() {
       if (error) throw error;
 
       if (data) {
-        setCredentialData(data);
+        setCredentialData(data as { nome: string; codigo: string });
       } else {
         setCredentialError('Nenhum cadastro encontrado para este e-mail. Verifique e tente novamente ou realize sua inscrição ao lado.');
       }
@@ -247,7 +271,7 @@ export default function Home() {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: any = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
@@ -360,22 +384,57 @@ export default function Home() {
                       </motion.div>
                       <motion.div variants={itemVariants} className="space-y-2 md:space-y-3">
                         <Label htmlFor="cidade" className="text-white/60 font-bold text-[10px] md:text-xs uppercase tracking-widest pl-1">Cidade</Label>
-                        <Input
-                          id="cidade"
-                          placeholder="Sua Cidade"
-                          {...register('cidade')}
-                          className={cn("liquid-input h-12 md:h-14 transition-all duration-300 focus:scale-[1.01]", errors.cidade && "border-red-500/50 focus:border-red-500/50")}
-                        />
+                        <div className="relative">
+                          <select
+                            id="cidade"
+                            {...register('cidade')}
+                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                              setValue('cidade', e.target.value);
+                              setValue('escola', ''); // limpa escola quando muda cidade
+                            }}
+                            className={cn(
+                              "liquid-input h-12 md:h-14 w-full transition-all duration-300 focus:scale-[1.01] appearance-none pr-10 cursor-pointer",
+                              errors.cidade && "border-red-500/50 focus:border-red-500/50"
+                            )}
+                          >
+                            <option value="" className="bg-neutral-900 text-white/50">Selecione sua cidade</option>
+                            {citiesList.map((city: string) => (
+                              <option key={city} value={city} className="bg-neutral-900 text-white">
+                                {city}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/40">
+                            <ChevronDown className="w-4 h-4" />
+                          </div>
+                        </div>
                         {errors.cidade && <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider pl-1">{errors.cidade.message}</p>}
                       </motion.div>
                       <motion.div variants={itemVariants} className="space-y-2 md:space-y-3">
                         <Label htmlFor="escola" className="text-white/60 font-bold text-[10px] md:text-xs uppercase tracking-widest pl-1">Escola / Instituição</Label>
-                        <Input
-                          id="escola"
-                          placeholder="Ex: Escola Estadual..."
-                          {...register('escola')}
-                          className={cn("liquid-input h-12 md:h-14 transition-all duration-300 focus:scale-[1.01]", errors.escola && "border-red-500/50 focus:border-red-500/50")}
-                        />
+                        <div className="relative">
+                          <select
+                            id="escola"
+                            disabled={!selectedCity}
+                            {...register('escola')}
+                            className={cn(
+                              "liquid-input h-12 md:h-14 w-full transition-all duration-300 focus:scale-[1.01] appearance-none pr-10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
+                              errors.escola && "border-red-500/50 focus:border-red-500/50"
+                            )}
+                          >
+                            <option value="" className="bg-neutral-900 text-white/50">
+                              {!selectedCity ? "Selecione primeiro a cidade" : "Selecione sua escola"}
+                            </option>
+                            {availableSchools.map((school: string) => (
+                              <option key={school} value={school} className="bg-neutral-900 text-white">
+                                {school}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-white/40">
+                            <ChevronDown className="w-4 h-4" />
+                          </div>
+                        </div>
                         {errors.escola && <p className="text-[10px] text-red-400 font-bold uppercase tracking-wider pl-1">{errors.escola.message}</p>}
                       </motion.div>
                       <motion.div variants={itemVariants} className="space-y-2 md:space-y-3">
@@ -513,7 +572,7 @@ export default function Home() {
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               className="w-full max-w-lg glass-card overflow-hidden border border-white/10 rounded-[2.5rem] shadow-3xl bg-neutral-950/90 relative"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               <div className="h-3 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500" />
               <button
@@ -622,7 +681,7 @@ export default function Home() {
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               className="w-full max-w-lg glass-card overflow-hidden border border-white/10 rounded-[2.5rem] shadow-3xl bg-neutral-950/90 relative"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
             >
               <div className="h-3 bg-gradient-to-r from-teal-500 via-emerald-500 to-teal-500" />
               <button
@@ -666,7 +725,7 @@ export default function Home() {
                           type="email"
                           placeholder="seu@email.com"
                           value={credentialEmail}
-                          onChange={(e) => setCredentialEmail(e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCredentialEmail(e.target.value)}
                           className="liquid-input h-12 md:h-14 tracking-wide"
                           required
                           disabled={searchingCredential}
@@ -975,7 +1034,7 @@ function UpcomingEventsWidget({ events, loading }: { events: any[]; loading: boo
                       initial={{ height: 0, opacity: 0, marginTop: 0 }}
                       animate={{ height: 'auto', opacity: 1, marginTop: 12 }}
                       exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                      onSubmit={(e) => handleSubscribeInline(e, evt.id)}
+                      onSubmit={(e: React.FormEvent) => handleSubscribeInline(e, evt.id)}
                       className="overflow-hidden space-y-2.5 pt-2 border-t border-white/5"
                     >
                       <div className="flex items-center gap-2">
@@ -983,7 +1042,7 @@ function UpcomingEventsWidget({ events, loading }: { events: any[]; loading: boo
                           placeholder="Código (EVT-XXXXXX)"
                           required
                           value={studentCode}
-                          onChange={(e) => setStudentCode(e.target.value.toUpperCase())}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStudentCode(e.target.value.toUpperCase())}
                           className="h-9 text-xs rounded-xl bg-black/40 border-white/10 text-white uppercase placeholder:text-white/20 tracking-wider focus:border-primary font-bold text-center"
                           autoFocus
                           autoCapitalize="characters"

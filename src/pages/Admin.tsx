@@ -426,14 +426,14 @@ export default function Admin() {
   const statsGlobal = useMemo(() => {
     const totalAlunos = participantes.length;
     const totalEventos = eventos.length;
-    const eventosPublicados = eventos.filter(e => e.publicado).length;
+    const eventosPublicados = eventos.filter((e: Evento) => e.publicado).length;
     return { totalAlunos, totalEventos, eventosPublicados };
   }, [participantes, eventos]);
 
   const statsEvento = useMemo(() => {
     if (!selectedEvento) return { total: 0, presentes: 0, ausentes: 0, porcentagem: 0 };
     const total = inscritosEvento.length;
-    const presentes = inscritosEvento.filter(p => p.presente).length;
+    const presentes = inscritosEvento.filter((p: InscricaoEvento) => p.presente).length;
     const ausentes = total - presentes;
     const porcentagem = total > 0 ? (presentes / total) * 100 : 0;
     return { total, presentes, ausentes, porcentagem };
@@ -441,7 +441,7 @@ export default function Admin() {
 
   // --- Filtros e Pesquisas ---
   const filteredAlunos = useMemo(() => {
-    return participantes.filter(p => {
+    return participantes.filter((p: Participante) => {
       return (
         p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -451,7 +451,7 @@ export default function Admin() {
   }, [participantes, searchTerm]);
 
   const filteredInscritos = useMemo(() => {
-    return inscritosEvento.filter(i => {
+    return inscritosEvento.filter((i: InscricaoEvento) => {
       const p = i.participantes;
       if (!p) return false;
 
@@ -472,8 +472,8 @@ export default function Admin() {
   // Filtrar alunos que NÃO estão inscritos no evento selecionado (para adicionar)
   const studentsNotSubscribed = useMemo(() => {
     if (!selectedEvento) return [];
-    const subscribedIds = new Set(inscritosEvento.map(i => i.participante_id));
-    return participantes.filter(p => {
+    const subscribedIds = new Set(inscritosEvento.map((i: InscricaoEvento) => i.participante_id));
+    return participantes.filter((p: Participante) => {
       const isNotSubscribed = !subscribedIds.has(p.id);
       const matchesSearch =
         p.nome.toLowerCase().includes(searchStudentForEvent.toLowerCase()) ||
@@ -488,9 +488,9 @@ export default function Admin() {
     if (!selectedEvento) return;
     const filteredList = type === 'all'
       ? inscritosEvento
-      : inscritosEvento.filter(p => p.presente);
+      : inscritosEvento.filter((p: InscricaoEvento) => p.presente);
 
-    const dataToExport = filteredList.map(i => {
+    const dataToExport = filteredList.map((i: InscricaoEvento) => {
       const p = i.participantes;
       return {
         Nome: p?.nome || '',
@@ -527,7 +527,7 @@ export default function Admin() {
       return;
     }
 
-    const dataToExport = participantes.map(p => ({
+    const dataToExport = participantes.map((p: Participante) => ({
       Nome: p.nome,
       Email: p.email,
       Telefone: p.telefone,
@@ -665,7 +665,7 @@ export default function Admin() {
                   </Card>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {eventos.map((evt) => (
+                    {eventos.map((evt: Evento) => (
                       <Card
                         key={evt.id}
                         className={cn(
@@ -705,10 +705,8 @@ export default function Admin() {
                               Inscritos & Estatísticas
                             </Button>
                             <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white/5 text-white/50 hover:text-white">
-                                  <MoreVertical className="w-4 h-4" />
-                                </Button>
+                              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white/5 text-white/50 hover:text-white" />}>
+                                <MoreVertical className="w-4 h-4" />
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="rounded-2xl bg-black/90 border-white/10 p-2 min-w-[140px]">
                                 <DropdownMenuItem onClick={() => handleTogglePublish(evt)} className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer">
@@ -781,7 +779,7 @@ export default function Admin() {
                             placeholder="Buscar aluno..."
                             className="liquid-input h-11 w-full text-sm pl-11"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                           />
                         </div>
                         <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider hidden sm:block">
@@ -810,7 +808,7 @@ export default function Admin() {
                             </TableCell>
                           </TableRow>
                         ) : (
-                          filteredAlunos.map((p) => (
+                          filteredAlunos.map((p: Participante) => (
                             <TableRow key={p.id} className="hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] group text-sm">
                               <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 font-bold text-white text-sm md:text-base">
                                 {p.nome}
@@ -944,17 +942,15 @@ export default function Admin() {
                           placeholder="Buscar..."
                           className="liquid-input h-10 w-full text-xs pl-11"
                           value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                         />
                       </div>
 
                       <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="flex-1 sm:flex-none h-10 rounded-xl bg-white/5 border-white/10 gap-2 px-4 shadow-sm hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-wider text-white/60">
-                              <Filter className="w-3.5 h-3.5" />
-                              <span>Filtro</span>
-                            </Button>
+                          <DropdownMenuTrigger render={<Button variant="outline" className="flex-1 sm:flex-none h-10 rounded-xl bg-white/5 border-white/10 gap-2 px-4 shadow-sm hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-wider text-white/60" />}>
+                            <Filter className="w-3.5 h-3.5" />
+                            <span>Filtro</span>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="rounded-2xl border-white/10 shadow-3xl bg-black/90 p-2 min-w-[160px]">
                             <DropdownMenuItem onClick={() => setFilter('all')} className="rounded-xl focus:bg-white/10 focus:text-white transition-all px-4 py-2 cursor-pointer font-medium text-xs text-white/80">Todos</DropdownMenuItem>
@@ -990,7 +986,7 @@ export default function Admin() {
                           </TableCell>
                         </TableRow>
                       ) : (
-                        filteredInscritos.map((i) => {
+                        filteredInscritos.map((i: InscricaoEvento) => {
                           const p = i.participantes;
                           if (!p) return null;
                           return (
@@ -1019,10 +1015,8 @@ export default function Admin() {
                               </TableCell>
                               <TableCell className="px-3 md:px-10">
                                 <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9 opacity-40 group-hover:opacity-100 transition-all rounded-xl hover:bg-white/10">
-                                      <MoreVertical className="w-4 h-4 text-white" />
-                                    </Button>
+                                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-9 w-9 opacity-40 group-hover:opacity-100 transition-all rounded-xl hover:bg-white/10" />}>
+                                    <MoreVertical className="w-4 h-4 text-white" />
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="rounded-2xl bg-black/95 border-white/10 p-2 min-w-[150px]">
                                     <DropdownMenuItem onClick={() => handleTogglePresence(i)} className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer">
@@ -1182,7 +1176,7 @@ export default function Admin() {
                       required
                       className="liquid-input h-12"
                       value={newStudent.nome}
-                      onChange={e => setNewStudent({ ...newStudent, nome: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, nome: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1192,7 +1186,7 @@ export default function Admin() {
                       required
                       className="liquid-input h-12"
                       value={newStudent.email}
-                      onChange={e => setNewStudent({ ...newStudent, email: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, email: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1201,7 +1195,7 @@ export default function Admin() {
                       required
                       className="liquid-input h-12"
                       value={newStudent.telefone}
-                      onChange={e => setNewStudent({ ...newStudent, telefone: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, telefone: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1210,7 +1204,7 @@ export default function Admin() {
                       required
                       className="liquid-input h-12"
                       value={newStudent.cidade}
-                      onChange={e => setNewStudent({ ...newStudent, cidade: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, cidade: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1219,7 +1213,7 @@ export default function Admin() {
                       required
                       className="liquid-input h-12"
                       value={newStudent.escola}
-                      onChange={e => setNewStudent({ ...newStudent, escola: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, escola: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1227,7 +1221,7 @@ export default function Admin() {
                     <Input
                       className="liquid-input h-12"
                       value={newStudent.gremio}
-                      onChange={e => setNewStudent({ ...newStudent, gremio: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, gremio: e.target.value })}
                     />
                   </div>
                 </div>
@@ -1288,7 +1282,7 @@ export default function Admin() {
                       className="liquid-input h-12"
                       placeholder="Ex: I Fórum de Liderança Olhar Jovem"
                       value={newEvent.titulo}
-                      onChange={e => setNewEvent({ ...newEvent, titulo: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, titulo: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -1297,7 +1291,7 @@ export default function Admin() {
                       className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-primary transition-all duration-300 min-h-[100px] placeholder:text-white/10"
                       placeholder="Informações adicionais sobre o cronograma, palestrantes, etc..."
                       value={newEvent.descricao}
-                      onChange={e => setNewEvent({ ...newEvent, descricao: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewEvent({ ...newEvent, descricao: e.target.value })}
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1308,7 +1302,7 @@ export default function Admin() {
                         required
                         className="liquid-input h-12 text-white/60"
                         value={newEvent.data}
-                        onChange={e => setNewEvent({ ...newEvent, data: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, data: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
@@ -1318,7 +1312,7 @@ export default function Admin() {
                         className="liquid-input h-12"
                         placeholder="Ex: Auditório Municipal"
                         value={newEvent.local}
-                        onChange={e => setNewEvent({ ...newEvent, local: e.target.value })}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, local: e.target.value })}
                       />
                     </div>
                   </div>
@@ -1328,7 +1322,7 @@ export default function Admin() {
                       id="publish-checkbox"
                       className="w-5 h-5 rounded border-white/15 bg-white/5 text-primary focus:ring-primary accent-primary"
                       checked={newEvent.publicado}
-                      onChange={e => setNewEvent({ ...newEvent, publicado: e.target.checked })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, publicado: e.target.checked })}
                     />
                     <label htmlFor="publish-checkbox" className="text-xs text-white/70 font-bold uppercase tracking-wider cursor-pointer">
                       Publicar evento imediatamente para os alunos
@@ -1391,7 +1385,7 @@ export default function Admin() {
                     placeholder="Buscar participante por nome ou código..."
                     className="liquid-input h-11 w-full text-sm pl-11"
                     value={searchStudentForEvent}
-                    onChange={(e) => setSearchStudentForEvent(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchStudentForEvent(e.target.value)}
                     autoFocus
                   />
                 </div>
@@ -1404,7 +1398,7 @@ export default function Admin() {
                     {searchStudentForEvent ? 'Nenhum aluno correspondente encontrado.' : 'Todos os alunos cadastrados já estão inscritos.'}
                   </div>
                 ) : (
-                  studentsNotSubscribed.map(student => (
+                  studentsNotSubscribed.map((student: Participante) => (
                     <div
                       key={student.id}
                       className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-all"
