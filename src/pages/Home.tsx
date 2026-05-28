@@ -737,9 +737,9 @@ export default function Home() {
                                 errors.cidade && "border-red-500/50 focus:border-red-500/50"
                               )}
                             >
-                              <option value="" className="text-neutral-900 bg-white">Selecione sua cidade</option>
+                              <option value="" className="text-white/60 bg-neutral-950">Selecione sua cidade</option>
                               {citiesList.map((city) => (
-                                <option key={city} value={city} className="text-neutral-900 bg-white">
+                                <option key={city} value={city} className="text-white bg-neutral-950">
                                   {city}
                                 </option>
                               ))}
@@ -763,11 +763,11 @@ export default function Home() {
                                 errors.escola && "border-red-500/50 focus:border-red-500/50"
                               )}
                             >
-                              <option value="" className="text-neutral-900 bg-white">
+                              <option value="" className="text-white/60 bg-neutral-950">
                                 {!selectedCity ? "Selecione primeiro a cidade" : "Selecione sua escola"}
                               </option>
                               {availableSchools.map((school) => (
-                                <option key={school} value={school} className="text-neutral-900 bg-white">
+                                <option key={school} value={school} className="text-white bg-neutral-950">
                                   {school}
                                 </option>
                               ))}

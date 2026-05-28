@@ -34,9 +34,13 @@
     background-attachment: fixed;
   }
 
+  select {
+    color-scheme: dark;
+  }
+
   select option {
-    color: #1c1c1e !important;
-    background-color: #ffffff !important;
+    color: #ffffff !important;
+    background-color: #0a0a0a !important;
   }
 }
 
