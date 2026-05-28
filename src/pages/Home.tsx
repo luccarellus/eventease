@@ -42,7 +42,14 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const registrationSchema = z.object({
-  nome: z.string().min(3, 'Nome muito curto').max(100),
+  nome: z
+    .string()
+    .min(3, 'Nome muito curto')
+    .max(100)
+    .refine(
+      (value) => value.trim().split(/\s+/).filter(Boolean).length >= 2,
+      { message: 'Por favor, insira seu nome completo (nome e sobrenome)' }
+    ),
   email: z.string().email('Email inválido'),
   telefone: z.string().min(10, 'Telefone inválido'),
   cidade: z.string().min(2, 'Cidade obrigatória'),
