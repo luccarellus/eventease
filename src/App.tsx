@@ -10,7 +10,6 @@ import Home from '@/pages/Home';
 import Confirm from '@/pages/Confirm';
 import Admin from '@/pages/Admin';
 import Login from '@/pages/Login';
-import Events from '@/pages/Events';
 import { supabase } from '@/lib/supabase';
 import { isAdmin } from '@/constants';
 import { motion, AnimatePresence } from 'motion/react';
@@ -54,8 +53,8 @@ function Navbar() {
         <div className="hidden md:flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
           {!userIsAdmin && (
             <>
-              <NavLink to="/" icon={<UserPlus className="w-4 h-4" />} label="Cadastro" active={location.pathname === '/'} />
-              <NavLink to="/eventos" icon={<Calendar className="w-4 h-4" />} label="Eventos" active={location.pathname === '/eventos'} />
+              <NavLink to="/" icon={<Calendar className="w-4 h-4" />} label="Eventos" active={location.pathname === '/' && !location.search.includes('buscar-credencial')} />
+              <NavLink to="/?buscar-credencial=true" icon={<UserCheck className="w-4 h-4" />} label="Minha Credencial" active={location.search.includes('buscar-credencial')} />
             </>
           )}
 
@@ -121,8 +120,8 @@ function BottomNav() {
       >
         {!userIsAdmin && (
           <>
-            <MobileNavLink to="/" icon={<UserPlus className="w-6 h-6" />} active={location.pathname === '/'} />
-            <MobileNavLink to="/eventos" icon={<Calendar className="w-6 h-6" />} active={location.pathname === '/eventos'} />
+            <MobileNavLink to="/" icon={<Calendar className="w-6 h-6" />} active={location.pathname === '/' && !location.search.includes('buscar-credencial')} />
+            <MobileNavLink to="/?buscar-credencial=true" icon={<UserCheck className="w-6 h-6" />} active={location.search.includes('buscar-credencial')} />
           </>
         )}
 
@@ -196,7 +195,7 @@ export default function App() {
         <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/eventos" element={<Events />} />
+            <Route path="/eventos" element={<Home />} />
             <Route path="/confirmar" element={<Confirm />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/login" element={<Login />} />
