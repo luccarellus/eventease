@@ -33,6 +33,11 @@
       radial-gradient(circle at 50% 50%, #001a15 0%, #000000 100%);
     background-attachment: fixed;
   }
+
+  select option {
+    color: #1c1c1e !important;
+    background-color: #ffffff !important;
+  }
 }
 
 .heading-display {
