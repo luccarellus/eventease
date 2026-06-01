@@ -49,8 +49,8 @@ function QRScanner({ onScan, onClose }: { onScan: (text: string) => void; onClos
   }, [onScan, onClose]);
 
   return (
-    <div className="relative w-full aspect-square bg-black overflow-hidden flex items-center justify-center">
-      <div id="reader" className="w-full h-full" />
+    <div className="relative w-full h-full min-h-[50vh] bg-black overflow-hidden flex items-center justify-center">
+      <div id="reader" className="w-full h-full flex items-center justify-center [&>video]:object-cover" />
       {/* Overlay de scanner */}
       <div className="absolute inset-0 border-[2px] border-primary/30 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-2 border-primary rounded-3xl" />
@@ -260,23 +260,25 @@ export default function Confirm() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="max-w-md mx-auto relative px-2 md:px-0"
+              className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-0 md:p-6 backdrop-blur-md"
             >
-              <Card className="glass-card overflow-hidden border-white/20 rounded-[2rem] shadow-3xl bg-black">
-                <div className="p-4 flex items-center justify-between border-b border-white/10">
+              <Card className="w-full h-full md:h-auto md:max-w-md mx-auto glass-card overflow-hidden border-white/20 rounded-none md:rounded-[2.5rem] shadow-3xl bg-black flex flex-col">
+                <div className="p-4 md:p-6 flex items-center justify-between border-b border-white/10 shrink-0 mt-8 md:mt-0">
                   <span className="text-white font-bold text-xs uppercase tracking-widest">Leitor de QR Code</span>
                   <Button variant="ghost" size="icon" onClick={() => setScannerActive(false)} className="rounded-full hover:bg-white/10 text-white">
-                    <X className="w-5 h-5" />
+                    <X className="w-6 h-6" />
                   </Button>
                 </div>
                 
-                <QRScanner 
-                  onScan={onScanSuccess} 
-                  onClose={() => setScannerActive(false)} 
-                />
+                <div className="flex-grow relative flex items-center justify-center bg-black">
+                  <QRScanner 
+                    onScan={onScanSuccess} 
+                    onClose={() => setScannerActive(false)} 
+                  />
+                </div>
 
-                <div className="p-6 text-center">
-                  <p className="text-white/40 text-xs font-medium">Acesso à câmera necessário.</p>
+                <div className="p-6 text-center shrink-0 pb-12 md:pb-6 border-t border-white/10">
+                  <p className="text-white/40 text-xs font-medium">Aponte a câmera para o QR Code da credencial.</p>
                 </div>
               </Card>
             </motion.div>

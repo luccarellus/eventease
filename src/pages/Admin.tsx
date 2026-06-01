@@ -1191,12 +1191,12 @@ export default function Admin() {
       {/* Modal 1: Cadastro Manual de Aluno (Global) */}
       <AnimatePresence>
         {showAddStudentModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-10 md:p-6 bg-black/85 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-2xl bg-neutral-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-3xl"
+              exit={{ opacity: 0, scale: 0.95, y: 50 }}
+              className="w-full max-w-2xl bg-neutral-900 border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[95dvh] overflow-y-auto"
             >
               <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
@@ -1296,12 +1296,12 @@ export default function Admin() {
       {/* Modal 2: Criar Evento */}
       <AnimatePresence>
         {showCreateEventModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-10 md:p-6 bg-black/85 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-xl bg-neutral-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-3xl"
+              exit={{ opacity: 0, scale: 0.95, y: 50 }}
+              className="w-full max-w-xl bg-neutral-900 border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[95dvh] overflow-y-auto"
             >
               <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
@@ -1400,12 +1400,12 @@ export default function Admin() {
       {/* Modal 3: Inscrever Aluno no Evento Específico */}
       <AnimatePresence>
         {showAddStudentToEventModal && selectedEvento && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-10 md:p-6 bg-black/85 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-xl bg-neutral-900 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-3xl flex flex-col max-h-[85vh]"
+              exit={{ opacity: 0, scale: 0.95, y: 50 }}
+              className="w-full max-w-xl bg-neutral-900 border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl flex flex-col max-h-[95dvh]"
             >
               <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>

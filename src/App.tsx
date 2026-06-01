@@ -119,7 +119,7 @@ function BottomNav() {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-black/80 backdrop-blur-3xl border-t border-white/10 rounded-t-3xl p-3 pb-6 flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.5)] pointer-events-auto"
+        className="bg-black/70 backdrop-blur-3xl saturate-150 border-t border-white/10 rounded-t-3xl p-3 pb-8 flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.8)] pointer-events-auto"
       >
         {!userIsAdmin && (
           <>
@@ -144,7 +144,7 @@ function MobileNavLink({ to, icon, active }: { to: string; icon: React.ReactNode
     <Link
       to={to}
       className={cn(
-        "flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-500",
+        "flex flex-col items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500",
         active
           ? "bg-primary text-white shadow-lg shadow-primary/40 scale-110 -translate-y-2"
           : "text-white/30 hover:text-white/60"
@@ -193,7 +193,7 @@ export default function App() {
 
   return (
     <Router>
-      <div className="min-h-screen pt-24 pb-32 md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col">
+      <div className="min-h-[100dvh] pt-24 pb-36 md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col">
         <Navbar />
         <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow">
           <Routes>

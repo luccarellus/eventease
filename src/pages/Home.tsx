@@ -453,11 +453,11 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="heading-display text-4xl md:text-7xl mb-6 md:mb-8 tracking-tight font-extrabold leading-[1.1] md:leading-[1.05]"
+          className="heading-display text-3xl sm:text-5xl md:text-7xl mb-6 md:mb-8 tracking-tight font-extrabold leading-[1.1] md:leading-[1.05]"
         >
           <span className="text-white drop-shadow-sm">Event</span>
           <span className="text-primary font-black drop-shadow-[0_2px_10px_rgba(0,191,165,0.2)]">Ease</span>
-          <span className="mx-4 text-white/15 font-light text-3xl md:text-5xl align-middle">/</span>
+          <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">/</span>
           <span className="bg-gradient-to-r from-emerald-400 via-primary to-teal-300 bg-clip-text text-transparent font-black tracking-tighter">
             Olhar Jovem
           </span>
@@ -595,13 +595,13 @@ export default function Home() {
       {/* Modal Contextual de Inscrição */}
       <AnimatePresence>
         {selectedEvent && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-black/85 backdrop-blur-md" onClick={closeRegistration}>
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-10 md:p-6 bg-black/85 backdrop-blur-md" onClick={closeRegistration}>
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              exit={{ opacity: 0, scale: 0.95, y: 50 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="w-full max-w-2xl bg-neutral-950 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative flex flex-col max-h-[90vh]"
+              className="w-full max-w-2xl bg-neutral-950 border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative flex flex-col max-h-[95dvh] md:max-h-[90dvh]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="h-2 bg-gradient-to-r from-emerald-500 via-primary to-teal-500" />

@@ -109,4 +109,13 @@
     border-radius: 2.5rem;
     @apply p-8 flex flex-col gap-4;
   }
+
+  /* Utility classes for mobile optimization */
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
