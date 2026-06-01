@@ -19,7 +19,7 @@ export default function CookieBanner() {
   }, []);
 
   const injectClarity = () => {
-    if (window.clarity) return; // Already injected
+    if ((window as any).clarity) return; // Already injected
     
     // Configura o script do Clarity
     (function(c: any, l: any, a: string, r: string, i: string, t?: any, y?: any) {

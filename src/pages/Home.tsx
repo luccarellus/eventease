@@ -55,8 +55,8 @@ const registrationSchema = z.object({
   cidade: z.string().min(2, 'Cidade obrigatória'),
   escola: z.string().min(2, 'Escola obrigatória'),
   gremio: z.string().optional(),
-  aceiteTermos: z.literal(true, {
-    errorMap: () => ({ message: 'Você deve aceitar a Política de Privacidade e os Termos de Uso.' }),
+  aceiteTermos: z.boolean().refine((val) => val === true, {
+    message: 'Você deve aceitar a Política de Privacidade e os Termos de Uso.',
   }),
 });
 
