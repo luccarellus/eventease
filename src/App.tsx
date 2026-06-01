@@ -115,11 +115,11 @@ function BottomNav() {
   const userIsAdmin = session ? isAdmin(session.user) : false;
 
   return (
-    <div className="md:hidden fixed bottom-6 left-6 right-6 z-50 pointer-events-none">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-black/60 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-2 flex items-center justify-around shadow-[0_20px_50px_rgba(0,0,0,0.5)] pointer-events-auto"
+        className="bg-black/80 backdrop-blur-3xl border-t border-white/10 rounded-t-3xl p-3 pb-6 flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.5)] pointer-events-auto"
       >
         {!userIsAdmin && (
           <>
