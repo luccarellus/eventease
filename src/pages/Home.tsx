@@ -36,7 +36,7 @@ import {
   Search,
   UserCheck
 } from 'lucide-react';
-import schoolsData from '@/data/schools.json';
+import rawSchoolsData from '@/data/cidades_escolas.json';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -155,15 +155,26 @@ export default function Home() {
 
   const selectedCity = watch('cidade');
 
+  const schoolsData = useMemo(() => {
+    const data: Record<string, string[]> = {};
+    rawSchoolsData.forEach((item: any) => {
+      if (!data[item.city]) {
+        data[item.city] = [];
+      }
+      data[item.city].push(item.school);
+    });
+    return data;
+  }, []);
+
   const citiesList = useMemo(() => {
     return Object.keys(schoolsData).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  }, []);
+  }, [schoolsData]);
 
   const availableSchools = useMemo(() => {
     if (!selectedCity) return [];
-    const schools = schoolsData[selectedCity as keyof typeof schoolsData] || [];
+    const schools = schoolsData[selectedCity] || [];
     return [...schools].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  }, [selectedCity]);
+  }, [selectedCity, schoolsData]);
 
   const generateCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
