@@ -14,6 +14,8 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,6 +34,12 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      toast.error(`Muitas tentativas falhas. Tente novamente em ${Math.ceil((lockoutUntil - Date.now()) / 1000)} segundos.`);
+      return;
+    }
+
     setLoading(true);
 
     const cleanEmail = email.trim().toLowerCase();
@@ -60,9 +68,24 @@ export default function Login() {
       }
 
       toast.success('Login realizado com sucesso!');
+      setLoginAttempts(0);
       navigate('/admin');
     } catch (error: any) {
       console.error('Login error:', error);
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+      
+      if (newAttempts >= 3) {
+        const lockoutTime = Date.now() + 30000; // 30 seconds
+        setLockoutUntil(lockoutTime);
+        toast.error('Muitas tentativas falhas. Acesso bloqueado temporariamente por 30 segundos.');
+        
+        // Timer to auto-unlock
+        setTimeout(() => {
+          setLoginAttempts(0);
+          setLockoutUntil(null);
+        }, 30000);
+      }
     } finally {
       setLoading(false);
     }
@@ -119,10 +142,10 @@ export default function Login() {
               <Button
                 type="submit"
                 className="modern-button w-full h-14 text-base shadow-2xl"
-                disabled={loading}
+                disabled={loading || (lockoutUntil !== null && Date.now() < lockoutUntil)}
               >
-                {loading ? 'Autenticando...' : 'Entrar no Sistema'}
-                {!loading && <ArrowRight className="w-5 h-5 ml-2" />}
+                {loading ? 'Autenticando...' : (lockoutUntil && Date.now() < lockoutUntil ? 'Acesso Bloqueado' : 'Entrar no Sistema')}
+                {!loading && (!lockoutUntil || Date.now() >= lockoutUntil) && <ArrowRight className="w-5 h-5 ml-2" />}
               </Button>
             </form>
           </CardContent>

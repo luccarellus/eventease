@@ -55,6 +55,9 @@ const registrationSchema = z.object({
   cidade: z.string().min(2, 'Cidade obrigatória'),
   escola: z.string().min(2, 'Escola obrigatória'),
   gremio: z.string().optional(),
+  aceiteTermos: z.literal(true, {
+    errorMap: () => ({ message: 'Você deve aceitar a Política de Privacidade e os Termos de Uso.' }),
+  }),
 });
 
 type RegistrationData = z.infer<typeof registrationSchema>;
@@ -146,6 +149,7 @@ export default function Home() {
       cidade: '',
       escola: '',
       gremio: '',
+      aceiteTermos: undefined as any,
     }
   });
 
@@ -807,6 +811,23 @@ export default function Home() {
                           />
                           {errors.telefone && <p className="text-[10px] text-red-400 font-bold uppercase pl-1">{errors.telefone.message}</p>}
                         </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <label className="flex items-start gap-3 cursor-pointer group">
+                          <div className="relative flex items-center justify-center mt-0.5">
+                            <input
+                              type="checkbox"
+                              {...register('aceiteTermos')}
+                              className="peer appearance-none w-5 h-5 border-2 border-white/20 rounded-md bg-transparent checked:bg-primary checked:border-primary transition-all focus:ring-2 focus:ring-primary/30 outline-none cursor-pointer"
+                            />
+                            <CheckCircle2 className="absolute w-3.5 h-3.5 text-black opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+                          </div>
+                          <span className="text-sm text-white/60 leading-tight">
+                            Declaro que li e concordo com os <Link to="/termos" target="_blank" className="text-primary hover:underline underline-offset-4">Termos de Uso</Link> e a <Link to="/politica-de-privacidade" target="_blank" className="text-primary hover:underline underline-offset-4">Política de Privacidade</Link>, e autorizo o tratamento dos meus dados conforme a LGPD.
+                          </span>
+                        </label>
+                        {errors.aceiteTermos && <p className="text-[10px] text-red-400 font-bold uppercase pl-1 mt-2">{errors.aceiteTermos.message}</p>}
                       </div>
 
                       <div className="pt-4 flex flex-col sm:flex-row gap-4 border-t border-white/5 mt-6">

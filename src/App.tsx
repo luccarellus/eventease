@@ -10,6 +10,9 @@ import Home from '@/pages/Home';
 import Confirm from '@/pages/Confirm';
 import Admin from '@/pages/Admin';
 import Login from '@/pages/Login';
+import PrivacyPolicy from '@/pages/PrivacyPolicy';
+import TermsOfService from '@/pages/TermsOfService';
+import CookieBanner from '@/components/CookieBanner';
 import { supabase } from '@/lib/supabase';
 import { isAdmin } from '@/constants';
 import { motion, AnimatePresence } from 'motion/react';
@@ -199,6 +202,8 @@ export default function App() {
             <Route path="/confirmar" element={<Confirm />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
+            <Route path="/termos" element={<TermsOfService />} />
           </Routes>
         </main>
 
@@ -211,6 +216,7 @@ export default function App() {
         )}
 
         <BottomNav />
+        <CookieBanner />
         <Toaster theme="dark" position="top-center" expand={true} richColors />
       </div>
     </Router>
