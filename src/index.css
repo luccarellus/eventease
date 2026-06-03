@@ -111,11 +111,11 @@
   }
 
   /* Utility classes for mobile optimization */
-  .hide-scrollbar {
+  .scrollbar-hide {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
-  .hide-scrollbar::-webkit-scrollbar {
+  .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
 }

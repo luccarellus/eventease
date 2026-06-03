@@ -525,8 +525,9 @@ export default function Admin() {
       };
     });
 
-    const csv = Papa.unparse(dataToExport);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const csv = Papa.unparse(dataToExport, { delimiter: ';' });
+    // Adiciona o BOM do UTF-8 para o Excel reconhecer os caracteres especiais (acentos)
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
@@ -556,8 +557,9 @@ export default function Admin() {
       'Data de Cadastro': format(new Date(p.created_at), 'dd/MM/yyyy HH:mm:ss')
     }));
 
-    const csv = Papa.unparse(dataToExport);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const csv = Papa.unparse(dataToExport, { delimiter: ';' });
+    // Adiciona o BOM do UTF-8 para o Excel reconhecer os caracteres especiais (acentos)
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
