@@ -110,20 +110,21 @@ CREATE INDEX IF NOT EXISTS idx_eventos_publicado ON eventos(publicado);
 -- FUNÇÕES RPC SEGURAS (SECURITY DEFINER) PARA ACESSO ANÔNIMO SELETIVO
 -- =========================================================================
 
--- 1. Obter participante por e-mail (retorna apenas nome e código para mitigar vazamento de PII)
+-- 1. Obter participante por e-mail (retorna apenas nome e se está registrado para mitigar vazamento de PII)
 CREATE OR REPLACE FUNCTION get_participant_by_email(p_email text)
-RETURNS TABLE (nome text, codigo text)
+RETURNS TABLE (nome text, registrado boolean)
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
   RETURN QUERY
-  SELECT p.nome, p.codigo
+  SELECT p.nome, true as registrado
   FROM participantes p
   WHERE LOWER(p.email) = LOWER(TRIM(p_email));
 END;
 $$;
+
 
 -- 2. Obter participante por código (retorna apenas ID e nome)
 CREATE OR REPLACE FUNCTION get_participant_by_code(p_code text)
@@ -163,7 +164,8 @@ $$;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  NEW.raw_app_meta_data := COALESCE(NEW.raw_app_meta_data, '{}'::jsonb) || '{"role": "admin"}'::jsonb;
+  -- Define role padrão como 'user' em vez de 'admin'
+  NEW.raw_app_meta_data := COALESCE(NEW.raw_app_meta_data, '{}'::jsonb) || '{"role": "user"}'::jsonb;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

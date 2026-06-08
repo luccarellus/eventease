@@ -199,24 +199,18 @@ export default function Home() {
 
       if (findError) throw findError;
 
-      const existing = rawExisting as { nome: string; codigo: string } | null;
+      const existing = rawExisting as { nome: string; registrado: boolean } | null;
       let participantId = '';
       let participantCode = '';
       let participantName = '';
 
-      if (existing) {
-        participantCode = existing.codigo;
-        participantName = existing.nome;
-
-        // Recuperar ID por código
-        const { data: rawPart, error: partError } = await supabase
-          .rpc('get_participant_by_code', { p_code: participantCode })
-          .maybeSingle();
-
-        if (partError) throw partError;
-        if (rawPart) {
-          participantId = (rawPart as { id: string }).id;
-        }
+      if (existing && existing.registrado) {
+        toast.warning(
+          'Este e-mail já está cadastrado. Por razões de segurança, use a aba "Já sou cadastrado" informando seu código da credencial para se inscrever.',
+          { duration: 6000 }
+        );
+        setSubmittingRegistration(false);
+        return;
       } else {
         // Criar participante novo
         const generatedCode = generateCode();
@@ -306,24 +300,18 @@ export default function Home() {
           .maybeSingle();
 
         if (findError) throw findError;
-        const existing = rawExisting as { nome: string; codigo: string } | null;
+        const existing = rawExisting as { nome: string; registrado: boolean } | null;
 
-        if (!existing) {
+        if (existing && existing.registrado) {
+          setExistingError(
+            'Cadastro localizado! Por motivos de segurança, não é possível se vincular informando apenas o e-mail. Por favor, insira o seu código da credencial (EVT-XXXXXX).'
+          );
+          setSearchingExisting(false);
+          return;
+        } else {
           setExistingError('Nenhum cadastro encontrado para este e-mail.');
           setSearchingExisting(false);
           return;
-        }
-
-        participantCode = existing.codigo;
-        participantName = existing.nome;
-
-        const { data: rawPart, error: partError } = await supabase
-          .rpc('get_participant_by_code', { p_code: participantCode })
-          .maybeSingle();
-
-        if (partError) throw partError;
-        if (rawPart) {
-          participantId = (rawPart as { id: string }).id;
         }
       } else {
         // Buscar por código
@@ -397,8 +385,12 @@ export default function Home() {
 
       if (error) throw error;
 
-      if (data) {
-        setCredentialData(data as { nome: string; codigo: string });
+      const existing = data as { nome: string; registrado: boolean } | null;
+
+      if (existing && existing.registrado) {
+        setCredentialError(
+          'Cadastro localizado! Por motivos de segurança e privacidade, a credencial não pode ser exibida diretamente na página. Por favor, confira o seu código (EVT-XXXXXX) no e-mail de confirmação ou consulte a organização do evento.'
+        );
       } else {
         setCredentialError('Nenhum cadastro encontrado para este e-mail. Verifique se o e-mail está correto ou realize a inscrição em um evento.');
       }

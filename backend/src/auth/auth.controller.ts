@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { SupabaseAuthGuard } from './guards/supabase.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -39,6 +40,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async login(@Body() loginDto: any, @Res({ passthrough: true }) response: Response) {
     const user = await this.authService.validateUser(loginDto.email, loginDto.password);
     if (!user) {
