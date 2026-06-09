@@ -110,10 +110,13 @@
     @apply p-8 flex flex-col gap-4;
   }
 
-  /* Utility classes for mobile optimization */
   .scrollbar-hide {
     -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+  }
+  @supports (scrollbar-width: none) {
+    .scrollbar-hide {
+      scrollbar-width: none;  /* Firefox */
+    }
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
