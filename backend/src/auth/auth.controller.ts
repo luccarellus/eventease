@@ -5,6 +5,9 @@ import { SupabaseAuthGuard } from './guards/supabase.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 import { Throttle } from '@nestjs/throttler';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { SetRoleDto } from './dto/set-role.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -13,11 +16,8 @@ export class AuthController {
   @Post('set-role')
   @UseGuards(SupabaseAuthGuard, RolesGuard)
   @Roles('admin')
-  async setRole(@Body() body: { userId: string; role: string }) {
-    if (!body.userId || !body.role) {
-      throw new BadRequestException('userId e role são campos obrigatórios.');
-    }
-    const updatedUser = await this.authService.updateUserRole(body.userId, body.role);
+  async setRole(@Body() setRoleDto: SetRoleDto) {
+    const updatedUser = await this.authService.updateUserRole(setRoleDto.userId, setRoleDto.role);
     return {
       message: 'Role do usuário atualizada com sucesso no Supabase!',
       user: {
@@ -30,18 +30,17 @@ export class AuthController {
 
 
   @Post('register')
-  async register(@Body() registerDto: any) {
+  async register(@Body() registerDto: RegisterDto) {
     return this.authService.registerUser(
       registerDto.email,
       registerDto.password,
-      registerDto.fullName,
-      registerDto.role,
+      registerDto.fullName
     );
   }
 
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  async login(@Body() loginDto: any, @Res({ passthrough: true }) response: Response) {
+  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
     const user = await this.authService.validateUser(loginDto.email, loginDto.password);
     if (!user) {
       throw new UnauthorizedException('Credenciais inválidas.');

@@ -67,14 +67,14 @@ export class AuthService {
     return null;
   }
 
-  async registerUser(email: string, pass: string, fullName?: string, role: string = 'USER') {
+  async registerUser(email: string, pass: string, fullName?: string) {
     const hashedPassword = await bcrypt.hash(pass, 10);
     const user = await this.prisma.user.create({
       data: {
         email: email.toLowerCase().trim(),
         password: hashedPassword,
         fullName,
-        role,
+        role: 'USER', // Força role padrão USER
       },
     });
     const { password, ...result } = user;

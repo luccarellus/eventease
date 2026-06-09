@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +9,6 @@ import { UserCheck, QrCode, Search, CheckCircle2, AlertCircle, Clock, MapPin, Us
 import { cn } from '@/lib/utils';
 import { Participante, Evento } from '@/types/index';
 import { Html5Qrcode } from 'html5-qrcode';
-
-import { isAdmin } from '@/constants';
 
 // Componente do Scanner para garantir que o elemento DOM esteja pronto
 function QRScanner({ onScan, onClose }: { onScan: (text: string) => void; onClose: () => void }) {
@@ -63,12 +60,10 @@ function QRScanner({ onScan, onClose }: { onScan: (text: string) => void; onClos
 export default function Confirm() {
   const [codigo, setCodigo] = useState('');
   const [loading, setLoading] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
   const [scannerActive, setScannerActive] = useState(false);
   const [result, setResult] = useState<{ status: 'success' | 'already' | 'notfound'; data?: Participante; eventTitle?: string } | null>(null);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [selectedEventoId, setSelectedEventoId] = useState<string>('');
-  const navigate = useNavigate();
 
   const fetchEvents = async () => {
     try {
@@ -88,44 +83,8 @@ export default function Confirm() {
   };
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          toast.error('Acesso restrito. Por favor, faça login.');
-          navigate('/login');
-          return;
-        }
-
-        if (!isAdmin(session.user)) {
-          toast.error('Você não tem permissão de administrador.');
-          await supabase.auth.signOut();
-          navigate('/login');
-          return;
-        }
-
-        await fetchEvents();
-        setAuthLoading(false);
-      } catch (e) {
-        console.error('Auth check error in Confirm:', e);
-        toast.error('Erro de conexão. Verifique suas credenciais.');
-        navigate('/login');
-      }
-    };
-    checkAuth();
-  }, [navigate]);
-
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <RefreshCcw className="w-8 h-8 animate-spin text-neutral-400" />
-          <p className="text-neutral-500 font-medium tracking-tight">Verificando acesso...</p>
-        </div>
-      </div>
-    );
-  }
+    fetchEvents();
+  }, []);
 
   const handleManualCheckin = async (e?: React.FormEvent, codeOverride?: string) => {
     if (e) e.preventDefault();

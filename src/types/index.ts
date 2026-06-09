@@ -8,8 +8,8 @@ export interface Participante {
   escola: string;
   gremio?: string;
   codigo: string;
-  presente: boolean;
-  confirmado_em?: string;
+  aceitou_termos?: boolean;
+  termos_aceitos_em?: string;
   created_at: string;
 }
 

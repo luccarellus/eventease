@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Toaster } from './components/ui/event-toaster';
 import Home from '@/pages/Home';
@@ -13,33 +13,17 @@ import Login from '@/pages/Login';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import TermsOfService from '@/pages/TermsOfService';
 import CookieBanner from '@/components/CookieBanner';
-import { supabase } from '@/lib/supabase';
-import { isAdmin } from '@/constants';
-import { motion, AnimatePresence } from 'motion/react';
-import { Calendar, UserCheck, LayoutDashboard, LogIn, ShieldCheck, LogOut, UserPlus, RefreshCcw } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Calendar, UserCheck, LayoutDashboard, LogOut, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 function Navbar() {
   const location = useLocation();
-  const [session, setSession] = useState<any>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const userIsAdmin = session ? isAdmin(session.user) : false;
+  const { userIsAdmin, signOut } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-xl">
@@ -80,7 +64,7 @@ function Navbar() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => supabase.auth.signOut()}
+                onClick={signOut}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all text-white/50 hover:text-red-400 hover:bg-red-500/10 h-auto active:scale-95"
               >
                 <LogOut className="w-4 h-4" />
@@ -96,23 +80,7 @@ function Navbar() {
 
 function BottomNav() {
   const location = useLocation();
-  const [session, setSession] = useState<any>(null);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const userIsAdmin = session ? isAdmin(session.user) : false;
+  const { userIsAdmin } = useAuth();
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
@@ -173,53 +141,53 @@ function NavLink({ to, icon, label, active }: { to: string; icon: React.ReactNod
 }
 
 export default function App() {
-  const [session, setSession] = useState<any>(null);
+  return (
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
+  );
+}
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    }).catch(err => console.error('Supabase session error:', err));
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const userIsAdmin = session ? isAdmin(session.user) : false;
+function AppContent() {
+  const { userIsAdmin } = useAuth();
 
   return (
-    <Router>
-      <div className="min-h-[100dvh] pt-24 pb-36 md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col">
-        <Navbar />
-        <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/eventos" element={<Home />} />
-            <Route path="/confirmar" element={<Confirm />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
-            <Route path="/termos" element={<TermsOfService />} />
-          </Routes>
-        </main>
+    <div className="min-h-[100dvh] pt-24 pb-36 md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col">
+      <Navbar />
+      <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/eventos" element={<Home />} />
+          <Route path="/confirmar" element={
+            <ProtectedRoute>
+              <Confirm />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          } />
+          <Route path="/login" element={<Login />} />
+          <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
+          <Route path="/termos" element={<TermsOfService />} />
+        </Routes>
+      </main>
 
-        {!userIsAdmin && (
-          <footer className="mt-auto py-8 text-center opacity-40 hover:opacity-100 transition-opacity">
-            <Link to="/login" className="text-xs uppercase tracking-[0.2em] font-bold text-white hover:text-primary">
-              Staff/Organização
-            </Link>
-          </footer>
-        )}
+      {!userIsAdmin && (
+        <footer className="mt-auto py-8 text-center opacity-40 hover:opacity-100 transition-opacity">
+          <Link to="/login" className="text-xs uppercase tracking-[0.2em] font-bold text-white hover:text-primary">
+            Staff/Organização
+          </Link>
+        </footer>
+      )}
 
-        <BottomNav />
-        <CookieBanner />
-        <Toaster theme="dark" position="top-center" expand={true} richColors />
-      </div>
-    </Router>
+      <BottomNav />
+      <CookieBanner />
+      <Toaster theme="dark" position="top-center" expand={true} richColors />
+    </div>
   );
 }
 

@@ -100,6 +100,18 @@ export default function Home() {
   // Escutar parâmetro de busca de credencial na URL (?buscar-credencial=true)
   useEffect(() => {
     if (searchParams.get('buscar-credencial') === 'true') {
+      const savedCred = localStorage.getItem('eventease_credential');
+      if (savedCred) {
+        try {
+          const parsed = JSON.parse(savedCred);
+          setCredentialData(parsed);
+          setCredentialEmail('');
+          setCredentialError('');
+          setShowCredentialModal(true);
+          setSearchParams({});
+          return;
+        } catch {}
+      }
       setCredentialEmail('');
       setCredentialData(null);
       setCredentialError('');
@@ -223,7 +235,8 @@ export default function Home() {
             escola: formData.escola,
             gremio: formData.gremio || '',
             codigo: generatedCode,
-            presente: false,
+            aceitou_termos: true,
+            termos_aceitos_em: new Date().toISOString(),
             created_at: new Date().toISOString(),
           },
         ]);
@@ -268,6 +281,12 @@ export default function Home() {
       } else {
         toast.info('Você já está inscrito neste evento! Sua credencial foi carregada.');
       }
+
+      // LocalStorage backup
+      localStorage.setItem('eventease_credential', JSON.stringify({
+        nome: participantName,
+        codigo: participantCode
+      }));
 
       setSuccessData({ nome: participantName, codigo: participantCode });
       reset();
@@ -385,12 +404,17 @@ export default function Home() {
 
       if (error) throw error;
 
-      const existing = data as { nome: string; registrado: boolean } | null;
+      const existing = data as { nome: string; codigo: string; registrado: boolean } | null;
 
       if (existing && existing.registrado) {
-        setCredentialError(
-          'Cadastro localizado! Por motivos de segurança e privacidade, a credencial não pode ser exibida diretamente na página. Por favor, confira o seu código (EVT-XXXXXX) no e-mail de confirmação ou consulte a organização do evento.'
-        );
+        setCredentialData({
+          nome: existing.nome,
+          codigo: existing.codigo
+        });
+        localStorage.setItem('eventease_credential', JSON.stringify({
+          nome: existing.nome,
+          codigo: existing.codigo
+        }));
       } else {
         setCredentialError('Nenhum cadastro encontrado para este e-mail. Verifique se o e-mail está correto ou realize a inscrição em um evento.');
       }
@@ -472,6 +496,17 @@ export default function Home() {
         >
           <Button
             onClick={() => {
+              const savedCred = localStorage.getItem('eventease_credential');
+              if (savedCred) {
+                try {
+                  const parsed = JSON.parse(savedCred);
+                  setCredentialData(parsed);
+                  setCredentialEmail('');
+                  setCredentialError('');
+                  setShowCredentialModal(true);
+                  return;
+                } catch {}
+              }
               setCredentialEmail('');
               setCredentialData(null);
               setCredentialError('');

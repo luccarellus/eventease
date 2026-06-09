@@ -9,10 +9,16 @@ CREATE TABLE IF NOT EXISTS participantes (
   escola TEXT NOT NULL,
   gremio TEXT,
   codigo TEXT NOT NULL UNIQUE,
-  presente BOOLEAN DEFAULT false,
-  confirmado_em TIMESTAMPTZ,
+  aceitou_termos BOOLEAN DEFAULT false,
+  termos_aceitos_em TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Script de migração para bases já existentes:
+-- ALTER TABLE participantes ADD COLUMN IF NOT EXISTS aceitou_termos BOOLEAN DEFAULT false;
+-- ALTER TABLE participantes ADD COLUMN IF NOT EXISTS termos_aceitos_em TIMESTAMPTZ;
+-- ALTER TABLE participantes DROP COLUMN IF EXISTS presente;
+-- ALTER TABLE participantes DROP COLUMN IF EXISTS confirmado_em;
 
 -- Habilitar RLS
 ALTER TABLE participantes ENABLE ROW LEVEL SECURITY;
@@ -110,16 +116,16 @@ CREATE INDEX IF NOT EXISTS idx_eventos_publicado ON eventos(publicado);
 -- FUNÇÕES RPC SEGURAS (SECURITY DEFINER) PARA ACESSO ANÔNIMO SELETIVO
 -- =========================================================================
 
--- 1. Obter participante por e-mail (retorna apenas nome e se está registrado para mitigar vazamento de PII)
+-- 1. Obter participante por e-mail (retorna nome, código da credencial para recuperação e se está registrado)
 CREATE OR REPLACE FUNCTION get_participant_by_email(p_email text)
-RETURNS TABLE (nome text, registrado boolean)
+RETURNS TABLE (nome text, codigo text, registrado boolean)
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
   RETURN QUERY
-  SELECT p.nome, true as registrado
+  SELECT p.nome, p.codigo, true as registrado
   FROM participantes p
   WHERE LOWER(p.email) = LOWER(TRIM(p_email));
 END;

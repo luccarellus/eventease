@@ -73,6 +73,11 @@ export default function Admin() {
   const [inscritosEvento, setInscritosEvento] = useState<InscricaoEvento[]>([]);
   const [loadingInscritos, setLoadingInscritos] = useState(false);
 
+  // Paginação e Contagem de Alunos
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const itemsPerPage = 10;
+
   // Filtros e Pesquisas
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'present' | 'absent'>('all');
@@ -105,41 +110,16 @@ export default function Admin() {
 
   const navigate = useNavigate();
 
-  const checkAuth = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Acesso restrito. Por favor, faça login.');
-        navigate('/login');
-        return;
-      }
-
-      if (!isAdmin(session.user)) {
-        toast.error('Você não tem permissão de administrador.');
-        await supabase.auth.signOut();
-        navigate('/login');
-        return;
-      }
-
-      fetchData();
-    } catch (e: any) {
-      console.error('Auth check error:', e);
-      toast.error('Erro ao verificar permissões de acesso.');
-      navigate('/login');
-    }
-  };
-
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Buscar Alunos
-      const { data: partData, error: partError } = await supabase
+      // Obter contagem global leve de Alunos para os Stats
+      const { count, error: countError } = await supabase
         .from('participantes')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact', head: true });
 
-      if (partError) throw partError;
-      setParticipantes(partData || []);
+      if (countError) throw countError;
+      setTotalStudents(count || 0);
 
       // Buscar Eventos
       const { data: evtData, error: evtError } = await supabase
@@ -151,8 +131,37 @@ export default function Admin() {
       setEventos(evtData || []);
 
     } catch (error: any) {
-      console.error('Error fetching data:', error);
-      toast.error('Erro ao carregar dados do banco.');
+      console.error('Error fetching general stats/events:', error);
+      toast.error('Erro ao carregar dados dos eventos.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchParticipantes = async (page: number, search: string) => {
+    setLoading(true);
+    try {
+      const from = (page - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
+
+      let query = supabase
+        .from('participantes')
+        .select('*', { count: 'exact' });
+
+      if (search.trim()) {
+        query = query.or(`nome.ilike.%${search}%,email.ilike.%${search}%,codigo.ilike.%${search}%`);
+      }
+
+      const { data, count, error } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+      setParticipantes(data || []);
+      setTotalStudents(count || 0);
+    } catch (error) {
+      console.error('Error fetching participants:', error);
+      toast.error('Erro ao carregar lista de participantes.');
     } finally {
       setLoading(false);
     }
@@ -196,7 +205,7 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    checkAuth();
+    fetchData();
 
     // Inscrição em tempo real para modificações no schema public
     const channel = supabase
@@ -206,12 +215,18 @@ export default function Admin() {
         { event: '*', schema: 'public' },
         () => {
           fetchData();
+          if (activeTab === 'alunos') {
+            fetchParticipantes(currentPage, searchTerm);
+          }
         }
       )
       .subscribe();
 
     const handleSync = () => {
       fetchData();
+      if (activeTab === 'alunos') {
+        fetchParticipantes(currentPage, searchTerm);
+      }
     };
     window.addEventListener('sync-data', handleSync);
 
@@ -220,6 +235,13 @@ export default function Admin() {
       window.removeEventListener('sync-data', handleSync);
     };
   }, []);
+
+  // Efeito para recarregar alunos quando a aba, página ou busca mudar
+  useEffect(() => {
+    if (activeTab === 'alunos') {
+      fetchParticipantes(currentPage, searchTerm);
+    }
+  }, [activeTab, currentPage, searchTerm]);
 
   // Efeito para recarregar inscritos quando o evento selecionado mudar
   useEffect(() => {
@@ -442,11 +464,11 @@ export default function Admin() {
 
   // --- Estatísticas ---
   const statsGlobal = useMemo(() => {
-    const totalAlunos = participantes.length;
+    const totalAlunos = totalStudents;
     const totalEventos = eventos.length;
     const eventosPublicados = eventos.filter((e: Evento) => e.publicado).length;
     return { totalAlunos, totalEventos, eventosPublicados };
-  }, [participantes, eventos]);
+  }, [totalStudents, eventos]);
 
   const statsEvento = useMemo(() => {
     if (!selectedEvento) return { total: 0, presentes: 0, ausentes: 0, porcentagem: 0 };
@@ -458,15 +480,7 @@ export default function Admin() {
   }, [inscritosEvento, selectedEvento]);
 
   // --- Filtros e Pesquisas ---
-  const filteredAlunos = useMemo(() => {
-    return participantes.filter((p: Participante) => {
-      return (
-        p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.codigo.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
-  }, [participantes, searchTerm]);
+  const filteredAlunos = participantes;
 
   const filteredInscritos = useMemo(() => {
     return inscritosEvento.filter((i: InscricaoEvento) => {
@@ -826,11 +840,14 @@ export default function Admin() {
                             placeholder="Buscar aluno..."
                             className="liquid-input h-11 w-full text-sm pl-11"
                             value={searchTerm}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              setSearchTerm(e.target.value);
+                              setCurrentPage(1); // Resetar para a primeira página ao buscar
+                            }}
                           />
                         </div>
                         <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider hidden sm:block">
-                          Total: {filteredAlunos.length} cadastrados
+                          Total: {totalStudents} cadastrados
                         </div>
                       </div>
                     </div>
@@ -890,9 +907,39 @@ export default function Admin() {
                       </TableBody>
                     </Table>
                   </div>
-                  <div className="p-6 md:p-8 border-t border-white/[0.08] bg-white/[0.02] text-[9px] md:text-[10px] uppercase font-bold tracking-[0.2em] text-white/20 flex flex-col sm:flex-row justify-between items-center gap-4 px-8 md:px-10">
-                    <span>{filteredAlunos.length} cadastrados no total</span>
-                    <span className="flex items-center gap-2">
+                  <div className="p-6 md:p-8 border-t border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row justify-between items-center gap-4 px-8 md:px-10">
+                    <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-[0.2em] text-white/20">
+                      Total: {totalStudents} cadastrados
+                    </span>
+
+                    {/* Controles de Paginação */}
+                    {totalStudents > itemsPerPage && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={currentPage === 1 || loading}
+                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                          className="rounded-xl border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-35 text-[10px] font-bold uppercase tracking-widest px-3 h-9"
+                        >
+                          Anterior
+                        </Button>
+                        <span className="text-white/45 text-xs font-bold px-2">
+                          Pág. {currentPage} de {Math.ceil(totalStudents / itemsPerPage)}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={currentPage >= Math.ceil(totalStudents / itemsPerPage) || loading}
+                          onClick={() => setCurrentPage(prev => prev + 1)}
+                          className="rounded-xl border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-35 text-[10px] font-bold uppercase tracking-widest px-3 h-9"
+                        >
+                          Próximo
+                        </Button>
+                      </div>
+                    )}
+
+                    <span className="flex items-center gap-2 text-[9px] md:text-[10px] uppercase font-bold tracking-[0.2em] text-white/20">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                       Banco de Dados Ativo
                     </span>
