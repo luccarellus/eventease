@@ -288,38 +288,42 @@ div.bg-neutral-900 .bg-white\/\[0\.01\] {
 
 /* Top Navigation Bar */
 nav.fixed {
-  background-color: #ffffff !important;
+  background-color: #0a0a0a !important;
   border-bottom: 3.5px solid #000000 !important;
-  box-shadow: 0px 4px 0px 0px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0px 4px 0px 0px rgba(0, 0, 0, 0.2) !important;
 }
 
 nav.fixed .text-white\/40 {
-  color: #4b5563 !important;
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 nav.fixed .text-white\/40:hover {
-  color: #0a0a0a !important;
-  background-color: rgba(0, 0, 0, 0.05) !important;
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 nav.fixed .bg-white\/5 {
-  background-color: rgba(0, 0, 0, 0.05) !important;
-  border-color: rgba(0, 0, 0, 0.15) !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+nav.fixed a {
+  color: #ffffff !important;
 }
 
 /* Bottom Navigation Bar */
 .md\:hidden .bg-black\/70 {
-  background-color: #ffffff !important;
+  background-color: #0a0a0a !important;
   border-top: 3.5px solid #000000 !important;
-  box-shadow: 0px -4px 0px 0px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0px -4px 0px 0px rgba(0, 0, 0, 0.2) !important;
 }
 
 .md\:hidden .bg-black\/70 a {
-  color: rgba(0, 0, 0, 0.4) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
 }
 
 .md\:hidden .bg-black\/70 a:hover {
-  color: #0a0a0a !important;
+  color: #ffffff !important;
 }
 
 .md\:hidden .bg-black\/70 a.bg-primary {
