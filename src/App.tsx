@@ -140,7 +140,29 @@ function NavLink({ to, icon, label, active }: { to: string; icon: React.ReactNod
   );
 }
 
+const IS_MAINTENANCE_MODE = true;
+
+function MaintenanceScreen() {
+  return (
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center p-6 text-center">
+      <div className="max-w-md w-full space-y-8">
+        <div className="flex justify-center">
+          <img src="/logo_oficial.png" alt="Olhar Jovem" className="h-16 md:h-20 w-auto" />
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Estamos em Manutenção</h1>
+        <p className="text-white/60 text-lg md:text-xl leading-relaxed">
+          Nosso sistema está passando por melhorias no momento. Voltaremos em breve com novidades!
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  if (IS_MAINTENANCE_MODE) {
+    return <MaintenanceScreen />;
+  }
+
   return (
     <AuthProvider>
       <Router>
