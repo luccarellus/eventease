@@ -3,18 +3,21 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// Exemplo de model para autenticação e LGPD
+// ==========================================
+// User Authentication (Substitui Supabase Auth)
+// ==========================================
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
   password      String
   fullName      String?
-  role          String    @default("USER")
+  role          String    @default("admin") // Role 'admin' for the dashboard
   
-  // LGPD Fields
+  // LGPD Fields (se necessário futuramente)
   acceptedTerms Boolean   @default(false)
   termsAcceptedAt DateTime?
   dataConsent   Boolean   @default(false)
@@ -23,4 +26,70 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   @@map("users")
+}
+
+// ==========================================
+// Participantes
+// ==========================================
+model Participante {
+  id              String    @id @default(uuid()) @db.Uuid
+  nome            String
+  email           String
+  telefone        String
+  empresa         String?   // 'Instituição' no UI
+  cidade          String
+  escola          String
+  gremio          String?
+  codigo          String    @unique
+  
+  aceitou_termos  Boolean   @default(false)
+  termos_aceitos_em DateTime? @db.Timestamptz
+
+  createdAt       DateTime  @default(now()) @db.Timestamptz @map("created_at")
+
+  inscricoes      InscricaoEvento[]
+
+  @@index([codigo])
+  @@index([email])
+  @@map("participantes")
+}
+
+// ==========================================
+// Eventos
+// ==========================================
+model Evento {
+  id              String    @id @default(uuid()) @db.Uuid
+  titulo          String
+  descricao       String?
+  data            DateTime  @db.Timestamptz
+  local           String
+  publicado       Boolean   @default(false)
+  
+  createdAt       DateTime  @default(now()) @db.Timestamptz @map("created_at")
+
+  inscricoes      InscricaoEvento[]
+
+  @@index([publicado])
+  @@map("eventos")
+}
+
+// ==========================================
+// Inscrições de Eventos
+// ==========================================
+model InscricaoEvento {
+  id              String    @id @default(uuid()) @db.Uuid
+  eventoId        String    @db.Uuid @map("evento_id")
+  participanteId  String    @db.Uuid @map("participante_id")
+  presente        Boolean   @default(false)
+  confirmado_em   DateTime? @db.Timestamptz
+  
+  createdAt       DateTime  @default(now()) @db.Timestamptz @map("created_at")
+
+  evento          Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  participante    Participante @relation(fields: [participanteId], references: [id], onDelete: Cascade)
+
+  @@unique([eventoId, participanteId], name: "unique_evento_participante")
+  @@index([eventoId])
+  @@index([participanteId])
+  @@map("inscricoes_evento")
 }

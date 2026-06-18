@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
-import { isAdmin } from '@/constants';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -18,19 +18,13 @@ export default function Login() {
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const navigate = useNavigate();
 
+  const { user, checkAuth } = useAuth();
+
   useEffect(() => {
-    const checkLogged = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session && isAdmin(session.user)) {
-          navigate('/admin');
-        }
-      } catch (e) {
-        console.error('Check logged error:', e);
-      }
-    };
-    checkLogged();
-  }, [navigate]);
+    if (user && user.role === 'admin') {
+      navigate('/admin');
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,28 +39,18 @@ export default function Login() {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const res = await api.post('/auth/login', {
         email: cleanEmail,
         password,
       });
 
-      if (error) {
-        if (error.message === 'Invalid login credentials') {
-          toast.error('Credenciais inválidas. Verifique seu e-mail e senha.');
-        } else if (error.message === 'Email not confirmed') {
-          toast.error('E-mail não confirmado. Verifique sua caixa de entrada.');
-        } else {
-          toast.error(error.message);
-        }
-        throw error;
+      if (!res.ok) {
+        const errorData = await res.json();
+        toast.error(errorData.message || 'Credenciais inválidas. Verifique seu e-mail e senha.');
+        throw new Error('Login failed');
       }
 
-      if (data.user && !isAdmin(data.user)) {
-        toast.error(`Acesso restrito. Sua conta (${data.user.email}) não tem permissões de administrador.`);
-        await supabase.auth.signOut();
-        return;
-      }
-
+      await checkAuth();
       toast.success('Login realizado com sucesso!');
       setLoginAttempts(0);
       navigate('/admin');

@@ -1,7 +1,7 @@
-import { Controller, Post, Res, Body, UnauthorizedException, UseGuards, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Res, Body, UnauthorizedException, UseGuards, BadRequestException, Req } from '@nestjs/common';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
-import { SupabaseAuthGuard } from './guards/supabase.guard';
+import { JwtAuthGuard } from './guards/jwt.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
 import { Throttle } from '@nestjs/throttler';
@@ -14,7 +14,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('set-role')
-  @UseGuards(SupabaseAuthGuard, RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async setRole(@Body() setRoleDto: SetRoleDto) {
     const updatedUser = await this.authService.updateUserRole(setRoleDto.userId, setRoleDto.role);
@@ -23,7 +23,7 @@ export class AuthController {
       user: {
         id: updatedUser.id,
         email: updatedUser.email,
-        appMetadata: updatedUser.app_metadata,
+        role: updatedUser.role,
       },
     };
   }
@@ -64,6 +64,12 @@ export class AuthController {
     });
 
     return { message: 'Login bem-sucedido', user };
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  getMe(@Req() req: any) {
+    return { user: req.user };
   }
 
   @Post('logout')

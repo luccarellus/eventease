@@ -6,6 +6,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthController } from './health/health.controller';
 import { AuthModule } from './auth/auth.module';
+import { EventsModule } from './events/events.module';
+import { ParticipantsModule } from './participants/participants.module';
+import { RegistrationsModule } from './registrations/registrations.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { AuthModule } from './auth/auth.module';
       limit: 100,
     }]),
     AuthModule,
+    EventsModule,
+    ParticipantsModule,
+    RegistrationsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

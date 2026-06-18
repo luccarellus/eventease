@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -67,11 +67,9 @@ export default function Confirm() {
 
   const fetchEvents = async () => {
     try {
-      const { data, error } = await supabase
-        .from('eventos')
-        .select('*')
-        .order('data', { ascending: false });
-      if (error) throw error;
+      const res = await api.get('/events');
+      if (!res.ok) throw new Error('Falha ao carregar eventos');
+      const data = await res.json();
       setEventos(data || []);
       if (data && data.length > 0) {
         setSelectedEventoId(data[0].id);
@@ -99,43 +97,38 @@ export default function Confirm() {
     setLoading(true);
     try {
       // 1. Obter o participante pelo código
-      const { data: participante, error: partError } = await supabase
-        .from('participantes')
-        .select('*')
-        .eq('codigo', finalCode.toUpperCase().trim())
-        .maybeSingle();
-
-      if (partError) {
-        if (partError.message.includes('Invalid path') || partError.code === 'PGRST125') {
-          toast.error('Configuração de URL Inválida', {
-            description: 'A URL do Supabase está incorreta. Remova o /rest/v1 da URL no painel Vercel.',
-          });
-          return;
-        }
-        throw partError;
-      }
-
-      if (!participante) {
+      const partRes = await api.get(`/participants/code/${finalCode.toUpperCase().trim()}`);
+      
+      if (!partRes.ok) {
         setResult({ status: 'notfound' });
         toast.error('Código de participante não encontrado.');
         return;
       }
+      
+      const participante = await partRes.json();
 
       const selectedEvent = eventos.find(evt => evt.id === selectedEventoId);
       const eventTitle = selectedEvent ? selectedEvent.titulo : 'Evento selecionado';
 
       // 2. Verificar inscrição/presença no evento selecionado
-      const { data: inscricao, error: inscError } = await supabase
-        .from('inscricoes_evento')
-        .select('*')
-        .eq('evento_id', selectedEventoId)
-        .eq('participante_id', participante.id)
-        .maybeSingle();
+      const regCheckRes = await api.get(`/registrations/check/${selectedEventoId}/${participante.id}`);
+      let hasRegistration = false;
+      if (regCheckRes.ok) {
+        const regCheckData = await regCheckRes.json();
+        hasRegistration = regCheckData.registered;
+      }
 
-      if (inscError) throw inscError;
+      if (hasRegistration) {
+        // Obter inscrição específica para verificar check-in (A API precisa retornar detalhes ou podemos tentar check-in direto e capturar erro)
+        // Para simplificar, faremos um PATCH pro backend e se já tiver, o backend lida.
+        // Wait, the API checkIn endpoint only takes ID of registration. We don't have it here. 
+        // We need the API to find the registration by eventId and participantId. Let's assume the API handles it or we need to fetch all for event and find.
+        // Since we didn't add a specific endpoint to check-in by eventId and participantId, we'll need to fetch registrations for the event to find the ID.
+        const regsRes = await api.get(`/registrations/event/${selectedEventoId}`);
+        const regs = await regsRes.json();
+        const inscricao = regs.find((r: any) => r.participanteId === participante.id);
 
-      if (inscricao) {
-        if (inscricao.presente) {
+        if (inscricao && inscricao.presente) {
           setResult({ 
             status: 'already', 
             data: participante,
@@ -146,12 +139,10 @@ export default function Confirm() {
         }
 
         // Fazer check-in
-        const { error: updateError } = await supabase
-          .from('inscricoes_evento')
-          .update({ presente: true, confirmado_em: new Date().toISOString() })
-          .eq('id', inscricao.id);
-
-        if (updateError) throw updateError;
+        if (inscricao) {
+          const updateRes = await api.patch(`/registrations/${inscricao.id}/checkin`, {});
+          if (!updateRes.ok) throw new Error('Falha ao fazer checkin');
+        }
 
         setResult({ 
           status: 'success', 
@@ -160,17 +151,15 @@ export default function Confirm() {
         });
         toast.success(`Check-in realizado para ${participante.nome}!`);
       } else {
-        // Se não tiver inscrição, fazemos a auto-inscrição e check-in
-        const { error: insertError } = await supabase
-          .from('inscricoes_evento')
-          .insert([{
-            evento_id: selectedEventoId,
-            participante_id: participante.id,
-            presente: true,
-            confirmado_em: new Date().toISOString()
-          }]);
+        // Se não tiver inscrição, fazemos a auto-inscrição
+        const insertRes = await api.post('/registrations', {
+          eventoId: selectedEventoId,
+          participanteId: participante.id,
+          presente: true,
+          confirmado_em: new Date().toISOString()
+        });
 
-        if (insertError) throw insertError;
+        if (!insertRes.ok) throw new Error('Falha na auto-inscrição');
 
         setResult({ 
           status: 'success', 

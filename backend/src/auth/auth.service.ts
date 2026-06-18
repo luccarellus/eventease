@@ -2,45 +2,22 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-  private supabase: SupabaseClient | null = null;
-
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseServiceKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY');
-
-    if (supabaseUrl && supabaseServiceKey) {
-      this.supabase = createClient(supabaseUrl, supabaseServiceKey, {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      });
-    }
-  }
+  ) {}
 
   async updateUserRole(userId: string, role: string) {
-    if (!this.supabase) {
-      throw new Error('Supabase client with service role key is not initialized.');
-    }
-
-    const { data, error } = await this.supabase.auth.admin.updateUserById(userId, {
-      app_metadata: { role },
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { role },
     });
-
-    if (error) {
-      throw new Error(`Failed to update user role in Supabase: ${error.message}`);
-    }
-
-    return data.user;
+    return updatedUser;
   }
 
 

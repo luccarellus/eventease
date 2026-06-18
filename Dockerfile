@@ -9,11 +9,7 @@ RUN npm install
 
 COPY . .
 
-# Recebe as variáveis do painel e passa para o Vite
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
+# Não usa mais Supabase, API é servida na mesma origem
 
 RUN npm run build
 

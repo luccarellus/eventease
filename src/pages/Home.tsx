@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useSearchParams, Link } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -124,13 +124,10 @@ export default function Home() {
   const fetchEvents = async () => {
     setLoadingEvents(true);
     try {
-      const { data, error } = await supabase
-        .from('eventos')
-        .select('*')
-        .eq('publicado', true)
-        .order('data', { ascending: true });
+      const res = await api.get('/events');
+      if (!res.ok) throw new Error('Failed to fetch events');
+      const data = await res.json();
 
-      if (error) throw error;
       setEventos(data || []);
     } catch (err: any) {
       console.error('Error fetching events:', err);
@@ -205,18 +202,17 @@ export default function Home() {
       const emailClean = formData.email.trim().toLowerCase();
 
       // 1. Verificar se participante já existe
-      const { data: rawExisting, error: findError } = await supabase
-        .rpc('get_participant_by_email', { p_email: emailClean })
-        .maybeSingle();
+      const checkRes = await api.get(`/participants/email/${emailClean}`);
+      let existing = null;
+      if (checkRes.ok) {
+        existing = await checkRes.json();
+      }
 
-      if (findError) throw findError;
-
-      const existing = rawExisting as { nome: string; registrado: boolean } | null;
       let participantId = '';
       let participantCode = '';
       let participantName = '';
 
-      if (existing && existing.registrado) {
+      if (existing && existing.id) {
         toast.warning(
           'Este e-mail já está cadastrado. Por razões de segurança, use a aba "Já sou cadastrado" informando seu código da credencial para se inscrever.',
           { duration: 6000 }
@@ -226,34 +222,27 @@ export default function Home() {
       } else {
         // Criar participante novo
         const generatedCode = generateCode();
-        const { error: insertPartError } = await supabase.from('participantes').insert([
-          {
-            nome: formData.nome,
-            email: formData.email,
-            telefone: formData.telefone,
-            cidade: formData.cidade,
-            escola: formData.escola,
-            gremio: formData.gremio || '',
-            codigo: generatedCode,
-            aceitou_termos: true,
-            termos_aceitos_em: new Date().toISOString(),
-            created_at: new Date().toISOString(),
-          },
-        ]);
+        const createRes = await api.post('/participants', {
+          nome: formData.nome,
+          email: formData.email,
+          telefone: formData.telefone,
+          cidade: formData.cidade,
+          escola: formData.escola,
+          gremio: formData.gremio || '',
+          codigo: generatedCode,
+          aceitou_termos: true,
+          termos_aceitos_em: new Date().toISOString(),
+        });
 
-        if (insertPartError) throw insertPartError;
-
-        // Recuperar ID recém-criado
-        const { data: rawPart, error: partError } = await supabase
-          .rpc('get_participant_by_code', { p_code: generatedCode })
-          .maybeSingle();
-
-        if (partError) throw partError;
-        if (rawPart) {
-          participantId = (rawPart as { id: string }).id;
-          participantCode = generatedCode;
-          participantName = formData.nome;
+        if (!createRes.ok) {
+          throw new Error('Falha ao criar participante');
         }
+        
+        const rawPart = await createRes.json();
+        
+        participantId = rawPart.id;
+        participantCode = rawPart.codigo;
+        participantName = rawPart.nome;
       }
 
       if (!participantId) {
@@ -261,22 +250,22 @@ export default function Home() {
       }
 
       // 2. Verificar inscrição existente no evento
-      const { data: registrationExists, error: checkError } = await supabase
-        .rpc('check_event_registration', { p_event_id: selectedEvent.id, p_participant_id: participantId });
-
-      if (checkError) throw checkError;
+      const checkRegRes = await api.get(`/registrations/check/${selectedEvent.id}/${participantId}`);
+      let registrationExists = false;
+      if (checkRegRes.ok) {
+        const checkData = await checkRegRes.json();
+        registrationExists = checkData.registered;
+      }
 
       if (!registrationExists) {
         // 3. Cadastrar no evento
-        const { error: insertRegError } = await supabase
-          .from('inscricoes_evento')
-          .insert([{
-            evento_id: selectedEvent.id,
-            participante_id: participantId,
-            presente: false
-          }]);
+        const insertRegRes = await api.post('/registrations', {
+          eventoId: selectedEvent.id,
+          participanteId: participantId,
+          presente: false
+        });
 
-        if (insertRegError) throw insertRegError;
+        if (!insertRegRes.ok) throw new Error('Falha ao registrar evento');
         toast.success('Inscrição confirmada com sucesso!');
       } else {
         toast.info('Você já está inscrito neste evento! Sua credencial foi carregada.');
@@ -314,14 +303,9 @@ export default function Home() {
 
       if (searchClean.includes('@')) {
         // Buscar por email
-        const { data: rawExisting, error: findError } = await supabase
-          .rpc('get_participant_by_email', { p_email: searchClean.toLowerCase() })
-          .maybeSingle();
+        const checkRes = await api.get(`/participants/email/${searchClean.toLowerCase()}`);
 
-        if (findError) throw findError;
-        const existing = rawExisting as { nome: string; registrado: boolean } | null;
-
-        if (existing && existing.registrado) {
+        if (checkRes.ok) {
           setExistingError(
             'Cadastro localizado! Por motivos de segurança, não é possível se vincular informando apenas o e-mail. Por favor, insira o seu código da credencial (EVT-XXXXXX).'
           );
@@ -335,19 +319,15 @@ export default function Home() {
       } else {
         // Buscar por código
         const formattedCode = searchClean.toUpperCase();
-        const { data: rawPart, error: partError } = await supabase
-          .rpc('get_participant_by_code', { p_code: formattedCode })
-          .maybeSingle();
+        const codeRes = await api.get(`/participants/code/${formattedCode}`);
 
-        if (partError) throw partError;
-        const participant = rawPart as { id: string; nome: string } | null;
-
-        if (!participant) {
+        if (!codeRes.ok) {
           setExistingError('Código de credencial não encontrado.');
           setSearchingExisting(false);
           return;
         }
 
+        const participant = await codeRes.json();
         participantId = participant.id;
         participantName = participant.nome;
         participantCode = formattedCode;
@@ -358,22 +338,22 @@ export default function Home() {
       }
 
       // Verificar se já está inscrito no evento
-      const { data: registrationExists, error: checkError } = await supabase
-        .rpc('check_event_registration', { p_event_id: selectedEvent.id, p_participant_id: participantId });
-
-      if (checkError) throw checkError;
+      const checkRegRes = await api.get(`/registrations/check/${selectedEvent.id}/${participantId}`);
+      let registrationExists = false;
+      if (checkRegRes.ok) {
+        const checkData = await checkRegRes.json();
+        registrationExists = checkData.registered;
+      }
 
       if (!registrationExists) {
         // Criar inscrição
-        const { error: insertRegError } = await supabase
-          .from('inscricoes_evento')
-          .insert([{
-            evento_id: selectedEvent.id,
-            participante_id: participantId,
-            presente: false
-          }]);
+        const insertRegRes = await api.post('/registrations', {
+          eventoId: selectedEvent.id,
+          participanteId: participantId,
+          presente: false
+        });
 
-        if (insertRegError) throw insertRegError;
+        if (!insertRegRes.ok) throw new Error('Falha ao registrar evento');
         toast.success('Inscrição vinculada com sucesso!');
       } else {
         toast.info('Você já está inscrito neste evento!');
@@ -398,15 +378,10 @@ export default function Home() {
     setCredentialError('');
 
     try {
-      const { data, error } = await supabase
-        .rpc('get_participant_by_email', { p_email: credentialEmail.trim().toLowerCase() })
-        .maybeSingle();
+      const res = await api.get(`/participants/email/${credentialEmail.trim().toLowerCase()}`);
 
-      if (error) throw error;
-
-      const existing = data as { nome: string; codigo: string; registrado: boolean } | null;
-
-      if (existing && existing.registrado) {
+      if (res.ok) {
+        const existing = await res.json();
         setCredentialData({
           nome: existing.nome,
           codigo: existing.codigo

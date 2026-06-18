@@ -1,6 +1,21 @@
 version: '3.8'
 
 services:
+  # Database PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: usuario
+      POSTGRES_PASSWORD: senha
+      POSTGRES_DB: eventease
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend_network
+
   # NestJS API - Replicas managed by Docker Compose
   api:
     build:
@@ -70,3 +85,6 @@ services:
 networks:
   backend_network:
     driver: bridge
+
+volumes:
+  pgdata:

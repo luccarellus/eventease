@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaService } from '../prisma.service';
-import { SupabaseAuthGuard } from './guards/supabase.guard';
+import { JwtAuthGuard } from './guards/jwt.guard';
 import { RolesGuard } from './guards/roles.guard';
 
 @Module({
@@ -16,9 +16,9 @@ import { RolesGuard } from './guards/roles.guard';
       signOptions: { expiresIn: '15m' }, // Access Token Curto
     }),
   ],
-  providers: [AuthService, JwtStrategy, PrismaService, SupabaseAuthGuard, RolesGuard],
+  providers: [AuthService, JwtStrategy, PrismaService, JwtAuthGuard, RolesGuard],
   controllers: [AuthController],
-  exports: [AuthService, SupabaseAuthGuard, RolesGuard],
+  exports: [AuthService, JwtAuthGuard, RolesGuard],
 })
 export class AuthModule {}
 

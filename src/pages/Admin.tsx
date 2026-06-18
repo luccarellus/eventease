@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { api } from '@/lib/api';
 import { Participante, Evento, InscricaoEvento } from '@/types/index';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
@@ -114,21 +114,18 @@ export default function Admin() {
     setLoading(true);
     try {
       // Obter contagem global leve de Alunos para os Stats
-      const { count, error: countError } = await supabase
-        .from('participantes')
-        .select('*', { count: 'exact', head: true });
-
-      if (countError) throw countError;
-      setTotalStudents(count || 0);
+      const pRes = await api.get('/participants');
+      if (pRes.ok) {
+        const allP = await pRes.json();
+        setTotalStudents(allP.length);
+      }
 
       // Buscar Eventos
-      const { data: evtData, error: evtError } = await supabase
-        .from('eventos')
-        .select('*')
-        .order('data', { ascending: false });
-
-      if (evtError) throw evtError;
-      setEventos(evtData || []);
+      const evtRes = await api.get('/events/admin/all');
+      if (evtRes.ok) {
+        const evts = await evtRes.json();
+        setEventos(evts || []);
+      }
 
     } catch (error: any) {
       console.error('Error fetching general stats/events:', error);
@@ -142,23 +139,23 @@ export default function Admin() {
     setLoading(true);
     try {
       const from = (page - 1) * itemsPerPage;
-      const to = from + itemsPerPage - 1;
+      const to = from + itemsPerPage;
 
-      let query = supabase
-        .from('participantes')
-        .select('*', { count: 'exact' });
+      const res = await api.get('/participants');
+      if (!res.ok) throw new Error('Error fetching participants');
+      let allP = await res.json();
 
       if (search.trim()) {
-        query = query.or(`nome.ilike.%${search}%,email.ilike.%${search}%,codigo.ilike.%${search}%`);
+        const s = search.toLowerCase();
+        allP = allP.filter((p: any) => 
+          p.nome.toLowerCase().includes(s) || 
+          p.email.toLowerCase().includes(s) || 
+          p.codigo.toLowerCase().includes(s)
+        );
       }
 
-      const { data, count, error } = await query
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (error) throw error;
-      setParticipantes(data || []);
-      setTotalStudents(count || 0);
+      setTotalStudents(allP.length);
+      setParticipantes(allP.slice(from, to));
     } catch (error) {
       console.error('Error fetching participants:', error);
       toast.error('Erro ao carregar lista de participantes.');
@@ -171,31 +168,16 @@ export default function Admin() {
   const fetchInscritosEvento = async (eventoId: string) => {
     setLoadingInscritos(true);
     try {
-      const { data, error } = await supabase
-        .from('inscricoes_evento')
-        .select(`
-          id,
-          evento_id,
-          participante_id,
-          presente,
-          confirmado_em,
-          created_at,
-          participantes (
-            id,
-            nome,
-            email,
-            telefone,
-            cidade,
-            escola,
-            gremio,
-            codigo
-          )
-        `)
-        .eq('evento_id', eventoId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setInscritosEvento(data as unknown as InscricaoEvento[] || []);
+      const res = await api.get(`/registrations/event/${eventoId}`);
+      if (!res.ok) throw new Error('Failed to fetch event registrations');
+      const data = await res.json();
+      
+      // Mapear os dados para o formato esperado pelo frontend
+      const mappedData = data.map((item: any) => ({
+        ...item,
+        participantes: item.participante
+      }));
+      setInscritosEvento(mappedData as unknown as InscricaoEvento[] || []);
     } catch (error) {
       console.error('Error fetching event subscriptions:', error);
       toast.error('Erro ao carregar inscritos do evento.');
@@ -207,21 +189,7 @@ export default function Admin() {
   useEffect(() => {
     fetchData();
 
-    // Inscrição em tempo real para modificações no schema public
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public' },
-        () => {
-          fetchData();
-          if (activeTab === 'alunos') {
-            fetchParticipantes(currentPage, searchTerm);
-          }
-        }
-      )
-      .subscribe();
-
+    // Removed supabase realtime channel
     const handleSync = () => {
       fetchData();
       if (activeTab === 'alunos') {
@@ -231,7 +199,6 @@ export default function Admin() {
     window.addEventListener('sync-data', handleSync);
 
     return () => {
-      supabase.removeChannel(channel);
       window.removeEventListener('sync-data', handleSync);
     };
   }, []);
@@ -251,7 +218,7 @@ export default function Admin() {
   }, [selectedEvento, participantes]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await api.post('/auth/logout', {});
     navigate('/login');
   };
 
@@ -260,12 +227,9 @@ export default function Admin() {
     if (!confirm(`Tem certeza que deseja excluir o cadastro de ${nome}? Isso removerá o aluno de todos os eventos.`)) return;
 
     try {
-      const { error } = await supabase
-        .from('participantes')
-        .delete()
-        .eq('id', id);
+      const res = await api.delete(`/participants/${id}`);
+      if (!res.ok) throw new Error('Falha ao deletar participante');
 
-      if (error) throw error;
       toast.success('Participante removido com sucesso.');
       fetchData();
     } catch (error: any) {
@@ -283,15 +247,13 @@ export default function Admin() {
     const finalCode = `EVT-${codigo}`;
 
     try {
-      const { error } = await supabase
-        .from('participantes')
-        .insert([{
-          ...newStudent,
-          codigo: finalCode,
-          presente: false
-        }]);
+      const res = await api.post('/participants', {
+        ...newStudent,
+        codigo: finalCode,
+        aceitou_termos: true,
+      });
 
-      if (error) throw error;
+      if (!res.ok) throw new Error('Falha ao adicionar participante');
 
       toast.success('Participante cadastrado com sucesso!');
       setShowAddStudentModal(false);
@@ -314,31 +276,26 @@ export default function Admin() {
     e.preventDefault();
     try {
       if (editingEventId) {
-        const { error } = await supabase
-          .from('eventos')
-          .update({
-            titulo: newEvent.titulo,
-            descricao: newEvent.descricao,
-            data: new Date(newEvent.data).toISOString(),
-            local: newEvent.local,
-            publicado: newEvent.publicado
-          })
-          .eq('id', editingEventId);
+        const res = await api.patch(`/events/${editingEventId}`, {
+          titulo: newEvent.titulo,
+          descricao: newEvent.descricao,
+          data: new Date(newEvent.data).toISOString(),
+          local: newEvent.local,
+          publicado: newEvent.publicado
+        });
 
-        if (error) throw error;
+        if (!res.ok) throw new Error('Falha ao atualizar evento');
         toast.success('Evento atualizado com sucesso!');
       } else {
-        const { error } = await supabase
-          .from('eventos')
-          .insert([{
-            titulo: newEvent.titulo,
-            descricao: newEvent.descricao,
-            data: new Date(newEvent.data).toISOString(),
-            local: newEvent.local,
-            publicado: newEvent.publicado
-          }]);
+        const res = await api.post('/events', {
+          titulo: newEvent.titulo,
+          descricao: newEvent.descricao,
+          data: new Date(newEvent.data).toISOString(),
+          local: newEvent.local,
+          publicado: newEvent.publicado
+        });
 
-        if (error) throw error;
+        if (!res.ok) throw new Error('Falha ao criar evento');
         toast.success('Evento criado com sucesso!');
       }
 
@@ -361,12 +318,9 @@ export default function Admin() {
   const handleDeleteEvent = async (id: string, titulo: string) => {
     if (!confirm(`Tem certeza que deseja excluir o evento "${titulo}"? Todas as inscrições associadas serão perdidas.`)) return;
     try {
-      const { error } = await supabase
-        .from('eventos')
-        .delete()
-        .eq('id', id);
+      const res = await api.delete(`/events/${id}`);
+      if (!res.ok) throw new Error('Falha ao excluir evento');
 
-      if (error) throw error;
       toast.success('Evento excluído com sucesso.');
       if (selectedEvento?.id === id) {
         setSelectedEvento(null);
@@ -379,12 +333,9 @@ export default function Admin() {
 
   const handleTogglePublish = async (event: Evento) => {
     try {
-      const { error } = await supabase
-        .from('eventos')
-        .update({ publicado: !event.publicado })
-        .eq('id', event.id);
+      const res = await api.patch(`/events/${event.id}`, { publicado: !event.publicado });
+      if (!res.ok) throw new Error('Falha ao alterar publicação');
 
-      if (error) throw error;
       toast.success(`Evento ${!event.publicado ? 'publicado' : 'despublicado'} com sucesso!`);
       fetchData();
       if (selectedEvento?.id === event.id) {
@@ -399,15 +350,12 @@ export default function Admin() {
   const handleTogglePresence = async (inscricao: InscricaoEvento) => {
     const newPresence = !inscricao.presente;
     try {
-      const { error } = await supabase
-        .from('inscricoes_evento')
-        .update({
-          presente: newPresence,
-          confirmado_em: newPresence ? new Date().toISOString() : null
-        })
-        .eq('id', inscricao.id);
+      const res = await api.patch(`/registrations/${inscricao.id}`, {
+        presente: newPresence,
+        confirmado_em: newPresence ? new Date().toISOString() : null
+      });
 
-      if (error) throw error;
+      if (!res.ok) throw new Error('Falha ao atualizar presença');
       toast.success(`Check-in ${newPresence ? 'confirmado' : 'cancelado'}!`);
       if (selectedEvento) {
         fetchInscritosEvento(selectedEvento.id);
@@ -420,12 +368,9 @@ export default function Admin() {
   const handleRemoveFromEvent = async (inscricaoId: string) => {
     if (!confirm('Deseja remover este aluno do evento? A inscrição dele será cancelada.')) return;
     try {
-      const { error } = await supabase
-        .from('inscricoes_evento')
-        .delete()
-        .eq('id', inscricaoId);
+      const res = await api.delete(`/registrations/${inscricaoId}`);
+      if (!res.ok) throw new Error('Falha ao remover aluno do evento');
 
-      if (error) throw error;
       toast.success('Aluno removido do evento com sucesso.');
       if (selectedEvento) {
         fetchInscritosEvento(selectedEvento.id);
@@ -438,20 +383,19 @@ export default function Admin() {
   const handleAddStudentToEvent = async (participanteId: string) => {
     if (!selectedEvento) return;
     try {
-      const { error } = await supabase
-        .from('inscricoes_evento')
-        .insert([{
-          evento_id: selectedEvento.id,
-          participante_id: participanteId,
-          presente: false
-        }]);
+      const res = await api.post('/registrations', {
+        eventoId: selectedEvento.id,
+        participanteId: participanteId,
+        presente: false
+      });
 
-      if (error) {
-        if (error.message.includes('duplicate key')) {
+      if (!res.ok) {
+        const errorData = await res.json();
+        if (errorData.message?.includes('Unique constraint failed') || errorData.message?.includes('já existe')) {
           toast.info('Aluno já inscrito neste evento.');
           return;
         }
-        throw error;
+        throw new Error('Falha ao inscrever aluno');
       }
 
       toast.success('Aluno inscrito com sucesso!');
