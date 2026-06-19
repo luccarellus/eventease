@@ -38,4 +38,14 @@ export class ParticipantsService {
     if (!p) throw new NotFoundException('Participante não encontrado');
     return p;
   }
+
+  async remove(id: string) {
+    try {
+      return await this.prisma.participante.delete({
+        where: { id },
+      });
+    } catch (error) {
+      throw new NotFoundException('Participante não encontrado para exclusão');
+    }
+  }
 }
