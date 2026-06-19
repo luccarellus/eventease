@@ -1,25 +1,41 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma.service';
 import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class AuthService {
+  private supabase: SupabaseClient;
+
   constructor(
-    private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') || this.configService.get<string>('SUPABASE_KEY');
 
-  async updateUserRole(userId: string, role: string) {
-    const updatedUser = await this.prisma.user.update({
-      where: { id: userId },
-      data: { role },
-    });
-    return updatedUser;
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('SUPABASE_URL e SUPABASE_KEY (ou SUPABASE_SERVICE_ROLE_KEY) não estão configuradas nas variáveis de ambiente.');
+    }
+
+    this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
+  async updateUserRole(userId: string, role: string) {
+    const { data, error } = await this.supabase.auth.admin.updateUserById(userId, {
+      app_metadata: { role },
+    });
+
+    if (error) {
+      throw new Error(`Erro ao atualizar a role do usuário no Supabase: ${error.message}`);
+    }
+
+    return {
+      id: data.user.id,
+      email: data.user.email,
+      role: data.user.app_metadata?.role,
+    };
+  }
 
   async generateTokens(user: any) {
     const payload = { sub: user.id, email: user.email, role: user.role };
@@ -33,28 +49,42 @@ export class AuthService {
   }
 
   async validateUser(email: string, pass: string): Promise<any> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+    const { data, error } = await this.supabase.auth.signInWithPassword({
+      email: email.toLowerCase().trim(),
+      password: pass,
     });
 
-    if (user && await bcrypt.compare(pass, user.password)) {
-      const { password, ...result } = user;
-      return result;
+    if (error || !data.user) {
+      return null;
     }
-    return null;
+
+    return {
+      id: data.user.id,
+      email: data.user.email,
+      role: data.user.app_metadata?.role || 'user',
+      fullName: data.user.user_metadata?.full_name || data.user.user_metadata?.fullName || null,
+    };
   }
 
   async registerUser(email: string, pass: string, fullName?: string) {
-    const hashedPassword = await bcrypt.hash(pass, 10);
-    const user = await this.prisma.user.create({
-      data: {
-        email: email.toLowerCase().trim(),
-        password: hashedPassword,
-        fullName,
-        role: 'USER', // Força role padrão USER
+    const { data, error } = await this.supabase.auth.signUp({
+      email: email.toLowerCase().trim(),
+      password: pass,
+      options: {
+        data: {
+          full_name: fullName,
+        },
       },
     });
-    const { password, ...result } = user;
-    return result;
+
+    if (error || !data.user) {
+      throw new Error(`Erro ao registrar usuário no Supabase: ${error.message}`);
+    }
+
+    return {
+      id: data.user.id,
+      email: data.user.email,
+      role: data.user.app_metadata?.role || 'user',
+    };
   }
 }
