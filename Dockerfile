@@ -78,7 +78,11 @@ RUN mkdir -p /etc/supervisor.d && \
     echo 'command=sh -c "npx prisma db push && node dist/main"' >> /etc/supervisord.conf && \
     echo 'directory=/app/backend' >> /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
-    echo 'autorestart=true' >> /etc/supervisord.conf
+    echo 'autorestart=true' >> /etc/supervisord.conf && \
+    echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
+    echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
+    echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
+    echo 'stderr_logfile_maxbytes=0' >> /etc/supervisord.conf
 
 EXPOSE 80
 
