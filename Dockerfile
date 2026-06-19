@@ -5,7 +5,7 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+RUN npm install --ignore-scripts
 
 COPY . .
 
@@ -65,6 +65,10 @@ COPY --from=backend-builder /app/backend/dist ./backend/dist
 COPY --from=backend-builder /app/backend/node_modules ./backend/node_modules
 COPY --from=backend-builder /app/backend/package*.json ./backend/
 COPY --from=backend-builder /app/backend/prisma ./backend/prisma
+COPY --from=backend-builder /app/backend/prisma.config.ts ./backend/
+COPY --from=backend-builder /app/backend/tsconfig.json ./backend/
+
+
 
 # 4. Configura o Supervisor para rodar Nginx + Node simultaneamente
 RUN mkdir -p /etc/supervisor.d && \
