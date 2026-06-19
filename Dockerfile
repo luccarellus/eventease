@@ -79,7 +79,7 @@ RUN mkdir -p /etc/supervisor.d && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
     echo '[program:backend]' >> /etc/supervisord.conf && \
-    echo 'command=sh -c "npx prisma db push --accept-data-loss || true; node dist/main"' >> /etc/supervisord.conf && \
+    echo 'command=sh -c "npx prisma db push --accept-data-loss || true; node dist/main.js"' >> /etc/supervisord.conf && \
     echo 'directory=/app/backend' >> /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
