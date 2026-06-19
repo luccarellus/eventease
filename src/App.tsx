@@ -140,7 +140,7 @@ function NavLink({ to, icon, label, active }: { to: string; icon: React.ReactNod
   );
 }
 
-const IS_MAINTENANCE_MODE = true;
+const IS_MAINTENANCE_MODE = false;
 
 function MaintenanceScreen() {
   return (
