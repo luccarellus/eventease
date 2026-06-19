@@ -30,8 +30,6 @@
     "emitDecoratorMetadata": true
   },
   "include": [
-    "src/**/*",
-    "api/**/*",
-    "backend/src/**/*"
+    "src/**/*"
   ]
 }

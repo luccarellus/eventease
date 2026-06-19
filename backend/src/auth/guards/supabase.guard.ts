@@ -1,20 +1,14 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { createSupabaseClient } from '../supabase-client';
 
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {
   private supabase: SupabaseClient;
 
   constructor(private configService: ConfigService) {
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
-    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') || this.configService.get<string>('SUPABASE_KEY');
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase URL or Key not configured in environment.');
-    }
-
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    this.supabase = createSupabaseClient(this.configService);
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -25,7 +19,10 @@ export class SupabaseAuthGuard implements CanActivate {
       throw new UnauthorizedException('Token de acesso não fornecido.');
     }
 
-    const { data: { user }, error } = await this.supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error,
+    } = await this.supabase.auth.getUser(token);
 
     if (error || !user) {
       throw new UnauthorizedException('Token inválido ou sessão expirada.');

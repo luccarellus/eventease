@@ -61,6 +61,40 @@ const registrationSchema = z.object({
 });
 
 type RegistrationData = z.infer<typeof registrationSchema>;
+type CredentialSummary = { nome: string; codigo: string };
+
+const CREDENTIAL_STORAGE_KEY = 'eventease_credential';
+
+function loadStoredCredential(): CredentialSummary | null {
+  const savedCredential = localStorage.getItem(CREDENTIAL_STORAGE_KEY);
+  if (!savedCredential) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(savedCredential) as CredentialSummary;
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredCredential(credential: CredentialSummary) {
+  localStorage.setItem(CREDENTIAL_STORAGE_KEY, JSON.stringify(credential));
+}
+
+function openCredentialModal(
+  setCredentialData: React.Dispatch<React.SetStateAction<CredentialSummary | null>>,
+  setCredentialEmail: React.Dispatch<React.SetStateAction<string>>,
+  setCredentialError: React.Dispatch<React.SetStateAction<string>>,
+  setShowCredentialModal: React.Dispatch<React.SetStateAction<boolean>>,
+) {
+  const savedCredential = loadStoredCredential();
+
+  setCredentialEmail('');
+  setCredentialError('');
+  setCredentialData(savedCredential);
+  setShowCredentialModal(true);
+}
 
 export default function Home() {
   // Controle de Eventos
@@ -100,23 +134,8 @@ export default function Home() {
   // Escutar parâmetro de busca de credencial na URL (?buscar-credencial=true)
   useEffect(() => {
     if (searchParams.get('buscar-credencial') === 'true') {
-      const savedCred = localStorage.getItem('eventease_credential');
-      if (savedCred) {
-        try {
-          const parsed = JSON.parse(savedCred);
-          setCredentialData(parsed);
-          setCredentialEmail('');
-          setCredentialError('');
-          setShowCredentialModal(true);
-          setSearchParams({});
-          return;
-        } catch {}
-      }
-      setCredentialEmail('');
-      setCredentialData(null);
-      setCredentialError('');
-      setShowCredentialModal(true);
-      setSearchParams({}); // Limpar o parâmetro da URL
+      openCredentialModal(setCredentialData, setCredentialEmail, setCredentialError, setShowCredentialModal);
+      setSearchParams({});
     }
   }, [searchParams, setSearchParams]);
 
@@ -194,6 +213,27 @@ export default function Home() {
     return `EVT-${code}`;
   };
 
+  const linkParticipantToEvent = async (eventId: string, participantId: string) => {
+    const checkRegRes = await api.get(`/registrations/check/${eventId}/${participantId}`);
+    const registrationExists = checkRegRes.ok ? (await checkRegRes.json()).registered : false;
+
+    if (!registrationExists) {
+      const insertRegRes = await api.post('/registrations', {
+        eventoId: eventId,
+        participanteId: participantId,
+        presente: false,
+      });
+
+      if (!insertRegRes.ok) {
+        throw new Error('Falha ao registrar evento');
+      }
+
+      return false;
+    }
+
+    return true;
+  };
+
   // Submissão do cadastro contextualizado ao evento
   const onSubmitRegistration = async (formData: RegistrationData) => {
     if (!selectedEvent) return;
@@ -250,32 +290,19 @@ export default function Home() {
       }
 
       // 2. Verificar inscrição existente no evento
-      const checkRegRes = await api.get(`/registrations/check/${selectedEvent.id}/${participantId}`);
-      let registrationExists = false;
-      if (checkRegRes.ok) {
-        const checkData = await checkRegRes.json();
-        registrationExists = checkData.registered;
-      }
+      const registrationExists = await linkParticipantToEvent(selectedEvent.id, participantId);
 
       if (!registrationExists) {
-        // 3. Cadastrar no evento
-        const insertRegRes = await api.post('/registrations', {
-          eventoId: selectedEvent.id,
-          participanteId: participantId,
-          presente: false
-        });
-
-        if (!insertRegRes.ok) throw new Error('Falha ao registrar evento');
         toast.success('Inscrição confirmada com sucesso!');
       } else {
         toast.info('Você já está inscrito neste evento! Sua credencial foi carregada.');
       }
 
       // LocalStorage backup
-      localStorage.setItem('eventease_credential', JSON.stringify({
+      saveStoredCredential({
         nome: participantName,
-        codigo: participantCode
-      }));
+        codigo: participantCode,
+      });
 
       setSuccessData({ nome: participantName, codigo: participantCode });
       reset();
@@ -338,22 +365,9 @@ export default function Home() {
       }
 
       // Verificar se já está inscrito no evento
-      const checkRegRes = await api.get(`/registrations/check/${selectedEvent.id}/${participantId}`);
-      let registrationExists = false;
-      if (checkRegRes.ok) {
-        const checkData = await checkRegRes.json();
-        registrationExists = checkData.registered;
-      }
+      const registrationExists = await linkParticipantToEvent(selectedEvent.id, participantId);
 
       if (!registrationExists) {
-        // Criar inscrição
-        const insertRegRes = await api.post('/registrations', {
-          eventoId: selectedEvent.id,
-          participanteId: participantId,
-          presente: false
-        });
-
-        if (!insertRegRes.ok) throw new Error('Falha ao registrar evento');
         toast.success('Inscrição vinculada com sucesso!');
       } else {
         toast.info('Você já está inscrito neste evento!');
@@ -386,10 +400,10 @@ export default function Home() {
           nome: existing.nome,
           codigo: existing.codigo
         });
-        localStorage.setItem('eventease_credential', JSON.stringify({
+        saveStoredCredential({
           nome: existing.nome,
-          codigo: existing.codigo
-        }));
+          codigo: existing.codigo,
+        });
       } else {
         setCredentialError('Nenhum cadastro encontrado para este e-mail. Verifique se o e-mail está correto ou realize a inscrição em um evento.');
       }
@@ -471,21 +485,7 @@ export default function Home() {
         >
           <Button
             onClick={() => {
-              const savedCred = localStorage.getItem('eventease_credential');
-              if (savedCred) {
-                try {
-                  const parsed = JSON.parse(savedCred);
-                  setCredentialData(parsed);
-                  setCredentialEmail('');
-                  setCredentialError('');
-                  setShowCredentialModal(true);
-                  return;
-                } catch {}
-              }
-              setCredentialEmail('');
-              setCredentialData(null);
-              setCredentialError('');
-              setShowCredentialModal(true);
+              openCredentialModal(setCredentialData, setCredentialEmail, setCredentialError, setShowCredentialModal);
             }}
             variant="outline"
             className="rounded-2xl border-white/10 hover:bg-white/5 text-white hover:text-white transition-all text-sm px-6 h-12 font-bold uppercase tracking-wider flex items-center gap-2"

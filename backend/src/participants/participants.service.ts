@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
+import { throwUniqueConstraintError } from '../common/prisma-error.util';
 
 @Injectable()
 export class ParticipantsService {
@@ -10,10 +11,7 @@ export class ParticipantsService {
     try {
       return await this.prisma.participante.create({ data });
     } catch (error) {
-      if (error.code === 'P2002') {
-        throw new ConflictException('Participante com este código ou email já existe.');
-      }
-      throw error;
+      throwUniqueConstraintError(error, 'Participante com este código ou email já existe.');
     }
   }
 

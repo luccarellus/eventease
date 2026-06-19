@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'presidente@olharjovem.org';
+  const email = 'lucassantos.-@outlook.com';
   const rawPassword = 'presidente123'; // Senha padrão recomendada
   const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
@@ -17,7 +17,7 @@ async function main() {
       data: {
         email,
         password: hashedPassword,
-        fullName: 'Presidente Olhar Jovem',
+        fullName: 'Lucas Santos',
         role: 'admin',
       },
     });

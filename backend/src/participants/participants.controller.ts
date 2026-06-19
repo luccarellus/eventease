@@ -1,8 +1,6 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { ParticipantsService } from './participants.service';
-import { JwtAuthGuard } from '../auth/guards/jwt.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { Prisma } from '@prisma/client';
 
 @Controller('participants')
@@ -25,15 +23,13 @@ export class ParticipantsController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   findAll() {
     return this.participantsService.findAll();
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   remove(@Param('id') id: string) {
     return this.participantsService.remove(id);
   }

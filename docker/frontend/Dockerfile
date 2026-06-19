@@ -10,13 +10,7 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build the Vite project
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
-
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
-
+# Build the Vite project (sem variáveis do Supabase)
 RUN npm run build
 
 # Stage 2: Serve the frontend using Nginx

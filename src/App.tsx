@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Toaster } from './components/ui/event-toaster';
 import Home from '@/pages/Home';
@@ -213,20 +212,3 @@ function AppContent() {
   );
 }
 
-function PageWrapper({ children }: { children: React.ReactNode }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.98, filter: 'blur(10px)' }}
-      animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-      exit={{ opacity: 0, y: -20, scale: 0.98, filter: 'blur(10px)' }}
-      transition={{
-        duration: 0.6,
-        ease: [0.22, 1, 0.36, 1],
-        opacity: { duration: 0.4 }
-      }}
-      className="w-full"
-    >
-      {children}
-    </motion.div>
-  );
-}

@@ -1,6 +1,7 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
+import { throwUniqueConstraintError } from '../common/prisma-error.util';
 
 @Injectable()
 export class RegistrationsService {
@@ -10,10 +11,7 @@ export class RegistrationsService {
     try {
       return await this.prisma.inscricaoEvento.create({ data });
     } catch (error) {
-      if (error.code === 'P2002') {
-        throw new ConflictException('Participante já está inscrito neste evento.');
-      }
-      throw error;
+      throwUniqueConstraintError(error, 'Participante já está inscrito neste evento.');
     }
   }
 

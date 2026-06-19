@@ -1,28 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { EventsService } from './events.service';
-import { JwtAuthGuard } from '../auth/guards/jwt.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { Prisma } from '@prisma/client';
 
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
-  // ==========================================
-  // Public Routes
-  // ==========================================
   @Get()
   findAllPublished() {
     return this.eventsService.findAll(true);
   }
 
-  // ==========================================
-  // Admin Routes
-  // ==========================================
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   create(@Body() data: Prisma.EventoCreateInput) {
     return this.eventsService.create({
       ...data,
@@ -31,29 +22,25 @@ export class EventsController {
   }
 
   @Get('admin/all')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   findAll() {
     return this.eventsService.findAll(false);
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   findOne(@Param('id') id: string) {
     return this.eventsService.findOne(id);
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   update(@Param('id') id: string, @Body() data: Prisma.EventoUpdateInput) {
     return this.eventsService.update(id, data);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   remove(@Param('id') id: string) {
     return this.eventsService.remove(id);
   }

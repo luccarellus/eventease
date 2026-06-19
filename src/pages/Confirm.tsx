@@ -10,6 +10,11 @@ import { cn } from '@/lib/utils';
 import { Participante, Evento } from '@/types/index';
 import { Html5Qrcode } from 'html5-qrcode';
 
+type CheckinParticipant = Participante & {
+  presente?: boolean;
+  confirmado_em?: string;
+};
+
 // Componente do Scanner para garantir que o elemento DOM esteja pronto
 function QRScanner({ onScan, onClose }: { onScan: (text: string) => void; onClose: () => void }) {
   useEffect(() => {
@@ -61,7 +66,7 @@ export default function Confirm() {
   const [codigo, setCodigo] = useState('');
   const [loading, setLoading] = useState(false);
   const [scannerActive, setScannerActive] = useState(false);
-  const [result, setResult] = useState<{ status: 'success' | 'already' | 'notfound'; data?: Participante; eventTitle?: string } | null>(null);
+  const [result, setResult] = useState<{ status: 'success' | 'already' | 'notfound'; data?: CheckinParticipant; eventTitle?: string } | null>(null);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [selectedEventoId, setSelectedEventoId] = useState<string>('');
 

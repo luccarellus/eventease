@@ -4,19 +4,20 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ==========================================
-// User Authentication (Substitui Supabase Auth)
+// User Authentication (Local - sem Supabase)
 // ==========================================
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
   password      String
   fullName      String?
-  role          String    @default("admin") // Role 'admin' for the dashboard
+  role          String    @default("user")
   
-  // LGPD Fields (se necessário futuramente)
+  // LGPD Fields
   acceptedTerms Boolean   @default(false)
   termsAcceptedAt DateTime?
   dataConsent   Boolean   @default(false)

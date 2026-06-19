@@ -39,15 +39,41 @@ export default function Login() {
     const cleanEmail = email.trim().toLowerCase();
 
     try {
-      const res = await api.post('/auth/login', {
-        email: cleanEmail,
-        password,
-      });
+      let res: Response;
+      try {
+        res = await api.post('/auth/login', {
+          email: cleanEmail,
+          password,
+        });
+      } catch (networkError) {
+        // Erro de rede: backend offline ou sem conexão
+        toast.error('Não foi possível conectar ao servidor. Verifique se o backend está rodando.');
+        setLoading(false);
+        return;
+      }
 
       if (!res.ok) {
-        const errorData = await res.json();
-        toast.error(errorData.message || 'Credenciais inválidas. Verifique seu e-mail e senha.');
-        throw new Error('Login failed');
+        let errorMessage = 'Credenciais inválidas. Verifique seu e-mail e senha.';
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch {}
+        
+        toast.error(errorMessage);
+
+        const newAttempts = loginAttempts + 1;
+        setLoginAttempts(newAttempts);
+
+        if (newAttempts >= 3) {
+          const lockoutTime = Date.now() + 30000;
+          setLockoutUntil(lockoutTime);
+          toast.error('Muitas tentativas falhas. Acesso bloqueado temporariamente por 30 segundos.');
+          setTimeout(() => {
+            setLoginAttempts(0);
+            setLockoutUntil(null);
+          }, 30000);
+        }
+        return;
       }
 
       await checkAuth();
@@ -55,21 +81,8 @@ export default function Login() {
       setLoginAttempts(0);
       navigate('/admin');
     } catch (error: any) {
-      console.error('Login error:', error);
-      const newAttempts = loginAttempts + 1;
-      setLoginAttempts(newAttempts);
-      
-      if (newAttempts >= 3) {
-        const lockoutTime = Date.now() + 30000; // 30 seconds
-        setLockoutUntil(lockoutTime);
-        toast.error('Muitas tentativas falhas. Acesso bloqueado temporariamente por 30 segundos.');
-        
-        // Timer to auto-unlock
-        setTimeout(() => {
-          setLoginAttempts(0);
-          setLockoutUntil(null);
-        }, 30000);
-      }
+      console.error('Login error inesperado:', error);
+      toast.error('Ocorreu um erro inesperado. Tente novamente.');
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,6 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
 import { RegistrationsService } from './registrations.service';
-import { JwtAuthGuard } from '../auth/guards/jwt.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { Prisma } from '@prisma/client';
 
 @Controller('registrations')
@@ -23,36 +21,31 @@ export class RegistrationsController {
   }
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   findAll() {
     return this.registrationsService.findAll();
   }
 
   @Get('event/:eventoId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   findByEvent(@Param('eventoId') eventoId: string) {
     return this.registrationsService.findByEvent(eventoId);
   }
 
   @Patch(':id/checkin')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   checkIn(@Param('id') id: string) {
     return this.registrationsService.checkIn(id);
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   update(@Param('id') id: string, @Body() data: Prisma.InscricaoEventoUpdateInput) {
     return this.registrationsService.update(id, data);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
+  @AdminRoute()
   remove(@Param('id') id: string) {
     return this.registrationsService.remove(id);
   }

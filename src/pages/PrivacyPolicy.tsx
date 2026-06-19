@@ -56,7 +56,7 @@ export default function PrivacyPolicy() {
         <section className="mb-10">
           <h2 className="text-2xl font-bold text-white mb-4">3. Proteção e Retenção de Dados</h2>
           <p className="mb-4">
-            Armazenamos suas informações em bancos de dados seguros geridos pela infraestrutura do Supabase, que conta com proteção em nível de linha (RLS) para evitar acessos não autorizados. Seus dados são retidos apenas pelo tempo necessário para a execução do evento e fins legais associados.
+            Armazenamos suas informações em bancos de dados seguros hospedados em infraestrutura própria, com controle de acesso rigoroso para evitar acessos não autorizados. Seus dados são retidos apenas pelo tempo necessário para a execução do evento e fins legais associados.
           </p>
         </section>
 
