@@ -1,25 +1,32 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
 import { RegistrationsService } from './registrations.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt.guard';
-import { Prisma } from '@prisma/client';
+import { CreateRegistrationDto } from './dto/create-registration.dto';
+import { UpdateRegistrationDto } from './dto/update-registration.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('registrations')
 export class RegistrationsController {
   constructor(private readonly registrationsService: RegistrationsService) {}
 
   /**
-   * Cria uma nova inscrição. Requer autenticação (JWT) — qualquer usuário logado pode criar inscrição.
-   * Usuários anônimos NÃO devem poder criar inscrições diretamente.
-   * Nota: o frontend público usa este endpoint via cookie JWT do usuário logado (admin ou participante).
-   * Para inscrições públicas (participantes sem login), o backend valida o payload via a rota pública.
+   * Cria uma nova inscrição.
+   * Nota: o frontend público usa este endpoint via cookie JWT do usuário logado ou anonimamente se cadastrando pela primeira vez.
+   * Limitado contra abusos automatizados.
    */
   @Post()
-  create(@Body() data: Prisma.InscricaoEventoUncheckedCreateInput) {
-    return this.registrationsService.create(data);
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  create(@Body() data: CreateRegistrationDto) {
+    return this.registrationsService.create({
+      eventoId: data.eventoId,
+      participanteId: data.participanteId,
+      presente: data.presente ?? false,
+      confirmado_em: data.confirmado_em ? new Date(data.confirmado_em) : undefined,
+    });
   }
 
   @Get('check/:eventoId/:participanteId')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   checkRegistration(
     @Param('eventoId') eventoId: string,
     @Param('participanteId') participanteId: string,
@@ -47,8 +54,11 @@ export class RegistrationsController {
 
   @Patch(':id')
   @AdminRoute()
-  update(@Param('id') id: string, @Body() data: Prisma.InscricaoEventoUpdateInput) {
-    return this.registrationsService.update(id, data);
+  update(@Param('id') id: string, @Body() data: UpdateRegistrationDto) {
+    return this.registrationsService.update(id, {
+      presente: data.presente,
+      confirmado_em: data.confirmado_em ? new Date(data.confirmado_em) : undefined,
+    });
   }
 
   @Delete(':id')

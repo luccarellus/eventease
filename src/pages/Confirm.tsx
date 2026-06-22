@@ -101,8 +101,8 @@ export default function Confirm() {
 
     setLoading(true);
     try {
-      // 1. Obter o participante pelo código
-      const partRes = await api.get(`/participants/code/${finalCode.toUpperCase().trim()}`);
+      // 1. Obter o participante pelo código (requer autenticação de administrador)
+      const partRes = await api.get(`/participants/admin/code/${finalCode.toUpperCase().trim()}`);
 
       if (!partRes.ok) {
         setResult({ status: 'notfound' });

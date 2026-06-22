@@ -3,14 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Toaster } from './components/ui/event-toaster';
-import Home from '@/pages/Home';
-import Confirm from '@/pages/Confirm';
-import Admin from '@/pages/Admin';
-import Login from '@/pages/Login';
-import PrivacyPolicy from '@/pages/PrivacyPolicy';
-import TermsOfService from '@/pages/TermsOfService';
 import CookieBanner from '@/components/CookieBanner';
 import { motion } from 'motion/react';
 import { Calendar, UserCheck, LayoutDashboard, LogOut, RefreshCcw } from 'lucide-react';
@@ -19,6 +14,24 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+
+const Home = lazy(() => import('@/pages/Home'));
+const Confirm = lazy(() => import('@/pages/Confirm'));
+const Admin = lazy(() => import('@/pages/Admin'));
+const Login = lazy(() => import('@/pages/Login'));
+const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
+
+function LoadingSpinner() {
+  return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <div className="relative w-16 h-16">
+        <div className="absolute inset-0 rounded-full border-4 border-white/5 border-t-primary animate-spin" />
+        <div className="absolute inset-2 rounded-full border-4 border-white/5 border-b-teal-400 animate-spin [animation-duration:1.5s] reverse" />
+      </div>
+    </div>
+  );
+}
 
 function Navbar() {
   const location = useLocation();
@@ -178,23 +191,25 @@ function AppContent() {
     <div className="min-h-[100dvh] pt-24 pb-36 md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/eventos" element={<Home />} />
-          <Route path="/confirmar" element={
-            <ProtectedRoute>
-              <Confirm />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin" element={
-            <ProtectedRoute>
-              <Admin />
-            </ProtectedRoute>
-          } />
-          <Route path="/login" element={<Login />} />
-          <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
-          <Route path="/termos" element={<TermsOfService />} />
-        </Routes>
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/eventos" element={<Home />} />
+            <Route path="/confirmar" element={
+              <ProtectedRoute>
+                <Confirm />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <Admin />
+              </ProtectedRoute>
+            } />
+            <Route path="/login" element={<Login />} />
+            <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
+            <Route path="/termos" element={<TermsOfService />} />
+          </Routes>
+        </Suspense>
       </main>
 
       {!userIsAdmin && (
@@ -211,4 +226,3 @@ function AppContent() {
     </div>
   );
 }
-

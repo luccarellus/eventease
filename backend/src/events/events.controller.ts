@@ -1,7 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
-import { Prisma } from '@prisma/client';
+import { CreateEventDto } from './dto/create-event.dto';
+import { UpdateEventDto } from './dto/update-event.dto';
 
 @Controller('events')
 export class EventsController {
@@ -14,7 +15,7 @@ export class EventsController {
 
   @Post()
   @AdminRoute()
-  create(@Body() data: Prisma.EventoCreateInput) {
+  create(@Body() data: CreateEventDto) {
     return this.eventsService.create({
       ...data,
       data: new Date(data.data),
@@ -35,8 +36,11 @@ export class EventsController {
 
   @Patch(':id')
   @AdminRoute()
-  update(@Param('id') id: string, @Body() data: Prisma.EventoUpdateInput) {
-    return this.eventsService.update(id, data);
+  update(@Param('id') id: string, @Body() data: UpdateEventDto) {
+    return this.eventsService.update(id, {
+      ...data,
+      data: data.data ? new Date(data.data) : undefined,
+    });
   }
 
   @Delete(':id')

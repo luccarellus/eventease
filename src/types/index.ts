@@ -16,15 +16,6 @@ export interface Participante {
 
 export type NewParticipante = Omit<Participante, 'id' | 'presente' | 'confirmado_em' | 'created_at' | 'createdAt'>;
 
-export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
-}
-
 export interface Evento {
   id: string;
   titulo: string;

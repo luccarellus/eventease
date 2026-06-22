@@ -20,7 +20,10 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/')
       .expect(200)
-      .expect('Hello World!');
+      .expect((res) => {
+        expect(res.body).toHaveProperty('name', 'EventEase API');
+        expect(res.body).toHaveProperty('status', 'operational');
+      });
   });
 
   afterEach(async () => {

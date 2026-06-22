@@ -66,7 +66,7 @@ type CredentialSummary = { nome: string; codigo: string };
 const CREDENTIAL_STORAGE_KEY = 'eventease_credential';
 
 function loadStoredCredential(): CredentialSummary | null {
-  const savedCredential = localStorage.getItem(CREDENTIAL_STORAGE_KEY);
+  const savedCredential = sessionStorage.getItem(CREDENTIAL_STORAGE_KEY);
   if (!savedCredential) {
     return null;
   }
@@ -79,7 +79,7 @@ function loadStoredCredential(): CredentialSummary | null {
 }
 
 function saveStoredCredential(credential: CredentialSummary) {
-  localStorage.setItem(CREDENTIAL_STORAGE_KEY, JSON.stringify(credential));
+  sessionStorage.setItem(CREDENTIAL_STORAGE_KEY, JSON.stringify(credential));
 }
 
 function openCredentialModal(

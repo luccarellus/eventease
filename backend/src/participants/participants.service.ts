@@ -8,9 +8,6 @@ const PUBLIC_PARTICIPANT_SELECT = {
   id: true,
   nome: true,
   codigo: true,
-  cidade: true,
-  escola: true,
-  gremio: true,
 } as const;
 
 @Injectable()
