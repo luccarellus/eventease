@@ -145,6 +145,10 @@ export default function Admin() {
       const res = await api.get('/participants');
       if (!res.ok) throw new Error('Error fetching participants');
       let allP = await res.json();
+      allP = allP.map((p: any) => ({
+        ...p,
+        created_at: p.createdAt || p.created_at,
+      }));
 
       if (search.trim()) {
         const s = search.toLowerCase();
@@ -176,6 +180,7 @@ export default function Admin() {
       // Mapear os dados para o formato esperado pelo frontend
       const mappedData = data.map((item: any) => ({
         ...item,
+        created_at: item.createdAt || item.created_at,
         participantes: item.participante
       }));
       setInscritosEvento(mappedData as unknown as InscricaoEvento[] || []);
@@ -483,7 +488,7 @@ export default function Admin() {
         Status: i.presente ? 'Confirmado' : 'Inscrito',
         'Confirmou Presença': i.presente ? 'Sim' : 'Não',
         'Data de Confirmação': i.confirmado_em ? format(new Date(i.confirmado_em), 'dd/MM/yyyy HH:mm:ss') : 'Não Confirmado',
-        'Data de Inscrição': format(new Date(i.created_at), 'dd/MM/yyyy HH:mm:ss')
+        'Data de Inscrição': (i.createdAt || i.created_at) ? format(new Date(i.createdAt || i.created_at), 'dd/MM/yyyy HH:mm:ss') : 'Não Informado'
       };
     });
 
@@ -516,7 +521,7 @@ export default function Admin() {
       Escola: p.escola,
       Grêmio: p.gremio || 'N/A',
       Código: p.codigo,
-      'Data de Cadastro': format(new Date(p.created_at), 'dd/MM/yyyy HH:mm:ss')
+      'Data de Cadastro': (p.createdAt || p.created_at) ? format(new Date(p.createdAt || p.created_at), 'dd/MM/yyyy HH:mm:ss') : 'Não Informado'
     }));
 
     const csv = Papa.unparse(dataToExport, { delimiter: ';' });

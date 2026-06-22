@@ -10,10 +10,11 @@ export interface Participante {
   codigo: string;
   aceitou_termos?: boolean;
   termos_aceitos_em?: string;
-  created_at: string;
+  createdAt?: string;
+  created_at?: string;
 }
 
-export type NewParticipante = Omit<Participante, 'id' | 'presente' | 'confirmado_em' | 'created_at'>;
+export type NewParticipante = Omit<Participante, 'id' | 'presente' | 'confirmado_em' | 'created_at' | 'createdAt'>;
 
 export enum OperationType {
   CREATE = 'create',
@@ -31,7 +32,8 @@ export interface Evento {
   data: string;
   local: string;
   publicado: boolean;
-  created_at: string;
+  createdAt?: string;
+  created_at?: string;
 }
 
 export interface InscricaoEvento {
@@ -43,8 +45,10 @@ export interface InscricaoEvento {
   participanteId?: string;
   presente: boolean;
   confirmado_em?: string;
-  created_at: string;
+  createdAt?: string;
+  created_at?: string;
   participantes?: Participante;
 }
+
 
 
