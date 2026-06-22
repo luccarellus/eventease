@@ -1,39 +1,126 @@
-# Projeto Olhar Jovem - Evento
+# EventEase - Olhar Jovem Eventos
 
-Este projeto foi desenvolvido para a gestão de inscrições e check-in do evento Olhar Jovem.
+Plataforma moderna e integrada de gestão de eventos, inscrição de participantes, controle de presença via QR Code e painel administrativo (Dashboard) em tempo real.
 
-## 🚀 Como implantar na Vercel
+O projeto utiliza uma arquitetura monorepo simplificada contendo uma aplicação web React (SPA) no frontend e uma API REST em NestJS com banco de dados PostgreSQL estruturado via Prisma.
 
-1. **Suba o código para o GitHub:**
-   * Se a exportação direta falhar, baixe o **ZIP** do projeto no AI Studio.
-   * Crie um novo repositório no seu GitHub.
-   * Suba os arquivos para lá.
+---
 
-2. **Conecte na Vercel:**
-   * Acesse [vercel.com](https://vercel.com) e importe o repositório.
+## 🛠️ Tecnologias Utilizadas
 
-3. **Configure as Variáveis de Ambiente (CRÍTICO):**
-   No painel da Vercel, antes de clicar em "Deploy", vá em **Environment Variables** e adicione:
-   * `VITE_SUPABASE_URL`: (Sua URL do Supabase)
-   * `VITE_SUPABASE_ANON_KEY`: (Sua Chave Anon do Supabase)
+- **Frontend**: [React 19](https://react.dev/), [Vite](https://vite.dev/), [React Router v7](https://reactrouter.com/), [TailwindCSS](https://tailwindcss.com/), [Motion](https://motion.dev/) (animações), [Lucide React](https://lucide.dev/) (ícones) e [Sonner](https://sonner.pages.dev/) (toasts).
+- **Backend**: [NestJS 11](https://nestjs.com/), [Passport JWT](http://www.passportjs.org/) (autenticação segura via Cookies), [Helmet](https://helmetjs.github.io/) (headers de segurança), [Throttler](https://github.com/nestjs/throttler) (rate-limiting) e [Jest](https://jestjs.io/) (testes e2e).
+- **Banco de Dados**: [PostgreSQL](https://www.postgresql.org/) (hospedado no [Supabase](https://supabase.com/)) com [Prisma ORM](https://www.prisma.io/).
+- **Hospedagem & Nuvem**: [Vercel](https://vercel.com/) (Serverless) e Docker (para auto-hospedagem opcional).
 
-   *Nota: Você encontra esses valores no painel do Supabase em Project Settings -> API.*
+---
 
-4. **Configurações de Build:**
-   * Framework Preset: `Vite`
-   * Build Command: `npm run build`
-   * Output Directory: `dist`
+## 📱 Funcionalidades Principais
 
-## 🔐 Segurança Administrativa
+1. **Inscrição de Alunos (Público)**: Formulário fluido e animado com seleção dinâmica de Cidade e Escola e geração instantânea de credencial com código único (`EVT-XXXXXX`) e QR Code.
+2. **Consulta de Credencial**: Recuperação rápida da credencial física de acesso inserindo apenas o e-mail cadastrado.
+3. **Validação de Check-in (Staff)**: Leitor de QR Code integrado para a câmera do celular ou digitação de código manual para registrar a presença dos participantes no evento em tempo real.
+4. **Painel de Controle Administrativo (Dashboard)**:
+   - Métricas globais de adesão e presença.
+   - Criação, edição, exclusão e publicação de múltiplos eventos.
+   - Lista geral de alunos cadastrados e participantes de cada evento.
+   - Filtros de presença e exportação instantânea de relatórios em planilhas **CSV (compatível com Excel)**.
+5. **Autenticação Segura**: Gerenciamento de acessos administrativos via cookies HTTPOnly com tokens JWT de expiração curta e rota de refresh automático contra ataques XSS/CSRF.
 
-Os e-mails autorizados como administradores estão configurados no arquivo `src/constants.ts`. Somente usuários com estes e-mails e autenticados via Supabase terão acesso às funcionalidades de:
+---
 
-* Painel de Liderança (Métricas)
-* Check-in de participantes
-* Controle de Sincronização
+## ⚙️ Configuração do Ambiente (.env)
 
-## 📱 Funcionalidades
+Crie arquivos `.env` na raiz do projeto e dentro do diretório `/backend`. Utilize as chaves conforme o modelo abaixo:
 
-* **Inscrição:** Cadastro de novos participantes via formulário fluido.
-* **Check-in:** Validação de ingressos via QR Code ou código manual.
-* **Painel Admin:** Visualização de estatísticas em tempo real.
+```env
+# URL do Supabase com pooling de conexões (porta 6543) - Usada em produção/servidor
+DATABASE_URL="postgresql://postgres.xxx:senha@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+
+# URL de conexão direta ao Supabase (porta 5432) - Usada para migrations e pushes
+DIRECT_URL="postgresql://postgres.xxx:senha@aws-0-sa-east-1.pooler.supabase.com:5432/postgres"
+
+# Segurança
+JWT_SECRET="gere-um-segredo-hexadecimal-forte-para-jwt"
+COOKIE_SECRET="gere-outro-segredo-forte-para-cookies"
+
+# CORS / URL do Frontend
+FRONTEND_URL="http://localhost:3000"
+```
+
+---
+
+## 🚀 Como Executar Localmente
+
+### Pré-requisitos
+- Node.js (versão 18 ou superior)
+- NPM instalado
+
+### Passo 1: Instalar Dependências e Gerar o Prisma Client
+Na raiz do projeto, instale os pacotes principais e gere a tipagem do banco:
+```bash
+npm install
+```
+Instale também as dependências da API NestJS dentro da pasta `backend`:
+```bash
+cd backend
+npm install
+cd ..
+```
+
+### Passo 2: Inicializar o Banco de Dados
+Certifique-se de configurar as strings do Supabase no `.env` e aplique as tabelas no banco:
+```bash
+# Sincroniza o schema.prisma com o Supabase
+npm run prisma:db-push
+
+# Popula o banco com o usuário administrador inicial
+npx prisma db seed --schema=backend/prisma/schema.prisma
+```
+*(O administrador padrão gerado é `lucassantos.-@outlook.com` com a senha `presidente123`)*.
+
+### Passo 3: Iniciar as Aplicações
+Em terminais separados:
+
+- **Iniciar API Backend** (porta `3001` padrão para proxy local):
+  ```bash
+  cd backend
+  npm run start:dev
+  ```
+- **Iniciar Frontend React (Vite)** (porta `3000` padrão):
+  ```bash
+  npm run dev
+  ```
+Acesse o sistema localmente em: `http://localhost:3000`
+
+---
+
+## 🧪 Testes Automatizados (Backend)
+
+O backend possui testes de ponta-a-ponta (E2E) robustos que validam segurança de rotas, LGPD, auth por cookies e persistência de dados. Para executá-los:
+
+```bash
+cd backend
+npm run test:e2e
+```
+
+---
+
+## 🌐 Como Implantar na Vercel
+
+O projeto está totalmente configurado para deploy serverless de monorepos na Vercel através do arquivo `vercel.json` e do handler em `api/index.ts`.
+
+1. **GitHub**: Suba o código para o seu repositório pessoal do GitHub.
+2. **Painel Vercel**: Importe o projeto a partir do repositório conectado.
+3. **Configuração de Build**:
+   - Framework Preset: `Vite`
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+4. **Variáveis de Ambiente**:
+   No menu *Environment Variables* da Vercel, cadastre as mesmas chaves do seu arquivo `.env`:
+   - `DATABASE_URL` (com pooling / porta 6543)
+   - `DIRECT_URL` (conexão direta / porta 5432)
+   - `JWT_SECRET`
+   - `COOKIE_SECRET`
+   - `FRONTEND_URL` (o domínio final do seu app gerado na Vercel)
+5. **Deploy**: Clique em **Deploy**. A Vercel servirá a SPA estática em `/` e compilará o NestJS em `/api/*` em uma única implantação serverless e segura.
