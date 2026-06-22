@@ -185,4 +185,48 @@ CREATE TRIGGER on_auth_user_created
 -- Promover retroativamente o usuário administrador principal
 UPDATE auth.users
 SET raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::jsonb) || '{"role": "admin"}'::jsonb
-WHERE email = 'presidente@olharjovem.org';
+WHERE email = 'lucassantos.-@outlook.com';
+
+-- ADMIN USERS (Sincronizado com Supabase Auth)
+
+-- Tabela admin_users
+CREATE TABLE IF NOT EXISTS admin_users (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT NOT NULL UNIQUE,
+  full_name TEXT,
+  role TEXT DEFAULT 'admin',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Habilitar RLS
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+
+-- Políticas
+DROP POLICY IF EXISTS "Admin: Controle total de admin_users" ON admin_users;
+CREATE POLICY "Admin: Controle total de admin_users" 
+ON admin_users FOR ALL 
+TO authenticated 
+USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin')
+WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
+-- Trigger para sincronizar auth.users com admin_users
+CREATE OR REPLACE FUNCTION public.sync_admin_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.admin_users (id, email, full_name, role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    NEW.raw_user_meta_data->>'full_name',
+    COALESCE(NEW.raw_app_meta_data->>'role', 'admin')
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created_sync ON auth.users;
+CREATE TRIGGER on_auth_user_created_sync
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_admin_user();

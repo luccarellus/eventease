@@ -8,24 +8,18 @@ datasource db {
 
 
 // ==========================================
-// User Authentication (Local - sem Supabase)
+// Admin Users (Sincronizado com Supabase Auth)
 // ==========================================
-model User {
-  id            String    @id @default(uuid())
+model AdminUser {
+  id            String    @id @db.Uuid
   email         String    @unique
-  password      String
   fullName      String?
-  role          String    @default("user")
+  role          String    @default("admin")
   
-  // LGPD Fields
-  acceptedTerms Boolean   @default(false)
-  termsAcceptedAt DateTime?
-  dataConsent   Boolean   @default(false)
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt     DateTime  @updatedAt @db.Timestamptz @map("updated_at")
 
-  @@map("users")
+  @@map("admin_users")
 }
 
 // ==========================================
