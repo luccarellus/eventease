@@ -216,12 +216,14 @@ WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 CREATE OR REPLACE FUNCTION public.sync_admin_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.admin_users (id, email, full_name, role)
+  INSERT INTO public.admin_users (id, email, full_name, role, created_at, updated_at)
   VALUES (
     NEW.id,
     NEW.email,
     NEW.raw_user_meta_data->>'full_name',
-    COALESCE(NEW.raw_app_meta_data->>'role', 'admin')
+    COALESCE(NEW.raw_app_meta_data->>'role', 'admin'),
+    COALESCE(NEW.created_at, now()),
+    COALESCE(NEW.created_at, now())
   );
   RETURN NEW;
 END;
@@ -270,12 +272,14 @@ CREATE TRIGGER on_auth_user_deleted_sync
   EXECUTE FUNCTION public.sync_admin_user_delete();
 
 -- 4. Sincronizar retroativamente os usuários já existentes no Supabase Auth
-INSERT INTO public.admin_users (id, email, full_name, role)
+INSERT INTO public.admin_users (id, email, full_name, role, created_at, updated_at)
 SELECT 
   id, 
   email, 
   raw_user_meta_data->>'full_name', 
-  COALESCE(raw_app_meta_data->>'role', 'admin')
+  COALESCE(raw_app_meta_data->>'role', 'admin'),
+  COALESCE(created_at, now()),
+  COALESCE(created_at, now())
 FROM auth.users
 ON CONFLICT (id) DO NOTHING;
 
