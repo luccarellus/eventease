@@ -193,7 +193,7 @@ WHERE email = 'lucassantos.-@outlook.com';
 DROP TABLE IF EXISTS admin_users CASCADE;
 
 CREATE TABLE admin_users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY, -- Sem foreign key direta com auth.users para evitar restrição cross-schema do Prisma
   email TEXT NOT NULL UNIQUE,
   full_name TEXT,
   role TEXT DEFAULT 'admin',
@@ -254,7 +254,22 @@ CREATE TRIGGER on_auth_user_updated_sync
   FOR EACH ROW
   EXECUTE FUNCTION public.sync_admin_user_update();
 
--- 3. Sincronizar retroativamente os usuários já existentes no Supabase Auth
+-- 3. Trigger para sincronizar EXCLUSÕES no auth.users com admin_users (Simulando ON DELETE CASCADE)
+CREATE OR REPLACE FUNCTION public.sync_admin_user_delete()
+RETURNS trigger AS $$
+BEGIN
+  DELETE FROM public.admin_users WHERE id = OLD.id;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_deleted_sync ON auth.users;
+CREATE TRIGGER on_auth_user_deleted_sync
+  AFTER DELETE ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_admin_user_delete();
+
+-- 4. Sincronizar retroativamente os usuários já existentes no Supabase Auth
 INSERT INTO public.admin_users (id, email, full_name, role)
 SELECT 
   id, 
@@ -263,4 +278,5 @@ SELECT
   COALESCE(raw_app_meta_data->>'role', 'admin')
 FROM auth.users
 ON CONFLICT (id) DO NOTHING;
+
 
