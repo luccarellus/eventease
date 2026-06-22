@@ -73,15 +73,25 @@ export class AuthService {
   }
 
   async validateUser(email: string, pass: string): Promise<{ id: string; email: string; role: string; fullName: string | null } | null> {
+    console.log(`[Login Debug] Tentando autenticar e-mail: ${email}`);
+    
     // 1. Fazer login no Supabase Auth usando o email e senha passados
     const { data, error } = await this.supabase.auth.signInWithPassword({
       email: email.toLowerCase().trim(),
       password: pass,
     });
 
-    if (error || !data.user) {
+    if (error) {
+      console.error(`[Login Debug] Erro no Supabase Auth: ${error.message} (status: ${error.status})`);
       return null;
     }
+
+    if (!data.user) {
+      console.error(`[Login Debug] Supabase Auth não retornou objeto de usuário.`);
+      return null;
+    }
+
+    console.log(`[Login Debug] Login no Supabase Auth bem-sucedido! UUID: ${data.user.id}`);
 
     // 2. Verificar se o usuário existe na tabela pública de administradores (admin_users)
     const dbUser = await this.prisma.adminUser.findUnique({
@@ -89,9 +99,11 @@ export class AuthService {
     });
 
     if (!dbUser) {
+      console.warn(`[Login Debug] UUID ${data.user.id} existe no Supabase Auth, mas NÃO existe na tabela pública admin_users.`);
       return null;
     }
 
+    console.log(`[Login Debug] Usuário encontrado na tabela admin_users! Role: ${dbUser.role}`);
     return {
       id: dbUser.id,
       email: dbUser.email,
