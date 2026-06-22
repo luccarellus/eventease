@@ -24,9 +24,9 @@ export class CreateParticipantDto {
   @IsString()
   gremio?: string;
 
-  @IsOptional()
   @IsString()
-  codigo?: string;
+  @IsNotEmpty({ message: 'Código é obrigatório' })
+  codigo!: string;
 
   @IsOptional()
   @IsBoolean()

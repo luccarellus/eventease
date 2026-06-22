@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../backend/src/app.module';
-import { configureApp } from '../backend/src/common/bootstrap.config';
+import { AppModule } from '../backend/dist/app.module.js';
+import { configureApp } from '../backend/dist/common/bootstrap.config.js';
 
 let cachedServer: any;
 

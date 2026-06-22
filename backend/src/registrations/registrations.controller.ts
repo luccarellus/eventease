@@ -4,6 +4,7 @@ import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateRegistrationDto } from './dto/create-registration.dto';
 import { UpdateRegistrationDto } from './dto/update-registration.dto';
 import { Throttle } from '@nestjs/throttler';
+import { toDateOrUndefined } from '../common/date.util';
 
 @Controller('registrations')
 export class RegistrationsController {
@@ -21,7 +22,7 @@ export class RegistrationsController {
       eventoId: data.eventoId,
       participanteId: data.participanteId,
       presente: data.presente ?? false,
-      confirmado_em: data.confirmado_em ? new Date(data.confirmado_em) : undefined,
+      confirmado_em: toDateOrUndefined(data.confirmado_em),
     });
   }
 
@@ -57,7 +58,7 @@ export class RegistrationsController {
   update(@Param('id') id: string, @Body() data: UpdateRegistrationDto) {
     return this.registrationsService.update(id, {
       presente: data.presente,
-      confirmado_em: data.confirmado_em ? new Date(data.confirmado_em) : undefined,
+      confirmado_em: toDateOrUndefined(data.confirmado_em),
     });
   }
 
@@ -67,4 +68,3 @@ export class RegistrationsController {
     return this.registrationsService.remove(id);
   }
 }
-

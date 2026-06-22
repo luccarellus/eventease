@@ -3,7 +3,6 @@ import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 import { throwUniqueConstraintError } from '../common/prisma-error.util';
 
-// Campos retornados em endpoints públicos (minimização de dados - LGPD)
 const PUBLIC_PARTICIPANT_SELECT = {
   id: true,
   nome: true,
@@ -13,6 +12,32 @@ const PUBLIC_PARTICIPANT_SELECT = {
 @Injectable()
 export class ParticipantsService {
   constructor(private prisma: PrismaService) {}
+
+  private async findByEmailQuery(email: string, select?: Prisma.ParticipanteSelect) {
+    const participant = await this.prisma.participante.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
+      select,
+    });
+
+    if (!participant) {
+      throw new NotFoundException('Participante não encontrado');
+    }
+
+    return participant;
+  }
+
+  private async findByCodeQuery(codigo: string, select?: Prisma.ParticipanteSelect) {
+    const participant = await this.prisma.participante.findUnique({
+      where: { codigo },
+      select,
+    });
+
+    if (!participant) {
+      throw new NotFoundException('Participante não encontrado');
+    }
+
+    return participant;
+  }
 
   async create(data: Prisma.ParticipanteCreateInput) {
     try {
@@ -29,50 +54,20 @@ export class ParticipantsService {
     });
   }
 
-  /**
-   * Busca por email para uso interno/admin — retorna dados completos.
-   */
   async findByEmail(email: string) {
-    const p = await this.prisma.participante.findFirst({
-      where: { email: { equals: email, mode: 'insensitive' } },
-    });
-    if (!p) throw new NotFoundException('Participante não encontrado');
-    return p;
+    return this.findByEmailQuery(email);
   }
 
-  /**
-   * Busca por email para endpoints públicos — retorna apenas dados mínimos (LGPD).
-   */
   async findByEmailPublic(email: string) {
-    const p = await this.prisma.participante.findFirst({
-      where: { email: { equals: email, mode: 'insensitive' } },
-      select: PUBLIC_PARTICIPANT_SELECT,
-    });
-    if (!p) throw new NotFoundException('Participante não encontrado');
-    return p;
+    return this.findByEmailQuery(email, PUBLIC_PARTICIPANT_SELECT);
   }
 
-  /**
-   * Busca por código para uso interno/admin — retorna dados completos.
-   */
   async findByCode(codigo: string) {
-    const p = await this.prisma.participante.findUnique({
-      where: { codigo },
-    });
-    if (!p) throw new NotFoundException('Participante não encontrado');
-    return p;
+    return this.findByCodeQuery(codigo);
   }
 
-  /**
-   * Busca por código para endpoints públicos — retorna apenas dados mínimos (LGPD).
-   */
   async findByCodePublic(codigo: string) {
-    const p = await this.prisma.participante.findUnique({
-      where: { codigo },
-      select: PUBLIC_PARTICIPANT_SELECT,
-    });
-    if (!p) throw new NotFoundException('Participante não encontrado');
-    return p;
+    return this.findByCodeQuery(codigo, PUBLIC_PARTICIPANT_SELECT);
   }
 
   async remove(id: string) {
@@ -80,9 +75,8 @@ export class ParticipantsService {
       return await this.prisma.participante.delete({
         where: { id },
       });
-    } catch (error) {
+    } catch {
       throw new NotFoundException('Participante não encontrado para exclusão');
     }
   }
 }
-

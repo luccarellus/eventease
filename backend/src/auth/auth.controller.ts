@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Res, Body, UnauthorizedException, UseGuards, BadRequestException, Req } from '@nestjs/common';
+import { Controller, Get, Post, Res, Body, UnauthorizedException, UseGuards, Req } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt.guard';
@@ -8,6 +8,11 @@ import { Throttle } from '@nestjs/throttler';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { SetRoleDto } from './dto/set-role.dto';
+import {
+  getAccessTokenCookieOptions,
+  getRefreshTokenCookieOptions,
+  getRefreshTokenClearCookieOptions,
+} from '../common/cookie-options.util';
 
 @Controller('auth')
 export class AuthController {
@@ -48,20 +53,8 @@ export class AuthController {
 
     const { accessToken, refreshToken } = await this.authService.generateTokens(user);
 
-    response.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // Configurado como 'strict' para mitigar CSRF
-      maxAge: 15 * 60 * 1000, // 15m
-    });
-
-    response.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // Configurado como 'strict' para mitigar CSRF
-      path: '/auth/refresh', // Apenas enviado para a rota de refresh
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7d
-    });
+    response.cookie('access_token', accessToken, getAccessTokenCookieOptions());
+    response.cookie('refresh_token', refreshToken, getRefreshTokenCookieOptions());
 
     return { message: 'Login bem-sucedido', user };
   }
@@ -77,12 +70,7 @@ export class AuthController {
     const user = await this.authService.validateRefreshToken(refreshToken);
     const { accessToken } = await this.authService.generateTokens(user);
 
-    response.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15m
-    });
+    response.cookie('access_token', accessToken, getAccessTokenCookieOptions());
 
     return { message: 'Token renovado com sucesso.' };
   }
@@ -96,8 +84,7 @@ export class AuthController {
   @Post('logout')
   async logout(@Res({ passthrough: true }) response: Response) {
     response.clearCookie('access_token');
-    response.clearCookie('refresh_token', { path: '/auth/refresh' });
+    response.clearCookie('refresh_token', getRefreshTokenClearCookieOptions());
     return { message: 'Logout bem-sucedido' };
   }
 }
-

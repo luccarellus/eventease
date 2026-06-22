@@ -22,6 +22,43 @@ const Login = lazy(() => import('@/pages/Login'));
 const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ReactNode;
+  isActive: (pathname: string, search: string) => boolean;
+};
+
+const PUBLIC_NAV_ITEMS: NavItem[] = [
+  {
+    to: '/',
+    label: 'Eventos',
+    icon: <Calendar className="w-4 h-4" />,
+    isActive: (pathname, search) => pathname === '/' && !search.includes('buscar-credencial'),
+  },
+  {
+    to: '/?buscar-credencial=true',
+    label: 'Minha Credencial',
+    icon: <UserCheck className="w-4 h-4" />,
+    isActive: (_, search) => search.includes('buscar-credencial'),
+  },
+];
+
+const ADMIN_NAV_ITEMS: NavItem[] = [
+  {
+    to: '/confirmar',
+    label: 'Check-in',
+    icon: <UserCheck className="w-4 h-4" />,
+    isActive: (pathname) => pathname === '/confirmar',
+  },
+  {
+    to: '/admin',
+    label: 'Dashboard',
+    icon: <LayoutDashboard className="w-4 h-4" />,
+    isActive: (pathname) => pathname === '/admin',
+  },
+];
+
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center min-h-[50vh]">
@@ -36,6 +73,7 @@ function LoadingSpinner() {
 function Navbar() {
   const location = useLocation();
   const { userIsAdmin, signOut } = useAuth();
+  const navItems = userIsAdmin ? ADMIN_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-xl">
@@ -50,17 +88,18 @@ function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
-          {!userIsAdmin && (
-            <>
-              <NavLink to="/" icon={<Calendar className="w-4 h-4" />} label="Eventos" active={location.pathname === '/' && !location.search.includes('buscar-credencial')} />
-              <NavLink to="/?buscar-credencial=true" icon={<UserCheck className="w-4 h-4" />} label="Minha Credencial" active={location.search.includes('buscar-credencial')} />
-            </>
-          )}
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              icon={item.icon}
+              label={item.label}
+              active={item.isActive(location.pathname, location.search)}
+            />
+          ))}
 
           {userIsAdmin && (
             <>
-              <NavLink to="/confirmar" icon={<UserCheck className="w-4 h-4" />} label="Check-in" active={location.pathname === '/confirmar'} />
-              <NavLink to="/admin" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" active={location.pathname === '/admin'} />
               <Button
                 variant="ghost"
                 size="sm"
@@ -93,6 +132,7 @@ function Navbar() {
 function BottomNav() {
   const location = useLocation();
   const { userIsAdmin } = useAuth();
+  const navItems = userIsAdmin ? ADMIN_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
@@ -101,19 +141,14 @@ function BottomNav() {
         animate={{ y: 0, opacity: 1 }}
         className="bg-black/70 backdrop-blur-3xl saturate-150 border-t border-white/10 rounded-t-3xl p-3 pb-8 flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.8)] pointer-events-auto"
       >
-        {!userIsAdmin && (
-          <>
-            <MobileNavLink to="/" icon={<Calendar className="w-6 h-6" />} active={location.pathname === '/' && !location.search.includes('buscar-credencial')} />
-            <MobileNavLink to="/?buscar-credencial=true" icon={<UserCheck className="w-6 h-6" />} active={location.search.includes('buscar-credencial')} />
-          </>
-        )}
-
-        {userIsAdmin && (
-          <>
-            <MobileNavLink to="/confirmar" icon={<UserCheck className="w-6 h-6" />} active={location.pathname === '/confirmar'} />
-            <MobileNavLink to="/admin" icon={<LayoutDashboard className="w-6 h-6" />} active={location.pathname.startsWith('/admin')} />
-          </>
-        )}
+        {navItems.map((item) => (
+          <MobileNavLink
+            key={item.to}
+            to={item.to}
+            icon={item.icon}
+            active={item.isActive(location.pathname, location.search)}
+          />
+        ))}
       </motion.div>
     </div>
   );
@@ -124,10 +159,10 @@ function MobileNavLink({ to, icon, active }: { to: string; icon: React.ReactNode
     <Link
       to={to}
       className={cn(
-        "flex flex-col items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500",
+        'flex flex-col items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500',
         active
-          ? "bg-primary text-white shadow-lg shadow-primary/40 scale-110 -translate-y-2"
-          : "text-white/30 hover:text-white/60"
+          ? 'bg-primary text-white shadow-lg shadow-primary/40 scale-110 -translate-y-2'
+          : 'text-white/30 hover:text-white/60',
       )}
     >
       {icon}
@@ -140,10 +175,10 @@ function NavLink({ to, icon, label, active }: { to: string; icon: React.ReactNod
     <Link
       to={to}
       className={cn(
-        "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all",
+        'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all',
         active
-          ? "bg-white/10 text-white border border-white/10 shadow-sm"
-          : "text-white/40 hover:text-white hover:bg-white/5"
+          ? 'bg-white/10 text-white border border-white/10 shadow-sm'
+          : 'text-white/40 hover:text-white hover:bg-white/5',
       )}
     >
       {icon}
@@ -161,9 +196,9 @@ function MaintenanceScreen() {
         <div className="flex justify-center">
           <img src="/logo_oficial.png" alt="Olhar Jovem" className="h-16 md:h-20 w-auto" />
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Estamos em Manutenção</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Estamos em ManutenÃ§Ã£o</h1>
         <p className="text-white/60 text-lg md:text-xl leading-relaxed">
-          Nosso sistema está passando por melhorias no momento. Voltaremos em breve com novidades!
+          Nosso sistema estÃ¡ passando por melhorias no momento. Voltaremos em breve com novidades!
         </p>
       </div>
     </div>
@@ -195,16 +230,22 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/eventos" element={<Home />} />
-            <Route path="/confirmar" element={
-              <ProtectedRoute>
-                <Confirm />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <Admin />
-              </ProtectedRoute>
-            } />
+            <Route
+              path="/confirmar"
+              element={
+                <ProtectedRoute>
+                  <Confirm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/login" element={<Login />} />
             <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
             <Route path="/termos" element={<TermsOfService />} />

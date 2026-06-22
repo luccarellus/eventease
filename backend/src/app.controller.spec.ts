@@ -1,2 +1,0 @@
-// AppController spec neutralized.
-export {};

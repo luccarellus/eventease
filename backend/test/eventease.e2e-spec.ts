@@ -116,7 +116,7 @@ describe('EventEase E2E Test Suite', () => {
       const cookies = response.headers['set-cookie'];
       expect(cookies).toBeDefined();
       expect(cookies.length).toBeGreaterThan(0);
-      adminCookies = cookies;
+      adminCookies = Array.isArray(cookies) ? cookies : cookies ? [cookies] : [];
     });
 
     it('deve permitir acesso a /auth/me usando cookies de administrador', async () => {

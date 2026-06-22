@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useSearchParams, Link } from 'react-router-dom';
 import { api } from '@/lib/api';
+import { generateCredentialCode } from '@/lib/credential-code';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -204,18 +205,6 @@ export default function Home() {
     return [...schools].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [selectedCity, schoolsData]);
 
-  const generateCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const array = new Uint8Array(6);
-    crypto.getRandomValues(array);
-    let code = '';
-    for (let i = 0; i < 6; i++) {
-      code += chars[array[i] % chars.length];
-    }
-    return `EVT-${code}`;
-  };
-
-
   const linkParticipantToEvent = async (eventId: string, participantId: string) => {
     const checkRegRes = await api.get(`/registrations/check/${eventId}/${participantId}`);
     const registrationExists = checkRegRes.ok ? (await checkRegRes.json()).registered : false;
@@ -264,7 +253,7 @@ export default function Home() {
         return;
       } else {
         // Criar participante novo
-        const generatedCode = generateCode();
+        const generatedCode = generateCredentialCode();
         const createRes = await api.post('/participants', {
           nome: formData.nome,
           email: formData.email,

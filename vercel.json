@@ -2,7 +2,10 @@
   "version": 2,
   "functions": {
     "api/index.ts": {
-      "includeFiles": "node_modules/.prisma/client/libquery_engine-*"
+      "includeFiles": [
+        "node_modules/.prisma/client/libquery_engine-*",
+        "backend/dist/**"
+      ]
     }
   },
   "rewrites": [

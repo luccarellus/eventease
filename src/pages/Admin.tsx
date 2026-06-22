@@ -59,6 +59,7 @@ import {
 } from 'recharts';
 import Papa from 'papaparse';
 import { cn } from '@/lib/utils';
+import { generateCredentialCode } from '@/lib/credential-code';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -245,14 +246,7 @@ export default function Admin() {
 
   const handleAddStudentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const array = new Uint8Array(6);
-    crypto.getRandomValues(array);
-    let codigo = '';
-    for (let i = 0; i < 6; i++) {
-      codigo += chars[array[i] % chars.length];
-    }
-    const finalCode = `EVT-${codigo}`;
+    const finalCode = generateCredentialCode();
 
 
     try {
