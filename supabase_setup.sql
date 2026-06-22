@@ -189,8 +189,10 @@ WHERE email = 'lucassantos.-@outlook.com';
 
 -- ADMIN USERS (Sincronizado com Supabase Auth)
 
--- Tabela admin_users
-CREATE TABLE IF NOT EXISTS admin_users (
+-- Recriar a tabela admin_users garantindo o nome correto das colunas
+DROP TABLE IF EXISTS admin_users CASCADE;
+
+CREATE TABLE admin_users (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL UNIQUE,
   full_name TEXT,
@@ -210,7 +212,7 @@ TO authenticated
 USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin')
 WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
--- Trigger para sincronizar auth.users com admin_users
+-- 1. Trigger para sincronizar INSERSÕES no auth.users com admin_users
 CREATE OR REPLACE FUNCTION public.sync_admin_user()
 RETURNS trigger AS $$
 BEGIN
@@ -230,3 +232,35 @@ CREATE TRIGGER on_auth_user_created_sync
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.sync_admin_user();
+
+-- 2. Trigger para sincronizar ATUALIZAÇÕES no auth.users com admin_users
+CREATE OR REPLACE FUNCTION public.sync_admin_user_update()
+RETURNS trigger AS $$
+BEGIN
+  UPDATE public.admin_users
+  SET 
+    email = NEW.email,
+    full_name = NEW.raw_user_meta_data->>'full_name',
+    role = COALESCE(NEW.raw_app_meta_data->>'role', 'admin'),
+    updated_at = now()
+  WHERE id = NEW.id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_updated_sync ON auth.users;
+CREATE TRIGGER on_auth_user_updated_sync
+  AFTER UPDATE ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_admin_user_update();
+
+-- 3. Sincronizar retroativamente os usuários já existentes no Supabase Auth
+INSERT INTO public.admin_users (id, email, full_name, role)
+SELECT 
+  id, 
+  email, 
+  raw_user_meta_data->>'full_name', 
+  COALESCE(raw_app_meta_data->>'role', 'admin')
+FROM auth.users
+ON CONFLICT (id) DO NOTHING;
+

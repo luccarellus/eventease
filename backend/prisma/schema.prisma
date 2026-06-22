@@ -13,7 +13,7 @@ datasource db {
 model AdminUser {
   id            String    @id @db.Uuid
   email         String    @unique
-  fullName      String?
+  fullName      String?   @map("full_name")
   role          String    @default("admin")
   
   createdAt     DateTime  @default(now()) @db.Timestamptz @map("created_at")

@@ -1,25 +1,40 @@
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
-import * as bcrypt from 'bcrypt';
+import { createClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class AuthService {
+  private supabase = createClient(
+    process.env.SUPABASE_URL!,
+    process.env.SUPABASE_ANON_KEY!
+  );
+
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
   ) {}
 
   async updateUserRole(userId: string, role: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.adminUser.findUnique({ where: { id: userId } });
 
     if (!user) {
       throw new NotFoundException(`Usuário com ID ${userId} não encontrado.`);
     }
 
-    const updated = await this.prisma.user.update({
+    // 1. Atualizar a role no banco de dados local public.admin_users
+    const updated = await this.prisma.adminUser.update({
       where: { id: userId },
       data: { role },
+    });
+
+    // 2. Atualizar a role no app_metadata do Supabase Auth para consistência do JWT
+    const supabaseService = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    await supabaseService.auth.admin.updateUserById(userId, {
+      app_metadata: { role },
     });
 
     return {
@@ -47,7 +62,7 @@ export class AuthService {
   async validateRefreshToken(token: string): Promise<{ id: string; email: string; role: string }> {
     try {
       const payload = await this.jwtService.verifyAsync(token);
-      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+      const user = await this.prisma.adminUser.findUnique({ where: { id: payload.sub } });
       if (!user) {
         throw new UnauthorizedException('Usuário não encontrado.');
       }
@@ -58,29 +73,35 @@ export class AuthService {
   }
 
   async validateUser(email: string, pass: string): Promise<{ id: string; email: string; role: string; fullName: string | null } | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+    // 1. Fazer login no Supabase Auth usando o email e senha passados
+    const { data, error } = await this.supabase.auth.signInWithPassword({
+      email: email.toLowerCase().trim(),
+      password: pass,
     });
 
-    if (!user) {
+    if (error || !data.user) {
       return null;
     }
 
-    const passwordMatch = await bcrypt.compare(pass, user.password);
-    if (!passwordMatch) {
+    // 2. Verificar se o usuário existe na tabela pública de administradores (admin_users)
+    const dbUser = await this.prisma.adminUser.findUnique({
+      where: { id: data.user.id },
+    });
+
+    if (!dbUser) {
       return null;
     }
 
     return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      fullName: user.fullName ?? null,
+      id: dbUser.id,
+      email: dbUser.email,
+      role: dbUser.role,
+      fullName: dbUser.fullName ?? null,
     };
   }
 
   async registerUser(email: string, pass: string, fullName?: string) {
-    const existing = await this.prisma.user.findUnique({
+    const existing = await this.prisma.adminUser.findUnique({
       where: { email: email.toLowerCase().trim() },
     });
 
@@ -88,16 +109,35 @@ export class AuthService {
       throw new UnauthorizedException('Este e-mail já está cadastrado.');
     }
 
-    const hashedPassword = await bcrypt.hash(pass, 12);
-
-    const user = await this.prisma.user.create({
-      data: {
-        email: email.toLowerCase().trim(),
-        password: hashedPassword,
-        fullName: fullName ?? null,
-        role: 'user',
+    // 1. Registrar no Supabase Auth
+    const { data, error } = await this.supabase.auth.signUp({
+      email: email.toLowerCase().trim(),
+      password: pass,
+      options: {
+        data: {
+          full_name: fullName,
+        },
       },
     });
+
+    if (error || !data.user) {
+      throw new UnauthorizedException(error?.message || 'Falha ao registrar usuário no Supabase Auth.');
+    }
+
+    // 2. Verificar se a trigger já populou o banco local
+    let user = await this.prisma.adminUser.findUnique({ where: { id: data.user.id } });
+
+    // Fallback caso a trigger de banco demore ou falhe temporariamente
+    if (!user) {
+      user = await this.prisma.adminUser.create({
+        data: {
+          id: data.user.id,
+          email: email.toLowerCase().trim(),
+          fullName: fullName ?? null,
+          role: 'admin',
+        },
+      });
+    }
 
     return {
       id: user.id,

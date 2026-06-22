@@ -46,7 +46,7 @@ describe('EventEase E2E Test Suite', () => {
         await prisma.participante.delete({ where: { id: testParticipantId } }).catch(() => {});
       }
       if (testUserId) {
-        await prisma.user.delete({ where: { id: testUserId } }).catch(() => {});
+        await prisma.adminUser.delete({ where: { id: testUserId } }).catch(() => {});
       }
     } catch (cleanupError) {
       console.warn('Erro ao limpar dados de teste:', cleanupError);
