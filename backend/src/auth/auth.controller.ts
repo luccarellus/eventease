@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Res, Body, UnauthorizedException, UseGuards, BadRequestException, Req } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -19,7 +19,7 @@ export class AuthController {
   async setRole(@Body() setRoleDto: SetRoleDto) {
     const updatedUser = await this.authService.updateUserRole(setRoleDto.userId, setRoleDto.role);
     return {
-      message: 'Role do usuário atualizada com sucesso no Supabase!',
+      message: 'Role do usuário atualizada com sucesso!',
       user: {
         id: updatedUser.id,
         email: updatedUser.email,
@@ -66,6 +66,27 @@ export class AuthController {
     return { message: 'Login bem-sucedido', user };
   }
 
+  @Post('refresh')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
+    const refreshToken = (req as any).cookies?.refresh_token;
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token não encontrado.');
+    }
+
+    const user = await this.authService.validateRefreshToken(refreshToken);
+    const { accessToken } = await this.authService.generateTokens(user);
+
+    response.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15m
+    });
+
+    return { message: 'Token renovado com sucesso.' };
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   getMe(@Req() req: any) {
@@ -75,7 +96,8 @@ export class AuthController {
   @Post('logout')
   async logout(@Res({ passthrough: true }) response: Response) {
     response.clearCookie('access_token');
-    response.clearCookie('refresh_token');
+    response.clearCookie('refresh_token', { path: '/auth/refresh' });
     return { message: 'Logout bem-sucedido' };
   }
 }
+

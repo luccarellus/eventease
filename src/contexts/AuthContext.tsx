@@ -29,9 +29,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
-      } else {
-        setUser(null);
+        return;
       }
+
+      // Se 401, tenta renovar o access token via refresh token
+      if (res.status === 401) {
+        const refreshRes = await api.post('/auth/refresh', {});
+        if (refreshRes.ok) {
+          // Refresh OK — tenta buscar o usuário novamente
+          const retryRes = await api.get('/auth/me');
+          if (retryRes.ok) {
+            const data = await retryRes.json();
+            setUser(data.user);
+            return;
+          }
+        }
+      }
+
+      setUser(null);
     } catch {
       setUser(null);
     } finally {
@@ -69,3 +84,4 @@ export const useAuth = (): AuthContextType => {
   }
   return context as AuthContextType;
 };
+

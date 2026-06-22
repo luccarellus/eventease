@@ -161,12 +161,13 @@ export default function Login() {
           className="mt-10 p-6 bg-white/[0.02] border border-white/[0.08] rounded-3xl backdrop-blur-xl"
         >
           <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-3 flex items-center gap-2">
-            <div className="w-1 h-1 rounded-full bg-primary" /> Sugestão de Setup
+            <div className="w-1 h-1 rounded-full bg-primary" /> Informação de Acesso
           </p>
           <p className="text-white/30 text-xs leading-relaxed font-medium">
-            O acesso é protegido por políticas RLS de nível empresarial.
+            O acesso é protegido por autenticação JWT com tokens de curta duração e refresh automático.
           </p>
         </motion.div>
+
       </motion.div>
     </div>
   );

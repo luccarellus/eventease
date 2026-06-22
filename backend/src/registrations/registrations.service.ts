@@ -12,6 +12,8 @@ export class RegistrationsService {
       return await this.prisma.inscricaoEvento.create({ data });
     } catch (error) {
       throwUniqueConstraintError(error, 'Participante já está inscrito neste evento.');
+      // throwUniqueConstraintError always throws, but TypeScript needs this:
+      throw error;
     }
   }
 

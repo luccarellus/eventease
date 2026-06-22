@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { Participante, Evento, InscricaoEvento } from '@/types/index';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
@@ -108,6 +109,7 @@ export default function Admin() {
   const [searchStudentForEvent, setSearchStudentForEvent] = useState('');
 
   const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   const fetchData = async () => {
     setLoading(true);
@@ -217,7 +219,7 @@ export default function Admin() {
   }, [selectedEvento, participantes]);
 
   const handleLogout = async () => {
-    await api.post('/auth/logout', {});
+    await signOut();
     navigate('/login');
   };
 
@@ -239,11 +241,14 @@ export default function Admin() {
   const handleAddStudentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const array = new Uint8Array(6);
+    crypto.getRandomValues(array);
     let codigo = '';
     for (let i = 0; i < 6; i++) {
-      codigo += chars.charAt(Math.floor(Math.random() * chars.length));
+      codigo += chars[array[i] % chars.length];
     }
     const finalCode = `EVT-${codigo}`;
+
 
     try {
       const res = await api.post('/participants', {
@@ -447,7 +452,7 @@ export default function Admin() {
   // Filtrar alunos que NÃO estão inscritos no evento selecionado (para adicionar)
   const studentsNotSubscribed = useMemo(() => {
     if (!selectedEvento) return [];
-    const subscribedIds = new Set(inscritosEvento.map((i: InscricaoEvento) => i.participante_id));
+    const subscribedIds = new Set(inscritosEvento.map((i: InscricaoEvento) => i.participanteId ?? i.participante_id));
     return participantes.filter((p: Participante) => {
       const isNotSubscribed = !subscribedIds.has(p.id);
       const matchesSearch =

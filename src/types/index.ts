@@ -38,9 +38,13 @@ export interface InscricaoEvento {
   id: string;
   evento_id: string;
   participante_id: string;
+  // API NestJS retorna em camelCase também
+  eventoId?: string;
+  participanteId?: string;
   presente: boolean;
   confirmado_em?: string;
   created_at: string;
   participantes?: Participante;
 }
+
 

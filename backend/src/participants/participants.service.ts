@@ -1,7 +1,17 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 import { throwUniqueConstraintError } from '../common/prisma-error.util';
+
+// Campos retornados em endpoints públicos (minimização de dados - LGPD)
+const PUBLIC_PARTICIPANT_SELECT = {
+  id: true,
+  nome: true,
+  codigo: true,
+  cidade: true,
+  escola: true,
+  gremio: true,
+} as const;
 
 @Injectable()
 export class ParticipantsService {
@@ -12,6 +22,7 @@ export class ParticipantsService {
       return await this.prisma.participante.create({ data });
     } catch (error) {
       throwUniqueConstraintError(error, 'Participante com este código ou email já existe.');
+      throw error;
     }
   }
 
@@ -21,6 +32,9 @@ export class ParticipantsService {
     });
   }
 
+  /**
+   * Busca por email para uso interno/admin — retorna dados completos.
+   */
   async findByEmail(email: string) {
     const p = await this.prisma.participante.findFirst({
       where: { email: { equals: email, mode: 'insensitive' } },
@@ -29,9 +43,36 @@ export class ParticipantsService {
     return p;
   }
 
+  /**
+   * Busca por email para endpoints públicos — retorna apenas dados mínimos (LGPD).
+   */
+  async findByEmailPublic(email: string) {
+    const p = await this.prisma.participante.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
+      select: PUBLIC_PARTICIPANT_SELECT,
+    });
+    if (!p) throw new NotFoundException('Participante não encontrado');
+    return p;
+  }
+
+  /**
+   * Busca por código para uso interno/admin — retorna dados completos.
+   */
   async findByCode(codigo: string) {
     const p = await this.prisma.participante.findUnique({
       where: { codigo },
+    });
+    if (!p) throw new NotFoundException('Participante não encontrado');
+    return p;
+  }
+
+  /**
+   * Busca por código para endpoints públicos — retorna apenas dados mínimos (LGPD).
+   */
+  async findByCodePublic(codigo: string) {
+    const p = await this.prisma.participante.findUnique({
+      where: { codigo },
+      select: PUBLIC_PARTICIPANT_SELECT,
     });
     if (!p) throw new NotFoundException('Participante não encontrado');
     return p;
@@ -47,3 +88,4 @@ export class ParticipantsService {
     }
   }
 }
+

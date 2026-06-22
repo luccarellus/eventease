@@ -7,14 +7,12 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  if (!process.env.JWT_SECRET) {
-    throw new Error('FATAL: A variável de ambiente JWT_SECRET não está definida.');
-  }
-  if (!process.env.COOKIE_SECRET) {
-    throw new Error('FATAL: A variável de ambiente COOKIE_SECRET não está definida.');
-  }
-  if (!process.env.FRONTEND_URL) {
-    throw new Error('FATAL: A variável de ambiente FRONTEND_URL não está definida.');
+  // Validações de variáveis de ambiente obrigatórias
+  const requiredEnvVars = ['JWT_SECRET', 'COOKIE_SECRET', 'FRONTEND_URL', 'DATABASE_URL'];
+  for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+      throw new Error(`FATAL: A variável de ambiente ${envVar} não está definida. Verifique o arquivo .env`);
+    }
   }
 
   // Security HTTP Headers
@@ -24,8 +22,9 @@ async function bootstrap() {
   app.use((cookieParser as any)(process.env.COOKIE_SECRET));
 
   // CORS Configuration
+  const allowedOrigins = process.env.FRONTEND_URL!.split(',').map(o => o.trim());
   app.enableCors({
-    origin: process.env.FRONTEND_URL.split(','),
+    origin: allowedOrigins,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization',
@@ -34,16 +33,19 @@ async function bootstrap() {
   // Global Validation Pipe
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
-    forbidNonWhitelisted: true,
+    forbidNonWhitelisted: false, // Permite campos extras sem rejeitar (necessário para formulários públicos)
     transform: true,
     transformOptions: {
       enableImplicitConversion: true,
     },
   }));
 
-  // Start Server
+  // Iniciar Servidor
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
+  console.log(`✅ EventEase API rodando em: http://localhost:${port}`);
+  console.log(`   Ambiente: ${process.env.NODE_ENV ?? 'development'}`);
+  console.log(`   CORS habilitado para: ${allowedOrigins.join(', ')}`);
 }
 bootstrap();
+

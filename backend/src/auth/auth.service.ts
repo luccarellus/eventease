@@ -40,6 +40,23 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  /**
+   * Valida um refresh token e retorna os dados do usuário.
+   * Lança UnauthorizedException se o token for inválido/expirado ou o usuário não existir.
+   */
+  async validateRefreshToken(token: string): Promise<{ id: string; email: string; role: string }> {
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+      if (!user) {
+        throw new UnauthorizedException('Usuário não encontrado.');
+      }
+      return { id: user.id, email: user.email, role: user.role };
+    } catch {
+      throw new UnauthorizedException('Refresh token inválido ou expirado. Faça login novamente.');
+    }
+  }
+
   async validateUser(email: string, pass: string): Promise<{ id: string; email: string; role: string; fullName: string | null } | null> {
     const user = await this.prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },

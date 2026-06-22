@@ -7,19 +7,31 @@ import { Prisma } from '@prisma/client';
 export class ParticipantsController {
   constructor(private readonly participantsService: ParticipantsService) {}
 
+  /**
+   * Endpoint público para criar participante (inscrição inicial no evento).
+   * Não requer autenticação pois é usado pelo formulário de inscrição público.
+   */
   @Post()
   create(@Body() data: Prisma.ParticipanteCreateInput) {
     return this.participantsService.create(data);
   }
 
+  /**
+   * Busca pública por e-mail — retorna apenas os dados mínimos necessários (id, nome, codigo).
+   * Usado para verificar cadastro antes de inscrição e buscar credencial.
+   */
   @Get('email/:email')
-  findByEmail(@Param('email') email: string) {
-    return this.participantsService.findByEmail(email);
+  async findByEmail(@Param('email') email: string) {
+    return this.participantsService.findByEmailPublic(email);
   }
 
+  /**
+   * Busca pública por código — retorna apenas os dados mínimos necessários (id, nome, codigo).
+   * Usado no check-in e na recuperação de credencial.
+   */
   @Get('code/:code')
-  findByCode(@Param('code') code: string) {
-    return this.participantsService.findByCode(code);
+  async findByCode(@Param('code') code: string) {
+    return this.participantsService.findByCodePublic(code);
   }
 
   @Get()
@@ -34,3 +46,4 @@ export class ParticipantsController {
     return this.participantsService.remove(id);
   }
 }
+

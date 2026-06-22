@@ -206,12 +206,15 @@ export default function Home() {
 
   const generateCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const array = new Uint8Array(6);
+    crypto.getRandomValues(array);
     let code = '';
     for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+      code += chars[array[i] % chars.length];
     }
     return `EVT-${code}`;
   };
+
 
   const linkParticipantToEvent = async (eventId: string, participantId: string) => {
     const checkRegRes = await api.get(`/registrations/check/${eventId}/${participantId}`);

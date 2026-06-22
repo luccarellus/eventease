@@ -103,13 +103,13 @@ export default function Confirm() {
     try {
       // 1. Obter o participante pelo código
       const partRes = await api.get(`/participants/code/${finalCode.toUpperCase().trim()}`);
-      
+
       if (!partRes.ok) {
         setResult({ status: 'notfound' });
         toast.error('Código de participante não encontrado.');
         return;
       }
-      
+
       const participante = await partRes.json();
 
       const selectedEvent = eventos.find(evt => evt.id === selectedEventoId);
@@ -124,18 +124,16 @@ export default function Confirm() {
       }
 
       if (hasRegistration) {
-        // Obter inscrição específica para verificar check-in (A API precisa retornar detalhes ou podemos tentar check-in direto e capturar erro)
-        // Para simplificar, faremos um PATCH pro backend e se já tiver, o backend lida.
-        // Wait, the API checkIn endpoint only takes ID of registration. We don't have it here. 
-        // We need the API to find the registration by eventId and participantId. Let's assume the API handles it or we need to fetch all for event and find.
-        // Since we didn't add a specific endpoint to check-in by eventId and participantId, we'll need to fetch registrations for the event to find the ID.
+        // Buscar a inscrição específica do participante no evento
         const regsRes = await api.get(`/registrations/event/${selectedEventoId}`);
+        if (!regsRes.ok) throw new Error('Falha ao buscar inscrições do evento');
         const regs = await regsRes.json();
-        const inscricao = regs.find((r: any) => r.participanteId === participante.id);
+        // Suporte a camelCase (participanteId) e snake_case (participante_id) da API
+        const inscricao = regs.find((r: any) => (r.participanteId ?? r.participante_id) === participante.id);
 
         if (inscricao && inscricao.presente) {
-          setResult({ 
-            status: 'already', 
+          setResult({
+            status: 'already',
             data: participante,
             eventTitle: eventTitle
           });
@@ -149,14 +147,14 @@ export default function Confirm() {
           if (!updateRes.ok) throw new Error('Falha ao fazer checkin');
         }
 
-        setResult({ 
-          status: 'success', 
+        setResult({
+          status: 'success',
           data: { ...participante, presente: true, confirmado_em: new Date().toISOString() },
           eventTitle: eventTitle
         });
         toast.success(`Check-in realizado para ${participante.nome}!`);
       } else {
-        // Se não tiver inscrição, fazemos a auto-inscrição
+        // Se não tiver inscrição, auto-inscrição com check-in já marcado
         const insertRes = await api.post('/registrations', {
           eventoId: selectedEventoId,
           participanteId: participante.id,
@@ -166,8 +164,8 @@ export default function Confirm() {
 
         if (!insertRes.ok) throw new Error('Falha na auto-inscrição');
 
-        setResult({ 
-          status: 'success', 
+        setResult({
+          status: 'success',
           data: { ...participante, presente: true, confirmado_em: new Date().toISOString() },
           eventTitle: eventTitle
         });
@@ -175,7 +173,7 @@ export default function Confirm() {
       }
     } catch (error: any) {
       console.error('Check-in error:', error);
-      toast.error('Erro ao realizar check-in.');
+      toast.error('Erro ao realizar check-in: ' + (error.message || 'Tente novamente.'));
     } finally {
       setLoading(false);
     }
@@ -286,7 +284,7 @@ export default function Confirm() {
                   <Button 
                     type="submit" 
                     className="modern-button h-16 md:h-20 w-full text-lg md:text-xl shadow-2xl"
-                    disabled={loading || !codigo}
+                    disabled={loading || !codigo || !selectedEventoId}
                   >
                     {loading ? 'Validando...' : 'Confirmar Presença'}
                     {!loading && <UserCheck className="w-5 h-5 md:w-7 md:h-7 ml-2" />}

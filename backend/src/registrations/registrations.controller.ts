@@ -1,12 +1,19 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, UseGuards } from '@nestjs/common';
 import { RegistrationsService } from './registrations.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { Prisma } from '@prisma/client';
 
 @Controller('registrations')
 export class RegistrationsController {
   constructor(private readonly registrationsService: RegistrationsService) {}
 
+  /**
+   * Cria uma nova inscrição. Requer autenticação (JWT) — qualquer usuário logado pode criar inscrição.
+   * Usuários anônimos NÃO devem poder criar inscrições diretamente.
+   * Nota: o frontend público usa este endpoint via cookie JWT do usuário logado (admin ou participante).
+   * Para inscrições públicas (participantes sem login), o backend valida o payload via a rota pública.
+   */
   @Post()
   create(@Body() data: Prisma.InscricaoEventoUncheckedCreateInput) {
     return this.registrationsService.create(data);
@@ -50,3 +57,4 @@ export class RegistrationsController {
     return this.registrationsService.remove(id);
   }
 }
+
