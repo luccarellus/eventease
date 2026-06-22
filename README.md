@@ -53,15 +53,20 @@ FRONTEND_URL="http://localhost:3000"
 ## 🚀 Como Executar Localmente
 
 ### Pré-requisitos
+
 - Node.js (versão 18 ou superior)
 - NPM instalado
 
 ### Passo 1: Instalar Dependências e Gerar o Prisma Client
+
 Na raiz do projeto, instale os pacotes principais e gere a tipagem do banco:
+
 ```bash
 npm install
 ```
+
 Instale também as dependências da API NestJS dentro da pasta `backend`:
+
 ```bash
 cd backend
 npm install
@@ -69,7 +74,9 @@ cd ..
 ```
 
 ### Passo 2: Inicializar o Banco de Dados
+
 Certifique-se de configurar as strings do Supabase no `.env` e aplique as tabelas no banco:
+
 ```bash
 # Sincroniza o schema.prisma com o Supabase
 npm run prisma:db-push
@@ -77,20 +84,26 @@ npm run prisma:db-push
 # Popula o banco com o usuário administrador inicial
 npx prisma db seed --schema=backend/prisma/schema.prisma
 ```
+
 *(O administrador padrão gerado é `lucassantos.-@outlook.com` com a senha `presidente123`)*.
 
 ### Passo 3: Iniciar as Aplicações
+
 Em terminais separados:
 
 - **Iniciar API Backend** (porta `3001` padrão para proxy local):
+
   ```bash
   cd backend
   npm run start:dev
   ```
+
 - **Iniciar Frontend React (Vite)** (porta `3000` padrão):
+
   ```bash
   npm run dev
   ```
+
 Acesse o sistema localmente em: `http://localhost:3000`
 
 ---
@@ -124,3 +137,4 @@ O projeto está totalmente configurado para deploy serverless de monorepos na Ve
    - `COOKIE_SECRET`
    - `FRONTEND_URL` (o domínio final do seu app gerado na Vercel)
 5. **Deploy**: Clique em **Deploy**. A Vercel servirá a SPA estática em `/` e compilará o NestJS em `/api/*` em uma única implantação serverless e segura.
+
