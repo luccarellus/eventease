@@ -22,8 +22,20 @@ export class AuthService {
       );
     }
 
-    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
-    this.supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+    this.supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
+    this.supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
   }
 
   private normalizeEmail(email: string) {

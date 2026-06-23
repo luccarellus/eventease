@@ -1,4 +1,9 @@
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+// Carrega o .env do diretório atual ou do diretório pai (raiz do monorepo)
+dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
+
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -15,6 +20,7 @@ import { RegistrationsModule } from './registrations/registrations.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../.env'],
     }),
     ThrottlerModule.forRoot([{
       name: 'default',

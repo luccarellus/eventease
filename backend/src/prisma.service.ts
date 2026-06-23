@@ -14,6 +14,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     const pool = new pg.Pool({
       connectionString,
+      max: 2, // Limite de conexões seguro por container serverless
+      idleTimeoutMillis: 15000, // Fecha conexões inativas mais rapidamente (15s)
+      connectionTimeoutMillis: 2000, // Evita travar o lambda caso o banco esteja indisponível
     });
 
     const adapter = new PrismaPg(pool);
