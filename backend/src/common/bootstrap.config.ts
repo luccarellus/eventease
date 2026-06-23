@@ -1,6 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
+import { getEnv } from './env.util';
 
 export function configureApp(app: INestApplication) {
   // Security HTTP Headers
@@ -14,7 +15,7 @@ export function configureApp(app: INestApplication) {
 
   // CORS Configuration
   const allowedOrigins = [
-    ...(process.env.FRONTEND_URL || '').split(','),
+    ...(getEnv('FRONTEND_URL', 'VITE_FRONTEND_URL') || '').split(','),
     process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
   ].map(o => o.trim()).filter(Boolean);
 

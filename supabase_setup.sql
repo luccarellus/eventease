@@ -170,8 +170,8 @@ $$;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  -- Define role padrão como 'user' em vez de 'admin'
-  NEW.raw_app_meta_data := COALESCE(NEW.raw_app_meta_data, '{}'::jsonb) || '{"role": "user"}'::jsonb;
+  -- Todo usuário criado pelo Auth deve nascer como admin
+  NEW.raw_app_meta_data := COALESCE(NEW.raw_app_meta_data, '{}'::jsonb) || '{"role": "admin"}'::jsonb;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -186,6 +186,11 @@ CREATE TRIGGER on_auth_user_created
 UPDATE auth.users
 SET raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::jsonb) || '{"role": "admin"}'::jsonb
 WHERE email = 'lucassantos.-@outlook.com';
+
+-- Garantir que qualquer usuário já existente no Auth seja tratado como admin
+UPDATE auth.users
+SET raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::jsonb) - 'role' || '{"role": "admin"}'::jsonb
+WHERE COALESCE(raw_app_meta_data->>'role', '') <> 'admin';
 
 -- ADMIN USERS (Sincronizado com Supabase Auth)
 
@@ -221,7 +226,7 @@ BEGIN
     NEW.id,
     NEW.email,
     NEW.raw_user_meta_data->>'full_name',
-    COALESCE(NEW.raw_app_meta_data->>'role', 'admin'),
+    'admin',
     COALESCE(NEW.created_at, now()),
     COALESCE(NEW.created_at, now())
   );
@@ -243,7 +248,7 @@ BEGIN
   SET 
     email = NEW.email,
     full_name = NEW.raw_user_meta_data->>'full_name',
-    role = COALESCE(NEW.raw_app_meta_data->>'role', 'admin'),
+    role = 'admin',
     updated_at = now()
   WHERE id = NEW.id;
   RETURN NEW;
@@ -277,10 +282,14 @@ SELECT
   id, 
   email, 
   raw_user_meta_data->>'full_name', 
-  COALESCE(raw_app_meta_data->>'role', 'admin'),
+  'admin',
   COALESCE(created_at, now()),
   COALESCE(created_at, now())
 FROM auth.users
 ON CONFLICT (id) DO NOTHING;
 
+-- 5. Garantir que todos os registros já existentes em admin_users sejam admin
+UPDATE public.admin_users
+SET role = 'admin'
+WHERE role IS DISTINCT FROM 'admin';
 

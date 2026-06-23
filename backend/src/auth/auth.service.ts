@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { createClient } from '@supabase/supabase-js';
+import { getEnv, requireEnv } from '../common/env.util';
 
 @Injectable()
 export class AuthService {
@@ -12,15 +13,9 @@ export class AuthService {
     private jwtService: JwtService,
     private prisma: PrismaService,
   ) {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
-      throw new Error(
-        'FATAL: SUPABASE_URL, SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY devem estar definidos.',
-      );
-    }
+    const supabaseUrl = requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
+    const supabaseAnonKey = requireEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
+    const supabaseServiceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY', 'VITE_SUPABASE_SERVICE_ROLE_KEY');
 
     this.supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -113,7 +108,7 @@ export class AuthService {
         return null;
       }
 
-      const role = authUser.app_metadata?.role ?? 'admin';
+      const role = 'admin';
       const fullName = authUser.user_metadata?.full_name ?? null;
 
       const createdUser = await this.prisma.adminUser.upsert({

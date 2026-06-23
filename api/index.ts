@@ -2,23 +2,16 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../backend/dist/app.module.js';
 import { configureApp } from '../backend/dist/common/bootstrap.config.js';
+import { requireEnv } from '../backend/dist/common/env.util.js';
 
 let cachedServer: any;
 
 function assertRequiredEnvVars() {
-  const requiredEnvVars = [
-    'DATABASE_URL',
-    'JWT_SECRET',
-    'SUPABASE_URL',
-    'SUPABASE_ANON_KEY',
-    'SUPABASE_SERVICE_ROLE_KEY',
-  ];
-
-  const missing = requiredEnvVars.filter((name) => !process.env[name]);
-
-  if (missing.length > 0) {
-    throw new Error(`FATAL: variáveis de ambiente ausentes: ${missing.join(', ')}`);
-  }
+  requireEnv('DATABASE_URL');
+  requireEnv('JWT_SECRET');
+  requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
+  requireEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
+  requireEnv('SUPABASE_SERVICE_ROLE_KEY', 'VITE_SUPABASE_SERVICE_ROLE_KEY');
 }
 
 async function bootstrapServer(): Promise<any> {

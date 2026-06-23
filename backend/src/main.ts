@@ -1,21 +1,14 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { configureApp } from './common/bootstrap.config';
+import { requireEnv } from './common/env.util';
 
 async function bootstrap() {
-  const requiredEnvVars = [
-    'JWT_SECRET',
-    'DATABASE_URL',
-    'SUPABASE_URL',
-    'SUPABASE_ANON_KEY',
-    'SUPABASE_SERVICE_ROLE_KEY',
-  ];
-
-  for (const envVar of requiredEnvVars) {
-    if (!process.env[envVar]) {
-      throw new Error(`FATAL: A variável de ambiente ${envVar} não está definida. Verifique o arquivo .env`);
-    }
-  }
+  requireEnv('JWT_SECRET');
+  requireEnv('DATABASE_URL');
+  requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
+  requireEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
+  requireEnv('SUPABASE_SERVICE_ROLE_KEY', 'VITE_SUPABASE_SERVICE_ROLE_KEY');
 
   const app = await NestFactory.create(AppModule);
 
