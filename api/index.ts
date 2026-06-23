@@ -9,8 +9,6 @@ function assertRequiredEnvVars() {
   const requiredEnvVars = [
     'DATABASE_URL',
     'JWT_SECRET',
-    'COOKIE_SECRET',
-    'FRONTEND_URL',
     'SUPABASE_URL',
     'SUPABASE_ANON_KEY',
     'SUPABASE_SERVICE_ROLE_KEY',

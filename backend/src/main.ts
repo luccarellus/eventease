@@ -5,8 +5,6 @@ import { configureApp } from './common/bootstrap.config';
 async function bootstrap() {
   const requiredEnvVars = [
     'JWT_SECRET',
-    'COOKIE_SECRET',
-    'FRONTEND_URL',
     'DATABASE_URL',
     'SUPABASE_URL',
     'SUPABASE_ANON_KEY',
