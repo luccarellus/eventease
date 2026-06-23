@@ -100,65 +100,45 @@ export class AuthService {
       where: { id: data.user.id },
     });
 
-    if (!dbUser) {
-      const { data: authData } = await this.supabaseAdmin.auth.admin.getUserById(data.user.id);
-      const authUser = authData.user;
+    const { data: authData } = await this.supabaseAdmin.auth.admin.getUserById(data.user.id);
+    const authUser = authData.user ?? data.user;
+    const fullName = authUser.user_metadata?.full_name ?? dbUser?.fullName ?? null;
 
-      if (!authUser) {
-        return null;
-      }
-
-      const role = 'admin';
-      const fullName = authUser.user_metadata?.full_name ?? null;
-
-      const createdUser = await this.prisma.adminUser.upsert({
-        where: { id: authUser.id },
-        update: {
-          email: authUser.email ?? normalizedEmail,
-          fullName,
-          role,
-        },
-        create: {
-          id: authUser.id,
-          email: authUser.email ?? normalizedEmail,
-          fullName,
-          role,
-        },
-      });
-
-      return {
-        id: createdUser.id,
-        email: createdUser.email,
-        role: createdUser.role,
-        fullName: createdUser.fullName ?? null,
-      };
-    }
+    const syncedUser = await this.prisma.adminUser.upsert({
+      where: { id: authUser.id },
+      update: {
+        email: authUser.email ?? normalizedEmail,
+        fullName,
+        role: 'admin',
+      },
+      create: {
+        id: authUser.id,
+        email: authUser.email ?? normalizedEmail,
+        fullName,
+        role: 'admin',
+      },
+    });
 
     return {
-      id: dbUser.id,
-      email: dbUser.email,
-      role: dbUser.role,
-      fullName: dbUser.fullName ?? null,
+      id: syncedUser.id,
+      email: syncedUser.email,
+      role: 'admin',
+      fullName: syncedUser.fullName ?? null,
     };
   }
 
   async registerUser(email: string, pass: string, fullName?: string) {
     const normalizedEmail = this.normalizeEmail(email);
-    const existing = await this.prisma.adminUser.findUnique({
-      where: { email: normalizedEmail },
-    });
 
-    if (existing) {
-      throw new UnauthorizedException('Este e-mail já está cadastrado.');
-    }
-
-    const { data, error } = await this.supabase.auth.signUp({
+    const { data, error } = await this.supabaseAdmin.auth.admin.createUser({
       email: normalizedEmail,
       password: pass,
-      options: {
-        data: {
-          full_name: fullName,
-        },
+      email_confirm: true,
+      user_metadata: {
+        full_name: fullName,
+      },
+      app_metadata: {
+        role: 'admin',
       },
     });
 
@@ -166,18 +146,20 @@ export class AuthService {
       throw new UnauthorizedException(error?.message || 'Falha ao registrar usuário no Supabase Auth.');
     }
 
-    let user = await this.prisma.adminUser.findUnique({ where: { id: data.user.id } });
-
-    if (!user) {
-      user = await this.prisma.adminUser.create({
-        data: {
-          id: data.user.id,
-          email: normalizedEmail,
-          fullName: fullName ?? null,
-          role: 'admin',
-        },
-      });
-    }
+    const user = await this.prisma.adminUser.upsert({
+      where: { id: data.user.id },
+      update: {
+        email: normalizedEmail,
+        fullName: fullName ?? null,
+        role: 'admin',
+      },
+      create: {
+        id: data.user.id,
+        email: normalizedEmail,
+        fullName: fullName ?? null,
+        role: 'admin',
+      },
+    });
 
     return {
       id: user.id,
