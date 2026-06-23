@@ -3,15 +3,23 @@ import { AppModule } from './app.module';
 import { configureApp } from './common/bootstrap.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const requiredEnvVars = [
+    'JWT_SECRET',
+    'COOKIE_SECRET',
+    'FRONTEND_URL',
+    'DATABASE_URL',
+    'SUPABASE_URL',
+    'SUPABASE_ANON_KEY',
+    'SUPABASE_SERVICE_ROLE_KEY',
+  ];
 
-  // Validações de variáveis de ambiente obrigatórias
-  const requiredEnvVars = ['JWT_SECRET', 'COOKIE_SECRET', 'FRONTEND_URL', 'DATABASE_URL'];
   for (const envVar of requiredEnvVars) {
     if (!process.env[envVar]) {
       throw new Error(`FATAL: A variável de ambiente ${envVar} não está definida. Verifique o arquivo .env`);
     }
   }
+
+  const app = await NestFactory.create(AppModule);
 
   // Unified configuration (CORS, Helmet, cookies, pipes)
   configureApp(app);
@@ -23,4 +31,3 @@ async function bootstrap() {
   console.log(`   Ambiente: ${process.env.NODE_ENV ?? 'development'}`);
 }
 bootstrap();
-

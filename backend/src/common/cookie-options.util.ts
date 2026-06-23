@@ -20,13 +20,13 @@ export function getAccessTokenCookieOptions(): CookieOptions {
 export function getRefreshTokenCookieOptions(): CookieOptions {
   return {
     ...baseCookieOptions,
-    path: '/auth/refresh',
+    path: '/api/auth/refresh',
     maxAge: REFRESH_TOKEN_MAX_AGE,
   };
 }
 
 export function getRefreshTokenClearCookieOptions(): CookieOptions {
   return {
-    path: '/auth/refresh',
+    path: '/api/auth/refresh',
   };
 }

@@ -46,6 +46,11 @@ COOKIE_SECRET="gere-outro-segredo-forte-para-cookies"
 
 # CORS / URL do Frontend
 FRONTEND_URL="http://localhost:3000"
+
+# Supabase Auth
+SUPABASE_URL="https://xxxx.supabase.co"
+SUPABASE_ANON_KEY="sua-chave-anon-aqui"
+SUPABASE_SERVICE_ROLE_KEY="sua-chave-service-role-aqui"
 ```
 
 ---
@@ -136,5 +141,7 @@ O projeto está totalmente configurado para deploy serverless de monorepos na Ve
    - `JWT_SECRET`
    - `COOKIE_SECRET`
    - `FRONTEND_URL` (o domínio final do seu app gerado na Vercel)
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
 5. **Deploy**: Clique em **Deploy**. A Vercel servirá a SPA estática em `/` e compilará o NestJS em `/api/*` em uma única implantação serverless e segura.
-

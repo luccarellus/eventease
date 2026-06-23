@@ -5,20 +5,26 @@ import { createClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class AuthService {
-  private readonly supabase = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!
-  );
-
-  private readonly supabaseAdmin = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  private readonly supabase;
+  private readonly supabaseAdmin;
 
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
-  ) {}
+  ) {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
+      throw new Error(
+        'FATAL: SUPABASE_URL, SUPABASE_ANON_KEY e SUPABASE_SERVICE_ROLE_KEY devem estar definidos.',
+      );
+    }
+
+    this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+    this.supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
+  }
 
   private normalizeEmail(email: string) {
     return email.toLowerCase().trim();
@@ -88,7 +94,37 @@ export class AuthService {
     });
 
     if (!dbUser) {
-      return null;
+      const { data: authData } = await this.supabaseAdmin.auth.admin.getUserById(data.user.id);
+      const authUser = authData.user;
+
+      if (!authUser) {
+        return null;
+      }
+
+      const role = authUser.app_metadata?.role ?? 'admin';
+      const fullName = authUser.user_metadata?.full_name ?? null;
+
+      const createdUser = await this.prisma.adminUser.upsert({
+        where: { id: authUser.id },
+        update: {
+          email: authUser.email ?? normalizedEmail,
+          fullName,
+          role,
+        },
+        create: {
+          id: authUser.id,
+          email: authUser.email ?? normalizedEmail,
+          fullName,
+          role,
+        },
+      });
+
+      return {
+        id: createdUser.id,
+        email: createdUser.email,
+        role: createdUser.role,
+        fullName: createdUser.fullName ?? null,
+      };
     }
 
     return {

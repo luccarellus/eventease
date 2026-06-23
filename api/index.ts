@@ -5,8 +5,27 @@ import { configureApp } from '../backend/dist/common/bootstrap.config.js';
 
 let cachedServer: any;
 
+function assertRequiredEnvVars() {
+  const requiredEnvVars = [
+    'DATABASE_URL',
+    'JWT_SECRET',
+    'COOKIE_SECRET',
+    'FRONTEND_URL',
+    'SUPABASE_URL',
+    'SUPABASE_ANON_KEY',
+    'SUPABASE_SERVICE_ROLE_KEY',
+  ];
+
+  const missing = requiredEnvVars.filter((name) => !process.env[name]);
+
+  if (missing.length > 0) {
+    throw new Error(`FATAL: variáveis de ambiente ausentes: ${missing.join(', ')}`);
+  }
+}
+
 async function bootstrapServer(): Promise<any> {
   if (!cachedServer) {
+    assertRequiredEnvVars();
     const app = await NestFactory.create(AppModule);
 
     // Unified configuration (CORS, Helmet, cookies, pipes)
