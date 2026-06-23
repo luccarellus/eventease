@@ -11,7 +11,8 @@ export function configureApp(app: INestApplication) {
   
   // Cookie Parser for secure JWT handling
   const cookieSecret = process.env.COOKIE_SECRET || 'fallback-cookie-secret';
-  app.use((cookieParser as any)(cookieSecret));
+  const parser = typeof cookieParser === 'function' ? cookieParser : (cookieParser as any).default;
+  app.use(parser(cookieSecret));
 
   // CORS Configuration
   const allowedOrigins = [
