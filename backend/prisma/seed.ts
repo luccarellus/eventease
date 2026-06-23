@@ -1,7 +1,17 @@
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
+
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 import { createClient } from '@supabase/supabase-js';
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL;
+const pool = new pg.Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 // Usamos a Service Role Key para poder ignorar confirmação de e-mail e criar a conta diretamente
 const supabase = createClient(
