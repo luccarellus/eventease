@@ -94,7 +94,7 @@ export class AuthService {
   async validateAndRotateRefreshToken(oldRefreshToken: string): Promise<{ id: string; email: string; role: string; newAccessToken: string; newRefreshToken: string }> {
     const tokenHash = this.hashToken(oldRefreshToken);
 
-    const storedToken = await this.prisma.refreshToken.findUnique({
+    const storedToken = await this.prisma.refreshToken.findFirst({
       where: { tokenHash },
       include: { user: true },
     });

@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsOptional, IsUUID, IsString } from 'class-validator';
 
 export class CreateRegistrationDto {
   @IsUUID('4', { message: 'ID do evento inválido' })
@@ -10,4 +10,8 @@ export class CreateRegistrationDto {
   @IsOptional()
   @IsBoolean()
   presente?: boolean;
+
+  @IsOptional()
+  @IsString()
+  confirmado_em?: string;
 }
