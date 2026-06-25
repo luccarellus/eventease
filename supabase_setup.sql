@@ -293,3 +293,32 @@ UPDATE public.admin_users
 SET role = 'admin'
 WHERE role IS DISTINCT FROM 'admin';
 
+
+-- ==========================================
+-- REFRESH TOKENS (para rotação e revogação)
+-- ==========================================
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  revoked_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Habilitar RLS
+ALTER TABLE refresh_tokens ENABLE ROW LEVEL SECURITY;
+
+-- Políticas
+DROP POLICY IF EXISTS "Admin: Controle total de refresh_tokens" ON refresh_tokens;
+CREATE POLICY "Admin: Controle total de refresh_tokens" 
+ON refresh_tokens FOR ALL 
+TO authenticated 
+USING ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin')
+WITH CHECK ((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+
+-- Índices
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
+
+
