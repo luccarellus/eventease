@@ -46,18 +46,23 @@ export class AuthController {
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
-    const user = await this.authService.validateUser(loginDto.email, loginDto.password);
-    if (!user) {
-      throw new UnauthorizedException('Credenciais inválidas.');
+    try {
+      const user = await this.authService.validateUser(loginDto.email, loginDto.password);
+      if (!user) {
+        throw new UnauthorizedException('Credenciais inválidas.');
+      }
+
+      const { accessToken, refreshToken } = await this.authService.generateTokens(user);
+      await this.authService.storeRefreshToken(user.id, refreshToken);
+
+      response.cookie('access_token', accessToken, getAccessTokenCookieOptions());
+      response.cookie('refresh_token', refreshToken, getRefreshTokenCookieOptions());
+
+      return { message: 'Login bem-sucedido', user };
+    } catch (err) {
+      console.error('Detailed login error on server:', err);
+      throw err;
     }
-
-    const { accessToken, refreshToken } = await this.authService.generateTokens(user);
-    await this.authService.storeRefreshToken(user.id, refreshToken);
-
-    response.cookie('access_token', accessToken, getAccessTokenCookieOptions());
-    response.cookie('refresh_token', refreshToken, getRefreshTokenCookieOptions());
-
-    return { message: 'Login bem-sucedido', user };
   }
 
   @Post('refresh')

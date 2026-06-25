@@ -177,7 +177,7 @@ export class AuthService {
     }
 
     const { data: authData } = await this.supabaseAdmin.auth.admin.getUserById(data.user.id);
-    const authUser = authData.user ?? data.user;
+    const authUser = authData?.user ?? data.user;
     const fullName = authUser.user_metadata?.full_name ?? dbUser.fullName ?? null;
 
     const syncedUser = await this.prisma.adminUser.update({
