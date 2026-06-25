@@ -96,7 +96,6 @@ export class AuthService {
 
     const storedToken = await this.prisma.refreshToken.findFirst({
       where: { tokenHash },
-      include: { user: true },
     });
 
     if (!storedToken) {
