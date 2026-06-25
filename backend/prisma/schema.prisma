@@ -87,3 +87,19 @@ model InscricaoEvento {
   @@index([participanteId])
   @@map("inscricoes_evento")
 }
+
+// ==========================================
+// Refresh Tokens (para rotação e revogação)
+// ==========================================
+model RefreshToken {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @db.Uuid @map("user_id")
+  tokenHash   String    @map("token_hash")
+  expiresAt   DateTime  @db.Timestamptz @map("expires_at")
+  revokedAt   DateTime? @db.Timestamptz @map("revoked_at")
+  createdAt   DateTime  @default(now()) @db.Timestamptz @map("created_at")
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}

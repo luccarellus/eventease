@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
-import { throwUniqueConstraintError } from '../common/prisma-error.util';
 
 const PUBLIC_PARTICIPANT_SELECT = {
   id: true,
@@ -40,12 +39,20 @@ export class ParticipantsService {
   }
 
   async create(data: Prisma.ParticipanteCreateInput) {
-    try {
-      return await this.prisma.participante.create({ data });
-    } catch (error) {
-      throwUniqueConstraintError(error, 'Participante com este código ou email já existe.');
-      throw error;
+    const email = data.email as string;
+    const codigo = data.codigo as string;
+
+    const existing = await this.prisma.participante.findFirst({
+      where: {
+        OR: [{ email: { equals: email, mode: 'insensitive' } }, { codigo }],
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException('Participante com este código ou email já existe.');
     }
+
+    return this.prisma.participante.create({ data });
   }
 
   async findAll() {

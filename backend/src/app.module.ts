@@ -11,6 +11,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthController } from './health/health.controller';
+import { PrismaModule } from './common/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { EventsModule } from './events/events.module';
 import { ParticipantsModule } from './participants/participants.module';
@@ -27,6 +28,7 @@ import { RegistrationsModule } from './registrations/registrations.module';
       ttl: 60000,
       limit: 100,
     }]),
+    PrismaModule,
     AuthModule,
     EventsModule,
     ParticipantsModule,

@@ -1,18 +1,22 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import * as cookieParser from 'cookie-parser';
-import { getEnv } from './env.util';
+import { getEnv, requireEnv } from './env.util';
 
 export function configureApp(app: INestApplication) {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Cookie Parser for secure JWT handling - fail in production if secret not set
+  const cookieSecret = isProduction 
+    ? requireEnv('COOKIE_SECRET')
+    : (process.env.COOKIE_SECRET || 'dev-cookie-secret-change-in-production');
+  const parser = typeof cookieParser === 'function' ? cookieParser : (cookieParser as any).default;
+  app.use(parser(cookieSecret));
+
   // Security HTTP Headers
   app.use(helmet({
     contentSecurityPolicy: false,
   }));
-  
-  // Cookie Parser for secure JWT handling
-  const cookieSecret = process.env.COOKIE_SECRET || 'fallback-cookie-secret';
-  const parser = typeof cookieParser === 'function' ? cookieParser : (cookieParser as any).default;
-  app.use(parser(cookieSecret));
 
   // CORS Configuration
   const allowedOrigins = [
@@ -21,7 +25,7 @@ export function configureApp(app: INestApplication) {
   ].map(o => o.trim()).filter(Boolean);
 
   app.enableCors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+    origin: allowedOrigins.length > 0 ? allowedOrigins : (isProduction ? false : true),
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type, Accept, Authorization',

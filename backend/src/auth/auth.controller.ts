@@ -52,6 +52,7 @@ export class AuthController {
     }
 
     const { accessToken, refreshToken } = await this.authService.generateTokens(user);
+    await this.authService.storeRefreshToken(user.id, refreshToken);
 
     response.cookie('access_token', accessToken, getAccessTokenCookieOptions());
     response.cookie('refresh_token', refreshToken, getRefreshTokenCookieOptions());
@@ -67,10 +68,10 @@ export class AuthController {
       throw new UnauthorizedException('Refresh token não encontrado.');
     }
 
-    const user = await this.authService.validateRefreshToken(refreshToken);
-    const { accessToken } = await this.authService.generateTokens(user);
+    const { newAccessToken, newRefreshToken } = await this.authService.validateAndRotateRefreshToken(refreshToken);
 
-    response.cookie('access_token', accessToken, getAccessTokenCookieOptions());
+    response.cookie('access_token', newAccessToken, getAccessTokenCookieOptions());
+    response.cookie('refresh_token', newRefreshToken, getRefreshTokenCookieOptions());
 
     return { message: 'Token renovado com sucesso.' };
   }
@@ -82,7 +83,11 @@ export class AuthController {
   }
 
   @Post('logout')
-  async logout(@Res({ passthrough: true }) response: Response) {
+  async logout(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
+    const refreshToken = (req as any).cookies?.refresh_token;
+    if (refreshToken) {
+      await this.authService.revokeRefreshToken(refreshToken);
+    }
     response.clearCookie('access_token');
     response.clearCookie('refresh_token', getRefreshTokenClearCookieOptions());
     return { message: 'Logout bem-sucedido' };

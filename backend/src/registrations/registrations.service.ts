@@ -1,20 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
-import { throwUniqueConstraintError } from '../common/prisma-error.util';
 
 @Injectable()
 export class RegistrationsService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.InscricaoEventoUncheckedCreateInput) {
-    try {
-      return await this.prisma.inscricaoEvento.create({ data });
-    } catch (error) {
-      throwUniqueConstraintError(error, 'Participante já está inscrito neste evento.');
-      // throwUniqueConstraintError always throws, but TypeScript needs this:
-      throw error;
+    const existing = await this.prisma.inscricaoEvento.findUnique({
+      where: {
+        unique_evento_participante: {
+          eventoId: data.eventoId as string,
+          participanteId: data.participanteId as string,
+        },
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException('Participante já está inscrito neste evento.');
     }
+
+    return this.prisma.inscricaoEvento.create({ data });
   }
 
   async checkRegistration(eventoId: string, participanteId: string) {

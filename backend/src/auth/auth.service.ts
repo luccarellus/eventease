@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { createClient } from '@supabase/supabase-js';
 import { getEnv, requireEnv } from '../common/env.util';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -37,6 +38,10 @@ export class AuthService {
     return email.toLowerCase().trim();
   }
 
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
   async updateUserRole(userId: string, role: string) {
     const user = await this.prisma.adminUser.findUnique({ where: { id: userId } });
 
@@ -52,6 +57,8 @@ export class AuthService {
     await this.supabaseAdmin.auth.admin.updateUserById(userId, {
       app_metadata: { role },
     });
+
+    await this.revokeAllUserRefreshTokens(userId);
 
     return {
       id: updated.id,
@@ -71,17 +78,83 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async validateRefreshToken(token: string): Promise<{ id: string; email: string; role: string }> {
-    try {
-      const payload = await this.jwtService.verifyAsync(token);
-      const user = await this.prisma.adminUser.findUnique({ where: { id: payload.sub } });
-      if (!user) {
-        throw new UnauthorizedException('Usuário não encontrado.');
-      }
-      return { id: user.id, email: user.email, role: user.role };
-    } catch {
-      throw new UnauthorizedException('Refresh token inválido ou expirado. Faça login novamente.');
+  async storeRefreshToken(userId: string, refreshToken: string) {
+    const tokenHash = this.hashToken(refreshToken);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await this.prisma.refreshToken.create({
+      data: {
+        userId,
+        tokenHash,
+        expiresAt,
+      },
+    });
+  }
+
+  async validateAndRotateRefreshToken(oldRefreshToken: string): Promise<{ id: string; email: string; role: string; newAccessToken: string; newRefreshToken: string }> {
+    const tokenHash = this.hashToken(oldRefreshToken);
+
+    const storedToken = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    });
+
+    if (!storedToken) {
+      throw new UnauthorizedException('Refresh token inválido.');
     }
+
+    if (storedToken.revokedAt) {
+      throw new UnauthorizedException('Refresh token revogado. Faça login novamente.');
+    }
+
+    if (storedToken.expiresAt < new Date()) {
+      await this.prisma.refreshToken.update({
+        where: { id: storedToken.id },
+        data: { revokedAt: new Date() },
+      });
+      throw new UnauthorizedException('Refresh token expirado. Faça login novamente.');
+    }
+
+    const user = await this.prisma.adminUser.findUnique({ where: { id: storedToken.userId } });
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado.');
+    }
+
+    await this.prisma.refreshToken.update({
+      where: { id: storedToken.id },
+      data: { revokedAt: new Date() },
+    });
+
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = await this.generateTokens({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    await this.storeRefreshToken(user.id, newRefreshToken);
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      newAccessToken,
+      newRefreshToken,
+    };
+  }
+
+  async revokeAllUserRefreshTokens(userId: string) {
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  async revokeRefreshToken(token: string) {
+    const tokenHash = this.hashToken(token);
+    await this.prisma.refreshToken.updateMany({
+      where: { tokenHash, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
   }
 
   async validateUser(email: string, pass: string): Promise<{ id: string; email: string; role: string; fullName: string | null } | null> {
@@ -100,29 +173,26 @@ export class AuthService {
       where: { id: data.user.id },
     });
 
+    if (!dbUser) {
+      throw new UnauthorizedException('Usuário não autorizado. Contate um administrador.');
+    }
+
     const { data: authData } = await this.supabaseAdmin.auth.admin.getUserById(data.user.id);
     const authUser = authData.user ?? data.user;
-    const fullName = authUser.user_metadata?.full_name ?? dbUser?.fullName ?? null;
+    const fullName = authUser.user_metadata?.full_name ?? dbUser.fullName ?? null;
 
-    const syncedUser = await this.prisma.adminUser.upsert({
+    const syncedUser = await this.prisma.adminUser.update({
       where: { id: authUser.id },
-      update: {
+      data: {
         email: authUser.email ?? normalizedEmail,
         fullName,
-        role: 'admin',
-      },
-      create: {
-        id: authUser.id,
-        email: authUser.email ?? normalizedEmail,
-        fullName,
-        role: 'admin',
       },
     });
 
     return {
       id: syncedUser.id,
       email: syncedUser.email,
-      role: 'admin',
+      role: syncedUser.role,
       fullName: syncedUser.fullName ?? null,
     };
   }
@@ -138,7 +208,7 @@ export class AuthService {
         full_name: fullName,
       },
       app_metadata: {
-        role: 'admin',
+        role: 'user',
       },
     });
 
@@ -151,13 +221,13 @@ export class AuthService {
       update: {
         email: normalizedEmail,
         fullName: fullName ?? null,
-        role: 'admin',
+        role: 'user',
       },
       create: {
         id: data.user.id,
         email: normalizedEmail,
         fullName: fullName ?? null,
-        role: 'admin',
+        role: 'user',
       },
     });
 
@@ -166,5 +236,13 @@ export class AuthService {
       email: user.email,
       role: user.role,
     };
+  }
+
+  async cleanupExpiredRefreshTokens() {
+    await this.prisma.refreshToken.deleteMany({
+      where: {
+        expiresAt: { lt: new Date() },
+      },
+    });
   }
 }

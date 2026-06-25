@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import { randomBytes } from 'crypto';
 dotenv.config();
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
@@ -13,25 +14,33 @@ const pool = new pg.Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// Usamos a Service Role Key para poder ignorar confirmação de e-mail e criar a conta diretamente
 const supabase = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+function generateSecurePassword(length = 32): string {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  const bytes = randomBytes(length);
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset[bytes[i] % charset.length];
+  }
+  return password;
+}
+
 async function main() {
   const email = 'lucassantos.-@outlook.com';
-  const rawPassword = 'presidente123'; // Senha padrão recomendada
 
-  // 1. Verificar se já existe na tabela de admin_users
   const existingUser = await prisma.adminUser.findUnique({
     where: { email },
   });
 
   if (!existingUser) {
+    const rawPassword = generateSecurePassword();
+    
     console.log(`Criando usuário administrador no Supabase Auth...`);
     
-    // Criar o usuário no Supabase Auth usando o admin API
     const { data, error } = await supabase.auth.admin.createUser({
       email,
       password: rawPassword,
@@ -51,9 +60,9 @@ async function main() {
 
     console.log(`✅ Usuário administrador criado com sucesso no Supabase Auth:`);
     console.log(`- E-mail: ${email}`);
-    console.log(`- Senha: ${rawPassword}`);
+    console.log(`- Senha gerada (salve agora, não será mostrada novamente): ${rawPassword}`);
+    console.log(`⚠️  IMPORTANTE: Altere a senha no primeiro login!`);
   } else {
-    // Garante que o usuário existente tenha a role admin
     await prisma.adminUser.update({
       where: { email },
       data: { role: 'admin' },
