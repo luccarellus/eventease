@@ -12,38 +12,100 @@ type ExpressLikeHandler = (req: Request, res: Response) => unknown;
 
 let cachedServer: ExpressLikeHandler | null = null;
 
+function maskConnectionString(connStr: string): string {
+  try {
+    return connStr.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
+  } catch {
+    return '<invalid>';
+  }
+}
+
 function assertRequiredEnvVars() {
-  requireEnv('DATABASE_URL');
   requireEnv('JWT_SECRET');
   requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
   requireEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
   requireEnv('SUPABASE_SERVICE_ROLE_KEY', 'VITE_SUPABASE_SERVICE_ROLE_KEY');
+
+  // Validate DATABASE_URL separately with better error message
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl || !dbUrl.trim()) {
+    console.error('[bootstrap] ERRO: DATABASE_URL não está configurada.');
+    console.error('[bootstrap] Configure a variável DATABASE_URL no dashboard do Vercel:');
+    console.error('[bootstrap]   https://vercel.com/luccarellustech/eventease/settings/environment-variables');
+    throw new Error(
+      'DATABASE_URL não configurada. Acesse o dashboard do Vercel e defina DATABASE_URL com a URL do Supabase PostgreSQL (pooler porta 6543).'
+    );
+  }
+
+  console.log('[bootstrap] DATABASE_URL:', maskConnectionString(dbUrl));
+
+  // Validate URL format (must end with .supabase.com for Supabase)
+  if (!dbUrl.includes('supabase.com') && !dbUrl.includes('localhost')) {
+    console.warn('[bootstrap] ATENÇÃO: DATABASE_URL não parece ser do Supabase.');
+    console.warn('[bootstrap] Formato esperado: postgresql://postgres.xxxx@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true');
+    console.warn('[bootstrap] Host atual detectado:', dbUrl.split('@')[1]?.split('/')[0] || '<desconhecido>');
+  }
+
+  console.log('[bootstrap] SUPABASE_URL definida:', !!process.env.SUPABASE_URL || !!process.env.VITE_SUPABASE_URL);
+  console.log('[bootstrap] JWT_SECRET definida:', !!process.env.JWT_SECRET);
+  console.log('[bootstrap] NODE_ENV:', process.env.NODE_ENV || 'não definido');
 }
 
-async function bootstrapServer(): Promise<ExpressLikeHandler> {
+async function bootstrapServer(): Promise<ExpressLikeHandler | null> {
   if (!cachedServer) {
-    assertRequiredEnvVars();
-    const app = await NestFactory.create(AppModule);
+    try {
+      assertRequiredEnvVars();
+      const app = await NestFactory.create(AppModule);
 
-    // Unified configuration (CORS, Helmet, cookies, pipes)
-    configureApp(app);
+      // Unified configuration (CORS, Helmet, cookies, pipes)
+      configureApp(app);
 
-    // Middleware to remove the /api prefix before routing to NestJS controllers
-    app.use((req: Request, _res: Response, next: NextFunction) => {
-      if (req.url.startsWith('/api')) {
-        req.url = req.url.substring(4) || '/';
+      // Middleware to remove the /api prefix before routing to NestJS controllers
+      app.use((req: Request, _res: Response, next: NextFunction) => {
+        if (req.url.startsWith('/api')) {
+          req.url = req.url.substring(4) || '/';
+        }
+        next();
+      });
+
+      await app.init();
+
+      cachedServer = app.getHttpAdapter().getInstance() as ExpressLikeHandler;
+    } catch (error: unknown) {
+      console.error('[bootstrap] ERRO FATAL ao inicializar a aplicação:');
+      if (error instanceof Error) {
+        console.error('[bootstrap] Mensagem:', error.message);
+        console.error('[bootstrap] Stack:', error.stack?.split('\n').slice(0, 4).join('\n'));
+      } else {
+        console.error('[bootstrap] Erro:', error);
       }
-      next();
-    });
-
-    await app.init();
-
-    cachedServer = app.getHttpAdapter().getInstance() as ExpressLikeHandler;
+      return null;
+    }
   }
   return cachedServer;
 }
 
 export default async function handler(req: Request, res: Response) {
-  const server = await bootstrapServer();
-  return server(req, res);
+  try {
+    const server = await bootstrapServer();
+    if (!server) {
+      res.statusCode = 503;
+      res.setHeader('Content-Type', 'application/json');
+      return res.end(JSON.stringify({
+        statusCode: 503,
+        message: 'Serviço temporariamente indisponível. O banco de dados pode estar inacessível ou mal configurado.',
+        error: 'Service Unavailable',
+      }));
+    }
+    return server(req, res);
+  } catch (error: unknown) {
+    console.error('[handler] Erro inesperado:', error instanceof Error ? error.message : error);
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    return res.end(JSON.stringify({
+      statusCode: 500,
+      message: 'Erro interno do servidor.',
+      error: 'Internal Server Error',
+    }));
+  }
 }

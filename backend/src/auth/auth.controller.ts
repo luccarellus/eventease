@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Res, Body, UnauthorizedException, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Res, Body, UnauthorizedException, ServiceUnavailableException, UseGuards, Req } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt.guard';
@@ -73,12 +73,27 @@ export class AuthController {
       throw new UnauthorizedException('Refresh token não encontrado.');
     }
 
-    const { newAccessToken, newRefreshToken } = await this.authService.validateAndRotateRefreshToken(refreshToken);
+    try {
+      const { newAccessToken, newRefreshToken } = await this.authService.validateAndRotateRefreshToken(refreshToken);
 
-    response.cookie('access_token', newAccessToken, getAccessTokenCookieOptions());
-    response.cookie('refresh_token', newRefreshToken, getRefreshTokenCookieOptions());
+      response.cookie('access_token', newAccessToken, getAccessTokenCookieOptions());
+      response.cookie('refresh_token', newRefreshToken, getRefreshTokenCookieOptions());
 
-    return { message: 'Token renovado com sucesso.' };
+      return { message: 'Token renovado com sucesso.' };
+    } catch (err) {
+      // Se for erro de rede/banco, retorna 503 em vez de 500 genérico
+      if (err instanceof ServiceUnavailableException) {
+        throw err;
+      }
+      if (err instanceof Error && (
+        err.message.includes('ENOTFOUND') ||
+        err.message.includes('getaddrinfo') ||
+        err.message.includes('tenant/user')
+      )) {
+        throw new ServiceUnavailableException('Serviço temporariamente indisponível. Tente novamente mais tarde.');
+      }
+      throw err;
+    }
   }
 
   @Get('me')
@@ -89,9 +104,14 @@ export class AuthController {
 
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
-    const refreshToken = (req as any).cookies?.refresh_token;
-    if (refreshToken) {
-      await this.authService.revokeRefreshToken(refreshToken);
+    try {
+      const refreshToken = (req as any).cookies?.refresh_token;
+      if (refreshToken) {
+        await this.authService.revokeRefreshToken(refreshToken);
+      }
+    } catch (err) {
+      console.error('[Auth] Erro ao revogar refresh token no logout:', err instanceof Error ? err.message : err);
+      // Continua mesmo se falhar — o cookie é limpo no cliente
     }
     response.clearCookie('access_token');
     response.clearCookie('refresh_token', getRefreshTokenClearCookieOptions());
