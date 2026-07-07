@@ -63,16 +63,27 @@ const registrationSchema = z.object({
 
 type RegistrationData = z.infer<typeof registrationSchema>;
 type CredentialSummary = { nome: string; codigo: string };
+type SchoolEntry = { city: string; school: string };
+type EventItem = {
+  id: string;
+  titulo: string;
+  descricao?: string;
+  data: string;
+  local: string;
+  publicado: boolean;
+  createdAt?: string;
+  created_at?: string;
+};
 
 const CREDENTIAL_STORAGE_KEY = 'eventease_credential';
 
 function loadStoredCredential(): CredentialSummary | null {
-  const savedCredential = sessionStorage.getItem(CREDENTIAL_STORAGE_KEY);
-  if (!savedCredential) {
-    return null;
-  }
-
   try {
+    const savedCredential = sessionStorage.getItem(CREDENTIAL_STORAGE_KEY);
+    if (!savedCredential) {
+      return null;
+    }
+
     return JSON.parse(savedCredential) as CredentialSummary;
   } catch {
     return null;
@@ -80,7 +91,22 @@ function loadStoredCredential(): CredentialSummary | null {
 }
 
 function saveStoredCredential(credential: CredentialSummary) {
-  sessionStorage.setItem(CREDENTIAL_STORAGE_KEY, JSON.stringify(credential));
+  try {
+    sessionStorage.setItem(CREDENTIAL_STORAGE_KEY, JSON.stringify(credential));
+  } catch {}
+}
+
+function formatEventDate(value?: string, pattern = "dd 'de' MMMM") {
+  if (!value) {
+    return 'Data indisponível';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'Data indisponível';
+  }
+
+  return format(date, pattern, { locale: ptBR });
 }
 
 function openCredentialModal(
@@ -99,12 +125,12 @@ function openCredentialModal(
 
 export default function Home() {
   // Controle de Eventos
-  const [eventos, setEventos] = useState<any[]>([]);
+  const [eventos, setEventos] = useState<EventItem[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Controle de Inscrição no Evento Selecionado
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [activeModalTab, setActiveModalTab] = useState<'cadastro' | 'busca'>('cadastro');
   const [successData, setSuccessData] = useState<{ nome: string; codigo: string } | null>(null);
   const [submittingRegistration, setSubmittingRegistration] = useState(false);
@@ -146,10 +172,10 @@ export default function Home() {
     try {
       const res = await api.get('/events');
       if (!res.ok) throw new Error('Failed to fetch events');
-      const data = await res.json();
+      const data = (await res.json()) as EventItem[];
 
-      setEventos(data || []);
-    } catch (err: any) {
+      setEventos(Array.isArray(data) ? data : []);
+    } catch (err) {
       console.error('Error fetching events:', err);
       toast.error('Erro ao carregar os eventos.');
     } finally {
@@ -178,7 +204,7 @@ export default function Home() {
       cidade: '',
       escola: '',
       gremio: '',
-      aceiteTermos: undefined as any,
+      aceiteTermos: false,
     }
   });
 
@@ -186,7 +212,7 @@ export default function Home() {
 
   const schoolsData = useMemo(() => {
     const data: Record<string, string[]> = {};
-    rawSchoolsData.forEach((item: any) => {
+    (rawSchoolsData as SchoolEntry[]).forEach((item) => {
       if (!data[item.city]) {
         data[item.city] = [];
       }
@@ -298,9 +324,10 @@ export default function Home() {
 
       setSuccessData({ nome: participantName, codigo: participantCode });
       reset();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Registration/Subscription error:', error);
-      toast.error('Erro ao realizar inscrição: ' + (error.message || 'Erro desconhecido'));
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error('Erro ao realizar inscrição: ' + message);
     } finally {
       setSubmittingRegistration(false);
     }
@@ -367,7 +394,7 @@ export default function Home() {
 
       setSuccessData({ nome: participantName, codigo: participantCode });
       setExistingCredentialSearch('');
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error linking existing participant:', err);
       setExistingError('Erro ao vincular inscrição. Tente novamente.');
     } finally {
@@ -399,7 +426,7 @@ export default function Home() {
       } else {
         setCredentialError('Nenhum cadastro encontrado para este e-mail. Verifique se o e-mail está correto ou realize a inscrição em um evento.');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error searching credential:', err);
       setCredentialError('Erro ao buscar credencial. Tente novamente mais tarde.');
     } finally {
@@ -542,7 +569,7 @@ export default function Home() {
                 <CardHeader className="p-8 pb-4">
                   <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest mb-3">
                     <Calendar className="w-3.5 h-3.5" />
-                    {format(new Date(evento.data), "dd 'de' MMMM", { locale: ptBR })}
+                    {formatEventDate(evento.data)}
                   </div>
                   <CardTitle className="font-display font-bold text-2xl text-white tracking-tight leading-tight group-hover:text-primary transition-colors">
                     {evento.titulo}
@@ -556,7 +583,7 @@ export default function Home() {
                   <div className="space-y-3 border-t border-white/5 pt-6 text-xs text-white/40 font-bold uppercase tracking-wider">
                     <div className="flex items-center gap-3">
                       <Clock className="w-4 h-4 text-emerald-400" />
-                      <span>{format(new Date(evento.data), "HH:mm'h'", { locale: ptBR })}</span>
+                      <span>{formatEventDate(evento.data, "HH:mm'h'")}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <MapPin className="w-4 h-4 text-teal-400 animate-pulse" />

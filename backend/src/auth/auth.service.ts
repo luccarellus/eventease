@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { createClient } from '@supabase/supabase-js';
-import { getEnv, requireEnv } from '../common/env.util';
+import { requireEnv } from '../common/env.util';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -40,6 +40,19 @@ export class AuthService {
 
   private hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  private isNetworkError(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+
+    return (
+      error.message.includes('fetch failed') ||
+      error.message.includes('getaddrinfo ENOTFOUND') ||
+      error.message.includes('ECONNREFUSED') ||
+      error.message.includes('ETIMEDOUT')
+    );
   }
 
   async updateUserRole(userId: string, role: string) {
@@ -159,82 +172,98 @@ export class AuthService {
   async validateUser(email: string, pass: string): Promise<{ id: string; email: string; role: string; fullName: string | null } | null> {
     const normalizedEmail = this.normalizeEmail(email);
 
-    const { data, error } = await this.supabase.auth.signInWithPassword({
-      email: normalizedEmail,
-      password: pass,
-    });
+    try {
+      const { data, error } = await this.supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password: pass,
+      });
 
-    if (error || !data.user) {
-      return null;
+      if (error || !data.user) {
+        return null;
+      }
+
+      const dbUser = await this.prisma.adminUser.findUnique({
+        where: { id: data.user.id },
+      });
+
+      if (!dbUser) {
+        throw new UnauthorizedException('Usuário não autorizado. Contate um administrador.');
+      }
+
+      const { data: authData } = await this.supabaseAdmin.auth.admin.getUserById(data.user.id);
+      const authUser = authData?.user ?? data.user;
+      const fullName = authUser.user_metadata?.full_name ?? dbUser.fullName ?? null;
+
+      const syncedUser = await this.prisma.adminUser.update({
+        where: { id: authUser.id },
+        data: {
+          email: authUser.email ?? normalizedEmail,
+          fullName,
+        },
+      });
+
+      return {
+        id: syncedUser.id,
+        email: syncedUser.email,
+        role: syncedUser.role,
+        fullName: syncedUser.fullName ?? null,
+      };
+    } catch (error) {
+      if (this.isNetworkError(error)) {
+        throw new ServiceUnavailableException('Serviço de autenticação indisponível no momento.');
+      }
+
+      throw error;
     }
-
-    const dbUser = await this.prisma.adminUser.findUnique({
-      where: { id: data.user.id },
-    });
-
-    if (!dbUser) {
-      throw new UnauthorizedException('Usuário não autorizado. Contate um administrador.');
-    }
-
-    const { data: authData } = await this.supabaseAdmin.auth.admin.getUserById(data.user.id);
-    const authUser = authData?.user ?? data.user;
-    const fullName = authUser.user_metadata?.full_name ?? dbUser.fullName ?? null;
-
-    const syncedUser = await this.prisma.adminUser.update({
-      where: { id: authUser.id },
-      data: {
-        email: authUser.email ?? normalizedEmail,
-        fullName,
-      },
-    });
-
-    return {
-      id: syncedUser.id,
-      email: syncedUser.email,
-      role: syncedUser.role,
-      fullName: syncedUser.fullName ?? null,
-    };
   }
 
   async registerUser(email: string, pass: string, fullName?: string) {
     const normalizedEmail = this.normalizeEmail(email);
 
-    const { data, error } = await this.supabaseAdmin.auth.admin.createUser({
-      email: normalizedEmail,
-      password: pass,
-      email_confirm: true,
-      user_metadata: {
-        full_name: fullName,
-      },
-      app_metadata: {
-        role: 'user',
-      },
-    });
+    try {
+      const { data, error } = await this.supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        password: pass,
+        email_confirm: true,
+        user_metadata: {
+          full_name: fullName,
+        },
+        app_metadata: {
+          role: 'user',
+        },
+      });
 
-    if (error || !data.user) {
-      throw new UnauthorizedException(error?.message || 'Falha ao registrar usuário no Supabase Auth.');
+      if (error || !data.user) {
+        throw new UnauthorizedException(error?.message || 'Falha ao registrar usuário no Supabase Auth.');
+      }
+
+      const user = await this.prisma.adminUser.upsert({
+        where: { id: data.user.id },
+        update: {
+          email: normalizedEmail,
+          fullName: fullName ?? null,
+          role: 'user',
+        },
+        create: {
+          id: data.user.id,
+          email: normalizedEmail,
+          fullName: fullName ?? null,
+          role: 'user',
+        },
+      });
+
+      return {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      };
+    } catch (error) {
+      if (this.isNetworkError(error)) {
+        throw new ServiceUnavailableException('Serviço de autenticação indisponível no momento.');
+      }
+
+      throw error;
     }
-
-    const user = await this.prisma.adminUser.upsert({
-      where: { id: data.user.id },
-      update: {
-        email: normalizedEmail,
-        fullName: fullName ?? null,
-        role: 'user',
-      },
-      create: {
-        id: data.user.id,
-        email: normalizedEmail,
-        fullName: fullName ?? null,
-        role: 'user',
-      },
-    });
-
-    return {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    };
   }
 
   async cleanupExpiredRefreshTokens() {

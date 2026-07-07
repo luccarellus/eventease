@@ -80,7 +80,7 @@ export default function Login() {
       toast.success('Login realizado com sucesso!');
       setLoginAttempts(0);
       navigate('/admin');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login error inesperado:', error);
       toast.error('Ocorreu um erro inesperado. Tente novamente.');
     } finally {
@@ -160,14 +160,14 @@ export default function Login() {
           transition={{ delay: 0.5 }}
           className="mt-10 p-6 bg-white/[0.02] border border-white/[0.08] rounded-3xl backdrop-blur-xl"
         >
-          <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-3 flex items-center gap-2">
-            <div className="w-1 h-1 rounded-full bg-primary" /> Informação de Acesso
-          </p>
+          <div className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-3 flex items-center gap-2">
+            <span className="w-1 h-1 rounded-full bg-primary" />
+            <span>Informação de Acesso</span>
+          </div>
           <p className="text-white/30 text-xs leading-relaxed font-medium">
             O acesso é protegido por autenticação JWT com tokens de curta duração e refresh automático.
           </p>
         </motion.div>
-
       </motion.div>
     </div>
   );

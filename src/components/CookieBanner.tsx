@@ -10,33 +10,49 @@ export default function CookieBanner() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem('cookie-consent');
-    if (!consent) {
-      setIsVisible(true);
-    } else if (consent === 'accepted') {
-      injectClarity();
+    try {
+      const consent = localStorage.getItem('cookie-consent');
+      if (!consent) {
+        setIsVisible(true);
+      } else if (consent === 'accepted') {
+        injectClarity();
+      }
+    } catch {
+      setIsVisible(false);
     }
   }, []);
 
   const injectClarity = () => {
-    if ((window as any).clarity) return; // Already injected
-    
-    // Configura o script do Clarity
-    (function(c: any, l: any, a: string, r: string, i: string, t?: any, y?: any) {
-        c[a] = c[a] || function() { (c[a].q = c[a].q || []).push(arguments) };
-        t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
-        y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
-    })(window, document, "clarity", "script", CLARITY_ID);
+    const clarityWindow = window as Window & { clarity?: unknown };
+    if (clarityWindow.clarity) return; // Already injected
+
+    type ClarityFunction = ((...args: unknown[]) => void) & { q?: unknown[] };
+    const win = window as unknown as Window & { clarity?: ClarityFunction };
+    win.clarity = win.clarity || ((...args: unknown[]) => {
+      win.clarity!.q = win.clarity!.q || [];
+      win.clarity!.q.push(args);
+    });
+
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.clarity.ms/tag/${CLARITY_ID}`;
+
+    const firstScript = document.getElementsByTagName('script')[0];
+    firstScript?.parentNode?.insertBefore(script, firstScript);
   };
 
   const handleAccept = () => {
-    localStorage.setItem('cookie-consent', 'accepted');
+    try {
+      localStorage.setItem('cookie-consent', 'accepted');
+    } catch {}
     setIsVisible(false);
     injectClarity();
   };
 
   const handleDecline = () => {
-    localStorage.setItem('cookie-consent', 'declined');
+    try {
+      localStorage.setItem('cookie-consent', 'declined');
+    } catch {}
     setIsVisible(false);
   };
 

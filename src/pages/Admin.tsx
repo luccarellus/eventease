@@ -63,6 +63,17 @@ import { generateCredentialCode } from '@/lib/credential-code';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+type ParticipantRecord = Participante & {
+  createdAt?: string;
+  created_at?: string;
+};
+
+type RegistrationRecord = InscricaoEvento & {
+  participante?: Participante;
+  participanteId?: string;
+  participante_id?: string;
+};
+
 export default function Admin() {
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
@@ -112,6 +123,19 @@ export default function Admin() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
 
+  const formatOptionalDate = (value?: string | null, fallback = 'Não Informado') => {
+    if (!value) {
+      return fallback;
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return fallback;
+    }
+
+    return format(date, 'dd/MM/yyyy HH:mm:ss');
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -129,7 +153,7 @@ export default function Admin() {
         setEventos(evts || []);
       }
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching general stats/events:', error);
       toast.error('Erro ao carregar dados dos eventos.');
     } finally {
@@ -145,15 +169,15 @@ export default function Admin() {
 
       const res = await api.get('/participants');
       if (!res.ok) throw new Error('Error fetching participants');
-      let allP = await res.json();
-      allP = allP.map((p: any) => ({
+      let allP = (await res.json()) as ParticipantRecord[];
+      allP = allP.map((p) => ({
         ...p,
         created_at: p.createdAt || p.created_at,
       }));
 
       if (search.trim()) {
         const s = search.toLowerCase();
-        allP = allP.filter((p: any) => 
+        allP = allP.filter((p) => 
           p.nome.toLowerCase().includes(s) || 
           p.email.toLowerCase().includes(s) || 
           p.codigo.toLowerCase().includes(s)
@@ -176,10 +200,10 @@ export default function Admin() {
     try {
       const res = await api.get(`/registrations/event/${eventoId}`);
       if (!res.ok) throw new Error('Failed to fetch event registrations');
-      const data = await res.json();
+      const data = (await res.json()) as RegistrationRecord[];
       
       // Mapear os dados para o formato esperado pelo frontend
-      const mappedData = data.map((item: any) => ({
+      const mappedData = data.map((item) => ({
         ...item,
         created_at: item.createdAt || item.created_at,
         participantes: item.participante
@@ -239,7 +263,7 @@ export default function Admin() {
 
       toast.success('Participante removido com sucesso.');
       fetchData();
-    } catch (error: any) {
+    } catch (error) {
       toast.error('Erro ao remover participante.');
     }
   };
@@ -269,7 +293,7 @@ export default function Admin() {
         gremio: ''
       });
       fetchData();
-    } catch (error: any) {
+    } catch (error) {
       toast.error('Erro ao realizar cadastro.');
     }
   };
@@ -481,8 +505,8 @@ export default function Admin() {
         Código: p?.codigo || '',
         Status: i.presente ? 'Confirmado' : 'Inscrito',
         'Confirmou Presença': i.presente ? 'Sim' : 'Não',
-        'Data de Confirmação': i.confirmado_em ? format(new Date(i.confirmado_em), 'dd/MM/yyyy HH:mm:ss') : 'Não Confirmado',
-        'Data de Inscrição': (i.createdAt || i.created_at) ? format(new Date(i.createdAt || i.created_at), 'dd/MM/yyyy HH:mm:ss') : 'Não Informado'
+        'Data de Confirmação': formatOptionalDate(i.confirmado_em, 'Não Confirmado'),
+        'Data de Inscrição': formatOptionalDate(i.createdAt || i.created_at)
       };
     });
 
@@ -515,7 +539,7 @@ export default function Admin() {
       Escola: p.escola,
       Grêmio: p.gremio || 'N/A',
       Código: p.codigo,
-      'Data de Cadastro': (p.createdAt || p.created_at) ? format(new Date(p.createdAt || p.created_at), 'dd/MM/yyyy HH:mm:ss') : 'Não Informado'
+      'Data de Cadastro': formatOptionalDate(p.createdAt || p.created_at)
     }));
 
     const csv = Papa.unparse(dataToExport, { delimiter: ';' });

@@ -15,6 +15,36 @@ type CheckinParticipant = Participante & {
   confirmado_em?: string;
 };
 
+type EventRecord = {
+  id: string;
+  titulo: string;
+  data: string;
+  local: string;
+  publicado: boolean;
+};
+
+type RegistrationRecord = {
+  id: string;
+  participanteId?: string;
+  participante_id?: string;
+  presente: boolean;
+};
+
+function formatEventDate(value?: string, pattern: 'date' | 'time' = 'date') {
+  if (!value) {
+    return '-';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '-';
+  }
+
+  return pattern === 'date'
+    ? date.toLocaleDateString('pt-BR')
+    : date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
 // Componente do Scanner para garantir que o elemento DOM esteja pronto
 function QRScanner({ onScan, onClose }: { onScan: (text: string) => void; onClose: () => void }) {
   useEffect(() => {
@@ -74,9 +104,9 @@ export default function Confirm() {
     try {
       const res = await api.get('/events');
       if (!res.ok) throw new Error('Falha ao carregar eventos');
-      const data = await res.json();
-      setEventos(data || []);
-      if (data && data.length > 0) {
+      const data = (await res.json()) as EventRecord[];
+      setEventos(Array.isArray(data) ? data : []);
+      if (Array.isArray(data) && data.length > 0) {
         setSelectedEventoId(data[0].id);
       }
     } catch (err) {
@@ -127,9 +157,9 @@ export default function Confirm() {
         // Buscar a inscrição específica do participante no evento
         const regsRes = await api.get(`/registrations/event/${selectedEventoId}`);
         if (!regsRes.ok) throw new Error('Falha ao buscar inscrições do evento');
-        const regs = await regsRes.json();
+        const regs = (await regsRes.json()) as RegistrationRecord[];
         // Suporte a camelCase (participanteId) e snake_case (participante_id) da API
-        const inscricao = regs.find((r: any) => (r.participanteId ?? r.participante_id) === participante.id);
+        const inscricao = regs.find((r) => (r.participanteId ?? r.participante_id) === participante.id);
 
         if (inscricao && inscricao.presente) {
           setResult({
@@ -171,9 +201,10 @@ export default function Confirm() {
         });
         toast.success(`Inscrição e Check-in automáticos para ${participante.nome}!`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Check-in error:', error);
-      toast.error('Erro ao realizar check-in: ' + (error.message || 'Tente novamente.'));
+      const message = error instanceof Error ? error.message : 'Tente novamente.';
+      toast.error('Erro ao realizar check-in: ' + message);
     } finally {
       setLoading(false);
     }
@@ -265,7 +296,7 @@ export default function Confirm() {
                       >
                         {eventos.map((evt) => (
                           <option key={evt.id} value={evt.id} className="bg-neutral-900 text-white">
-                            {evt.titulo} - {new Date(evt.data).toLocaleDateString('pt-BR')}
+                            {evt.titulo} - {formatEventDate(evt.data)}
                           </option>
                         ))}
                       </select>
@@ -376,7 +407,7 @@ export default function Confirm() {
                       <InfoRow 
                         icon={<Clock className="w-5 h-5 text-purple-400" />} 
                         label="Data/Hora Check-in" 
-                        value={result.data.confirmado_em ? new Date(result.data.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '-'} 
+                        value={formatEventDate(result.data.confirmado_em, 'time')} 
                       />
                     </div>
                   </div>
