@@ -561,6 +561,10 @@ export default function Admin() {
     { name: 'Ausentes', value: statsEvento.ausentes },
   ];
 
+  const handleChartFilter = (index: number) => {
+    setFilter(index === 0 ? 'present' : 'absent');
+  };
+
   if (loading && eventos.length === 0) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
@@ -1156,6 +1160,8 @@ export default function Admin() {
                           paddingAngle={8}
                           dataKey="value"
                           stroke="none"
+                          cursor="pointer"
+                          onClick={(_, index) => handleChartFilter(index)}
                         >
                           <Cell fill="var(--color-primary)" />
                           <Cell fill="rgba(255,255,255,0.05)" />
@@ -1166,8 +1172,26 @@ export default function Admin() {
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="flex justify-center gap-4 text-[9px] uppercase tracking-widest font-bold mt-2">
-                      <span className="text-primary">Confirmados ({statsEvento.presentes})</span>
-                      <span className="text-white/25">Apenas Inscritos ({statsEvento.ausentes})</span>
+                      <button
+                        type="button"
+                        onClick={() => setFilter('present')}
+                        className={cn(
+                          'transition-colors hover:text-primary focus:outline-none',
+                          filter === 'present' ? 'text-primary' : 'text-primary/70'
+                        )}
+                      >
+                        Confirmados ({statsEvento.presentes})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFilter('absent')}
+                        className={cn(
+                          'transition-colors hover:text-white focus:outline-none',
+                          filter === 'absent' ? 'text-white' : 'text-white/25'
+                        )}
+                      >
+                        Apenas Inscritos ({statsEvento.ausentes})
+                      </button>
                     </div>
                   </CardContent>
                 </Card>
