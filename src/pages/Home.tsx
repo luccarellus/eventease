@@ -479,10 +479,10 @@ export default function Home() {
           transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
           className="heading-display text-3xl sm:text-4xl md:text-7xl mb-6 md:mb-8 tracking-tight font-extrabold leading-[1.1] md:leading-[1.05]"
         >
-          <span className="text-white drop-shadow-sm">Eventos</span>
-          <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">do</span>
+          <span className="text-white drop-shadow-sm">EventEase</span>
+          <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">/</span>
           <span className="bg-gradient-to-r from-primary via-primary to-primary-dark bg-clip-text text-transparent font-black tracking-tighter">
-            Olhar Jovem
+            Instituto Olhar Jovem
           </span>
         </motion.h1>
 

@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { UserCheck, QrCode, Search, CheckCircle2, AlertCircle, Clock, MapPin, User, Building, RefreshCcw, X, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Participante, Evento } from '@/types/index';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 
 type CheckinParticipant = Participante & {
   presente?: boolean;
@@ -49,17 +49,34 @@ function formatEventDate(value?: string, pattern: 'date' | 'time' = 'date') {
 function QRScanner({ onScan, onClose }: { onScan: (text: string) => void; onClose: () => void }) {
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
+    let scanned = false;
 
     const start = async () => {
       try {
-        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode = new Html5Qrcode("reader", {
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+          verbose: false,
+        });
         await html5QrCode.start(
           { facingMode: "environment" },
           {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
+            fps: 24,
+            qrbox: (viewfinderWidth, viewfinderHeight) => {
+              const size = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.78);
+              const clampedSize = Math.max(220, Math.min(size, 360));
+              return { width: clampedSize, height: clampedSize };
+            },
+            disableFlip: true,
+            videoConstraints: {
+              facingMode: "environment",
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              frameRate: { ideal: 30, max: 30 },
+            },
           },
           (decodedText) => {
+            if (scanned) return;
+            scanned = true;
             onScan(decodedText);
           },
           () => { } // Ignorar erros de leitura contínua
