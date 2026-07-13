@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -89,29 +89,54 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[80vh] px-6">
+    <div className="flex flex-col items-center justify-center min-h-[85vh] px-6 py-12">
+      {/* Logos and Slogan above the card */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col items-center mb-8 space-y-4"
+      >
+        <div className="flex items-center justify-center gap-6">
+          <img
+            src="/logo_oficial.png"
+            alt="Instituto Olhar Jovem"
+            className="h-16 w-auto object-contain"
+          />
+          {/* Badge "no enem vou APROVAR" styling matching the badge sticker */}
+          <div className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-white shadow-lg border border-slate-100 rotate-6 p-1 text-center select-none">
+            <span className="text-[7px] font-extrabold text-[#00bfa5] leading-none uppercase">no</span>
+            <span className="text-[9px] font-black text-slate-800 leading-none uppercase">enem</span>
+            <span className="text-[7px] font-extrabold text-[#00bfa5] leading-none uppercase">vou</span>
+            <span className="text-[8px] font-black bg-[#00bfa5] text-white px-1 py-0.5 rounded mt-0.5 leading-none uppercase">aprovar</span>
+          </div>
+        </div>
+        <p className="text-[9px] md:text-[10px] text-white/40 font-bold uppercase tracking-[0.25em] text-center">
+          A evolução dos seus estudos começa aqui.
+        </p>
+      </motion.div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
         className="w-full max-w-md"
       >
-        <Card className="glass-card shadow-3xl border-white/[0.08] overflow-hidden">
-          <CardHeader className="text-center p-12 border-b border-white/[0.08] bg-white/[0.02]">
-            <CardTitle className="font-display text-3xl tracking-tight text-white mb-2">Portal Administrativo</CardTitle>
-            <CardDescription className="text-white/40 font-medium text-base">
-              Acesso exclusivo para administradores autorizados.
-            </CardDescription>
+        <Card className="glass-card shadow-3xl overflow-hidden border-white/[0.04]">
+          <CardHeader className="text-left px-12 pt-12 pb-2">
+            <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em]">Portal do Aluno</span>
+            <CardTitle className="font-display text-3xl font-extrabold tracking-tight text-white mt-1">Acesse sua conta</CardTitle>
           </CardHeader>
-          <CardContent className="p-12 pb-10">
-            <form id="login-form" onSubmit={handleLogin} className="space-y-8">
-              <div className="space-y-3">
-                <Label htmlFor="email" className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">Credencial de E-mail</Label>
+          <CardContent className="px-12 pt-8 pb-12">
+            <form id="login-form" onSubmit={handleLogin} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">E-mail</Label>
                 <div className="relative group">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="admin@empresa.com"
+                    placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="liquid-input pl-12 h-14 border-white/[0.05] focus:ring-primary rounded-2xl"
@@ -119,10 +144,8 @@ export default function Login() {
                   />
                 </div>
               </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">Chave de Acesso</Label>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">Senha</Label>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within:text-primary transition-colors" />
                   <Input
@@ -136,37 +159,52 @@ export default function Login() {
                   />
                 </div>
               </div>
+              
+              {/* Remember Me and Forgot Password links */}
+              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.1em] pt-1">
+                <label className="flex items-center gap-2 text-white/40 cursor-pointer hover:text-white/60 transition-colors">
+                  <input
+                    type="checkbox"
+                    className="w-3.5 h-3.5 rounded bg-[#0c1524] border-white/[0.1] text-primary focus:ring-0 cursor-pointer"
+                  />
+                  <span>Lembrar-me</span>
+                </label>
+                <a href="#" className="text-primary hover:text-primary-dark transition-colors" onClick={(e) => e.preventDefault()}>
+                  Esqueceu a senha?
+                </a>
+              </div>
+
               <Button
                 type="submit"
-                className="modern-button w-full h-14 text-base shadow-2xl"
+                className="modern-button w-full h-14 text-base font-bold uppercase tracking-wider mt-4"
                 disabled={loading || (lockoutUntil !== null && Date.now() < lockoutUntil)}
               >
-                {loading ? 'Autenticando...' : (lockoutUntil && Date.now() < lockoutUntil ? 'Acesso Bloqueado' : 'Entrar no Sistema')}
-                {!loading && (!lockoutUntil || Date.now() >= lockoutUntil) && <ArrowRight className="w-5 h-5 ml-2" />}
+                {loading ? 'Autenticando...' : (lockoutUntil && Date.now() < lockoutUntil ? 'Acesso Bloqueado' : 'Acessar')}
+                {!loading && (!lockoutUntil || Date.now() >= lockoutUntil) && <ArrowRight className="w-5 h-5 ml-1" />}
               </Button>
+
+              <div className="text-center text-[11px] font-medium text-white/40 pt-4">
+                Ainda não é membro?{' '}
+                <Link to="/" className="text-primary hover:underline font-bold transition-colors">
+                  Cadastre-se agora
+                </Link>
+              </div>
             </form>
           </CardContent>
-          <CardFooter className="bg-white/[0.01] flex flex-col p-8 items-center border-t border-white/[0.08]">
-            <p className="text-[10px] text-white/10 text-center leading-relaxed font-black uppercase tracking-[0.3em]">
-              Protocolo de Segurança Ativo
-            </p>
-          </CardFooter>
         </Card>
 
-        {/* Helper for Configuration */}
+        {/* Footer links under the card */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-10 p-6 bg-white/[0.02] border border-white/[0.08] rounded-3xl backdrop-blur-xl"
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-8 flex flex-col items-center gap-3 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-white/20"
         >
-          <div className="text-[10px] text-white/40 font-black uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span className="w-1 h-1 rounded-full bg-primary" />
-            <span>Informação de Acesso</span>
+          <div className="flex gap-4">
+            <Link to="/politica-de-privacidade" className="hover:text-white/40 transition-colors">Privacidade</Link>
+            <Link to="/termos" className="hover:text-white/40 transition-colors">Cookies</Link>
           </div>
-          <p className="text-white/30 text-xs leading-relaxed font-medium">
-            O acesso é protegido por autenticação JWT com tokens de curta duração e refresh automático.
-          </p>
+          <span>© 2026 NEVA PRO</span>
         </motion.div>
       </motion.div>
     </div>
