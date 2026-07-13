@@ -95,13 +95,13 @@ export default function Login() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex flex-col items-center mb-8 space-y-4"
+        className="w-full max-w-md flex flex-col items-center mb-8 space-y-4"
       >
-        <div className="flex items-center justify-center gap-6">
+        <div className="w-full flex items-center justify-center">
           <img
             src="/logo_oficial.png"
             alt="Instituto Olhar Jovem"
-            className="h-12 sm:h-16 w-auto object-contain"
+            className="h-16 sm:h-24 w-auto max-w-[88vw] object-contain"
           />
         </div>
       </motion.div>
