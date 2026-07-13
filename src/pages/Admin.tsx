@@ -595,19 +595,19 @@ export default function Admin() {
             <StatCard
               title="Total de Alunos"
               value={statsGlobal.totalAlunos}
-              icon={<Users className="w-5 h-5 text-teal-400" />}
+              icon={<Users className="w-5 h-5 text-primary" />}
               description="Cadastrados no sistema"
             />
             <StatCard
               title="Total de Eventos"
               value={statsGlobal.totalEventos}
-              icon={<Calendar className="w-5 h-5 text-emerald-400" />}
+              icon={<Calendar className="w-5 h-5 text-primary" />}
               description="Gerenciados"
             />
             <StatCard
               title="Eventos Ativos"
               value={statsGlobal.eventosPublicados}
-              icon={<Sparkles className="w-5 h-5 text-purple-400" />}
+              icon={<Sparkles className="w-5 h-5 text-primary" />}
               description="Publicados para os alunos"
             />
           </div>
@@ -962,15 +962,15 @@ export default function Admin() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-white/5 text-xs text-white/50 font-bold uppercase tracking-wider">
                   <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-emerald-400" />
+                    <Calendar className="w-5 h-5 text-primary" />
                     <span>{format(new Date(selectedEvento.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-purple-400" />
+                    <Clock className="w-5 h-5 text-primary" />
                     <span>{format(new Date(selectedEvento.data), "HH:mm'h'", { locale: ptBR })}</span>
                   </div>
                   <div className="flex items-center gap-3 sm:col-span-2">
-                    <MapPin className="w-5 h-5 text-teal-400 animate-pulse" />
+                    <MapPin className="w-5 h-5 text-primary animate-pulse" />
                     <span>{selectedEvento.local}</span>
                   </div>
                 </div>
@@ -1019,7 +1019,7 @@ export default function Admin() {
                           <DropdownMenuContent align="end" className="rounded-2xl border-white/10 shadow-3xl bg-black/90 p-2 min-w-[160px]">
                             <DropdownMenuItem onClick={() => setFilter('all')} className="rounded-xl focus:bg-white/10 focus:text-white transition-all px-4 py-2 cursor-pointer font-medium text-xs text-white/80">Todos</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => setFilter('present')} className="rounded-xl focus:bg-emerald-500/20 focus:text-emerald-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-emerald-400/80">Confirmados</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setFilter('absent')} className="rounded-xl focus:bg-blue-500/20 focus:text-blue-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-blue-400/80">Apenas Inscritos</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setFilter('absent')} className="rounded-xl focus:bg-white/10 focus:text-white transition-all px-4 py-2 cursor-pointer font-medium text-xs text-white/60">Apenas Inscritos</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -1071,9 +1071,9 @@ export default function Admin() {
                                   "inline-flex items-center gap-2 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] shadow-sm border",
                                   i.presente
                                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                    : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                    : "bg-white/5 text-white/50 border-white/10"
                                 )}>
-                                  <div className={cn("w-1 h-1 md:w-1.5 md:h-1.5 rounded-full", i.presente ? "bg-emerald-400 animate-pulse" : "bg-blue-400")} />
+                                  <div className={cn("w-1 h-1 md:w-1.5 md:h-1.5 rounded-full", i.presente ? "bg-emerald-400 animate-pulse" : "bg-white/40")} />
                                   {i.presente ? 'Confirmado' : 'Inscrito'}
                                 </div>
                               </TableCell>
@@ -1130,7 +1130,7 @@ export default function Admin() {
                 </div>
                 <div className="glass-card bg-white/[0.01] border-white/[0.08] p-5 rounded-2xl">
                   <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Apenas Inscritos</span>
-                  <div className="text-3xl font-display font-bold text-blue-400 mt-1">{statsEvento.ausentes}</div>
+                  <div className="text-3xl font-display font-bold text-white mt-1">{statsEvento.ausentes}</div>
                 </div>
                 <div className="glass-card bg-white/[0.01] border-white/[0.08] p-5 rounded-2xl">
                   <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Frequência</span>
@@ -1193,7 +1193,7 @@ export default function Admin() {
                     </Button>
                     <Button
                       onClick={() => exportEventCSV('present')}
-                      className="w-full bg-emerald-500 text-white hover:bg-emerald-600 font-bold rounded-xl h-10 shadow-md border border-white/20 text-[10px] uppercase tracking-widest"
+                      className="w-full bg-primary text-white hover:bg-primary-dark font-bold rounded-xl h-10 shadow-md border border-white/20 text-[10px] uppercase tracking-widest"
                     >
                       2. Apenas Confirmados
                     </Button>
@@ -1215,7 +1215,7 @@ export default function Admin() {
               initial={{ opacity: 0, scale: 0.95, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 50 }}
-              className="w-full max-w-2xl bg-neutral-900 border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[95dvh] overflow-y-auto"
+              className="w-full max-w-2xl bg-card border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[95dvh] overflow-y-auto"
             >
               <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
@@ -1320,7 +1320,7 @@ export default function Admin() {
               initial={{ opacity: 0, scale: 0.95, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 50 }}
-              className="w-full max-w-xl bg-neutral-900 border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[95dvh] overflow-y-auto"
+              className="w-full max-w-xl bg-card border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[95dvh] overflow-y-auto"
             >
               <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
@@ -1424,7 +1424,7 @@ export default function Admin() {
               initial={{ opacity: 0, scale: 0.95, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 50 }}
-              className="w-full max-w-xl bg-neutral-900 border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl flex flex-col max-h-[95dvh]"
+              className="w-full max-w-xl bg-card border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl flex flex-col max-h-[95dvh]"
             >
               <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>

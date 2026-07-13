@@ -481,7 +481,7 @@ export default function Home() {
         >
           <span className="text-white drop-shadow-sm">Eventos</span>
           <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">do</span>
-          <span className="bg-gradient-to-r from-emerald-400 via-primary to-teal-300 bg-clip-text text-transparent font-black tracking-tighter">
+          <span className="bg-gradient-to-r from-primary via-primary to-primary-dark bg-clip-text text-transparent font-black tracking-tighter">
             Olhar Jovem
           </span>
         </motion.h1>
@@ -508,7 +508,7 @@ export default function Home() {
             variant="outline"
             className="rounded-2xl border-white/10 hover:bg-white/5 text-white hover:text-white transition-all text-sm px-6 h-12 font-bold uppercase tracking-wider flex items-center gap-2"
           >
-            <Mail className="w-4 h-4 text-teal-400" />
+            <Mail className="w-4 h-4 text-primary" />
             Minha Credencial
           </Button>
         </motion.div>
@@ -581,11 +581,11 @@ export default function Home() {
 
                   <div className="space-y-3 border-t border-white/5 pt-6 text-xs text-white/40 font-bold uppercase tracking-wider">
                     <div className="flex items-center gap-3">
-                      <Clock className="w-4 h-4 text-emerald-400" />
+                      <Clock className="w-4 h-4 text-primary" />
                       <span>{formatEventDate(evento.data, "HH:mm'h'")}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <MapPin className="w-4 h-4 text-teal-400 animate-pulse" />
+                      <MapPin className="w-4 h-4 text-primary animate-pulse" />
                       <span className="truncate max-w-[220px]">{evento.local}</span>
                     </div>
                   </div>
@@ -621,10 +621,10 @@ export default function Home() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 50 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="w-full max-w-2xl bg-neutral-950 border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative flex flex-col max-h-[95dvh] md:max-h-[90dvh]"
+              className="w-full max-w-2xl bg-card border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative flex flex-col max-h-[95dvh] md:max-h-[90dvh]"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="h-2 bg-gradient-to-r from-emerald-500 via-primary to-teal-500" />
+              <div className="h-2 bg-gradient-to-r from-primary via-primary to-primary-dark" />
               
               <button
                 onClick={closeRegistration}
@@ -640,7 +640,7 @@ export default function Home() {
                 <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">Inscrição no Evento</span>
                 <h3 className="text-xl md:text-2xl font-display font-bold text-white mt-1 truncate pr-8">{selectedEvent.titulo}</h3>
                 <p className="text-white/40 text-xs mt-1 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-teal-400" /> {selectedEvent.local}
+                  <MapPin className="w-3.5 h-3.5 text-primary" /> {selectedEvent.local}
                 </p>
               </div>
 
@@ -779,9 +779,9 @@ export default function Home() {
                                 errors.cidade && "border-red-500/50 focus:border-red-500/50"
                               )}
                             >
-                              <option value="" className="text-white/60 bg-neutral-950">Selecione sua cidade</option>
+                              <option value="" className="text-white/60 bg-card">Selecione sua cidade</option>
                               {citiesList.map((city) => (
-                                <option key={city} value={city} className="text-white bg-neutral-950">
+                                <option key={city} value={city} className="text-white bg-card">
                                   {city}
                                 </option>
                               ))}
@@ -805,11 +805,11 @@ export default function Home() {
                                 errors.escola && "border-red-500/50 focus:border-red-500/50"
                               )}
                             >
-                              <option value="" className="text-white/60 bg-neutral-950">
+                              <option value="" className="text-white/60 bg-card">
                                 {!selectedCity ? "Selecione primeiro a cidade" : "Selecione sua escola"}
                               </option>
                               {availableSchools.map((school) => (
-                                <option key={school} value={school} className="text-white bg-neutral-950">
+                                <option key={school} value={school} className="text-white bg-card">
                                   {school}
                                 </option>
                               ))}
@@ -957,10 +957,10 @@ export default function Home() {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="w-full max-w-lg bg-neutral-950 border border-white/10 rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative p-6 md:p-10 space-y-6"
+              className="w-full max-w-lg bg-card border border-white/10 rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative p-6 md:p-10 space-y-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="h-2 bg-gradient-to-r from-emerald-500 via-primary to-teal-500 absolute top-0 left-0 right-0" />
+              <div className="h-2 bg-gradient-to-r from-primary via-primary to-primary-dark absolute top-0 left-0 right-0" />
               
               <button
                 onClick={() => setShowCredentialModal(false)}
@@ -982,7 +982,7 @@ export default function Home() {
                     className="space-y-6"
                   >
                     <div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-teal-400 pl-1">
+                      <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary pl-1">
                         Consulta de Acesso
                       </span>
                       <h3 className="font-display font-bold text-2xl md:text-3xl text-white mt-1 tracking-tight">

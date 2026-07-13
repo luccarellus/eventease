@@ -295,7 +295,7 @@ export default function Confirm() {
                         aria-label="Selecione o Evento para validação de ingresso"
                       >
                         {eventos.map((evt) => (
-                          <option key={evt.id} value={evt.id} className="bg-neutral-900 text-white">
+                          <option key={evt.id} value={evt.id} className="bg-card text-white">
                             {evt.titulo} - {formatEventDate(evt.data)}
                           </option>
                         ))}
@@ -398,14 +398,14 @@ export default function Confirm() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {result.eventTitle && (
                         <div className="sm:col-span-2">
-                          <InfoRow icon={<Sparkles className="w-5 h-5 text-yellow-400" />} label="Evento" value={result.eventTitle} />
+                          <InfoRow icon={<Sparkles className="w-5 h-5 text-primary" />} label="Evento" value={result.eventTitle} />
                         </div>
                       )}
-                      <InfoRow icon={<User className="w-5 h-5 text-teal-400" />} label="Participante" value={result.data.nome} />
-                      <InfoRow icon={<Building className="w-5 h-5 text-emerald-400" />} label="Instituição" value={result.data.escola} />
-                      <InfoRow icon={<MapPin className="w-5 h-5 text-orange-400" />} label="Cidade Base" value={result.data.cidade} />
+                      <InfoRow icon={<User className="w-5 h-5 text-primary" />} label="Participante" value={result.data.nome} />
+                      <InfoRow icon={<Building className="w-5 h-5 text-primary" />} label="Instituição" value={result.data.escola} />
+                      <InfoRow icon={<MapPin className="w-5 h-5 text-primary" />} label="Cidade Base" value={result.data.cidade} />
                       <InfoRow
-                        icon={<Clock className="w-5 h-5 text-purple-400" />}
+                        icon={<Clock className="w-5 h-5 text-primary" />}
                         label="Data/Hora Check-in"
                         value={formatEventDate(result.data.confirmado_em, 'time')}
                       />

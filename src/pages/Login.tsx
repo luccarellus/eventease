@@ -155,7 +155,7 @@ export default function Login() {
                 <label className="flex items-center gap-2 text-white/40 cursor-pointer hover:text-white/60 transition-colors">
                   <input
                     type="checkbox"
-                    className="w-3.5 h-3.5 rounded bg-[#0c1524] border-white/[0.1] text-primary focus:ring-0 cursor-pointer"
+                    className="w-3.5 h-3.5 rounded bg-input border-white/[0.1] text-primary focus:ring-0 cursor-pointer"
                   />
                   <span>Lembrar-me</span>
                 </label>
