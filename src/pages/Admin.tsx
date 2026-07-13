@@ -581,7 +581,7 @@ export default function Admin() {
             Controle Administrativo
           </div>
           <h1 className="heading-display text-3xl md:text-4xl mb-2 text-white leading-tight">
-            Portal do<span className="text-primary">Staff</span>
+            Painel do <span className="text-primary">Staff</span>
           </h1>
           <p className="text-white/40 text-base md:text-lg font-medium">Gerenciamento integrado de múltiplos eventos, inscrições e cadastro de alunos.</p>
         </motion.div>
