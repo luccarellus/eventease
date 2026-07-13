@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
@@ -90,7 +90,7 @@ export default function Login() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] px-6 py-12">
-      {/* Logos and Slogan above the card */}
+      {/* Logo above the card */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -103,17 +103,7 @@ export default function Login() {
             alt="Instituto Olhar Jovem"
             className="h-16 w-auto object-contain"
           />
-          {/* Badge "no enem vou APROVAR" styling matching the badge sticker */}
-          <div className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-white shadow-lg border border-slate-100 rotate-6 p-1 text-center select-none">
-            <span className="text-[7px] font-extrabold text-[#00bfa5] leading-none uppercase">no</span>
-            <span className="text-[9px] font-black text-slate-800 leading-none uppercase">enem</span>
-            <span className="text-[7px] font-extrabold text-[#00bfa5] leading-none uppercase">vou</span>
-            <span className="text-[8px] font-black bg-[#00bfa5] text-white px-1 py-0.5 rounded mt-0.5 leading-none uppercase">aprovar</span>
-          </div>
         </div>
-        <p className="text-[9px] md:text-[10px] text-white/40 font-bold uppercase tracking-[0.25em] text-center">
-          A evolução dos seus estudos começa aqui.
-        </p>
       </motion.div>
 
       <motion.div
@@ -124,8 +114,8 @@ export default function Login() {
       >
         <Card className="glass-card shadow-3xl overflow-hidden border-white/[0.04]">
           <CardHeader className="text-left px-12 pt-12 pb-2">
-            <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em]">Portal do Aluno</span>
-            <CardTitle className="font-display text-3xl font-extrabold tracking-tight text-white mt-1">Acesse sua conta</CardTitle>
+            <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em]">Área da Organização</span>
+            <CardTitle className="font-display text-3xl font-extrabold tracking-tight text-white mt-1">Acesso da equipe</CardTitle>
           </CardHeader>
           <CardContent className="px-12 pt-8 pb-12">
             <form id="login-form" onSubmit={handleLogin} className="space-y-6">
@@ -183,12 +173,6 @@ export default function Login() {
                 {!loading && (!lockoutUntil || Date.now() >= lockoutUntil) && <ArrowRight className="w-5 h-5 ml-1" />}
               </Button>
 
-              <div className="text-center text-[11px] font-medium text-white/40 pt-4">
-                Ainda não é membro?{' '}
-                <Link to="/" className="text-primary hover:underline font-bold transition-colors">
-                  Cadastre-se agora
-                </Link>
-              </div>
             </form>
           </CardContent>
         </Card>
@@ -204,7 +188,7 @@ export default function Login() {
             <Link to="/politica-de-privacidade" className="hover:text-white/40 transition-colors">Privacidade</Link>
             <Link to="/termos" className="hover:text-white/40 transition-colors">Cookies</Link>
           </div>
-          <span>© 2026 NEVA PRO</span>
+          <span>© 2026 Instituto Olhar Jovem</span>
         </motion.div>
       </motion.div>
     </div>

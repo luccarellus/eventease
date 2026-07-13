@@ -470,7 +470,7 @@ export default function Home() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
           </span>
-          Inscrições Abertas
+          Eventos com inscrições abertas
         </motion.div>
         
         <motion.h1
@@ -479,9 +479,8 @@ export default function Home() {
           transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
           className="heading-display text-3xl sm:text-5xl md:text-7xl mb-6 md:mb-8 tracking-tight font-extrabold leading-[1.1] md:leading-[1.05]"
         >
-          <span className="text-white drop-shadow-sm">Event</span>
-          <span className="text-primary font-black drop-shadow-[0_2px_10px_rgba(0,191,165,0.2)]">Ease</span>
-          <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">/</span>
+          <span className="text-white drop-shadow-sm">Eventos</span>
+          <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">do</span>
           <span className="bg-gradient-to-r from-emerald-400 via-primary to-teal-300 bg-clip-text text-transparent font-black tracking-tighter">
             Olhar Jovem
           </span>
