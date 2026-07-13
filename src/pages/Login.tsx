@@ -101,7 +101,7 @@ export default function Login() {
           <img
             src="/logo_oficial.png"
             alt="Instituto Olhar Jovem"
-            className="h-16 sm:h-24 w-auto max-w-[88vw] object-contain"
+            className="h-16 sm:h-24 w-auto max-w-[88vw] object-contain -translate-x-4 sm:-translate-x-6"
           />
         </div>
       </motion.div>
