@@ -253,6 +253,14 @@ function AppContent() {
         </Suspense>
       </main>
 
+      {!userIsAdmin && (
+        <footer className="mt-auto py-8 text-center opacity-40 hover:opacity-100 transition-opacity">
+          <Link to="/login" className="text-xs uppercase tracking-[0.2em] font-bold text-white hover:text-primary">
+            Staff/Organização
+          </Link>
+        </footer>
+      )}
+
       <BottomNav />
       <CookieBanner />
       <Toaster theme="dark" position="top-center" expand={true} richColors />
