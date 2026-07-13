@@ -62,7 +62,7 @@ function QRScanner({ onScan, onClose }: { onScan: (text: string) => void; onClos
           (decodedText) => {
             onScan(decodedText);
           },
-          () => {} // Ignorar erros de leitura contínua
+          () => { } // Ignorar erros de leitura contínua
         );
       } catch (err) {
         console.error("Erro ao iniciar scanner:", err);
@@ -225,58 +225,58 @@ export default function Confirm() {
     <div className="max-w-4xl mx-auto py-8 md:py-12 px-4 md:px-6">
       <div className="text-center mb-8 md:mb-12">
         <motion.div
-           initial={{ opacity: 0, y: -10 }}
-           animate={{ opacity: 1, y: 0 }}
-           className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-primary text-[9px] md:text-[10px] font-bold uppercase tracking-widest mb-4 md:mb-6"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-primary text-[9px] md:text-[10px] font-bold uppercase tracking-widest mb-4 md:mb-6"
         >
-           Controle de Acesso
+          Controle de Acesso
         </motion.div>
-        <h1 className="heading-display text-3xl md:text-5xl mb-3 md:mb-4 text-white leading-tight">Validação de <span className="text-primary italic">Presença</span></h1>
+        <h1 className="heading-display text-3xl md:text-5xl mb-3 md:mb-4 text-white leading-tight">Validação de <span className="text-primary">Check-in</span></h1>
         <p className="text-white/40 text-base md:text-xl font-medium max-w-xl mx-auto px-4">Valide as credenciais dos participantes para entrada no evento em tempo real.</p>
       </div>
 
-        <AnimatePresence mode="wait">
-          {scannerActive ? (
-            <motion.div
-              key="scanner"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-0 md:p-6 backdrop-blur-md"
-            >
-              <Card className="w-full h-full md:h-auto md:max-w-md mx-auto glass-card overflow-hidden border-white/20 rounded-none md:rounded-[2.5rem] shadow-3xl bg-black flex flex-col">
-                <div className="p-4 md:p-6 flex items-center justify-between border-b border-white/10 shrink-0 mt-8 md:mt-0">
-                  <span className="text-white font-bold text-xs uppercase tracking-widest">Leitor de QR Code</span>
-                  <Button variant="ghost" size="icon" onClick={() => setScannerActive(false)} className="rounded-full hover:bg-white/10 text-white">
-                    <X className="w-6 h-6" />
-                  </Button>
-                </div>
-                
-                <div className="flex-grow relative flex items-center justify-center bg-black">
-                  <QRScanner 
-                    onScan={onScanSuccess} 
-                    onClose={() => setScannerActive(false)} 
-                  />
-                </div>
+      <AnimatePresence mode="wait">
+        {scannerActive ? (
+          <motion.div
+            key="scanner"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-0 md:p-6 backdrop-blur-md"
+          >
+            <Card className="w-full h-full md:h-auto md:max-w-md mx-auto glass-card overflow-hidden border-white/20 rounded-none md:rounded-[2.5rem] shadow-3xl bg-black flex flex-col">
+              <div className="p-4 md:p-6 flex items-center justify-between border-b border-white/10 shrink-0 mt-8 md:mt-0">
+                <span className="text-white font-bold text-xs uppercase tracking-widest">Leitor de QR Code</span>
+                <Button variant="ghost" size="icon" onClick={() => setScannerActive(false)} className="rounded-full hover:bg-white/10 text-white">
+                  <X className="w-6 h-6" />
+                </Button>
+              </div>
 
-                <div className="p-6 text-center shrink-0 pb-12 md:pb-6 border-t border-white/10">
-                  <p className="text-white/40 text-xs font-medium">Aponte a câmera para o QR Code da credencial.</p>
-                </div>
-              </Card>
-            </motion.div>
-          ) : !result ? (
-            <motion.div
-              key="search"
-              initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-              animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="max-w-2xl mx-auto px-2 md:px-0"
-            >
+              <div className="flex-grow relative flex items-center justify-center bg-black">
+                <QRScanner
+                  onScan={onScanSuccess}
+                  onClose={() => setScannerActive(false)}
+                />
+              </div>
+
+              <div className="p-6 text-center shrink-0 pb-12 md:pb-6 border-t border-white/10">
+                <p className="text-white/40 text-xs font-medium">Aponte a câmera para o QR Code da credencial.</p>
+              </div>
+            </Card>
+          </motion.div>
+        ) : !result ? (
+          <motion.div
+            key="search"
+            initial={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="max-w-2xl mx-auto px-2 md:px-0"
+          >
             <Card className="glass-card shadow-3xl overflow-hidden border-white/[0.08] rounded-[2rem] md:rounded-[2.5rem]">
               <CardHeader className="bg-white/[0.02] border-b border-white/[0.08] p-8 md:p-12 pb-8 md:pb-10">
                 <div>
-                  <CardTitle className="font-display text-2xl md:text-3xl text-white leading-none mb-2 md:mb-3 tracking-tight">Validar Ingresso</CardTitle>
+                  <CardTitle className="font-display text-2xl md:text-3xl text-white leading-none mb-2 md:mb-3 tracking-tight">Credencial de Acesso</CardTitle>
                   <CardDescription className="text-white/30 text-sm md:text-lg font-medium">Escaneie ou digite o código alfanumérico.</CardDescription>
                 </div>
               </CardHeader>
@@ -312,8 +312,8 @@ export default function Confirm() {
                       autoFocus
                     />
                   </div>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="modern-button h-16 md:h-20 w-full text-lg md:text-xl shadow-2xl"
                     disabled={loading || !codigo || !selectedEventoId}
                   >
@@ -324,11 +324,11 @@ export default function Confirm() {
               </CardContent>
               <CardFooter className="bg-white/[0.01] p-8 md:p-10 flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 border-t border-white/[0.08]">
                 <span className="text-[9px] md:text-[10px] text-white/20 uppercase tracking-[0.3em] font-black">Módulo de Escaneamento</span>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setScannerActive(true)}
-                  className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-10 md:h-12 px-6 md:px-8 font-bold text-[10px] md:text-xs uppercase tracking-widest"
+                  className="rounded-full gap-2 border-primary/20 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all h-10 md:h-12 px-6 md:px-8 font-bold text-[10px] md:text-xs uppercase tracking-widest cursor-pointer"
                 >
                   <QrCode className="w-4 h-4 md:w-5 md:h-5 mr-1" /> Ativar Scanner
                 </Button>
@@ -345,21 +345,21 @@ export default function Confirm() {
           >
             <Card className={cn(
               "glass-card overflow-hidden shadow-3xl border-2 transition-all duration-700 rounded-[2rem] md:rounded-[2.5rem]",
-              result.status === 'success' ? "border-emerald-500/20 bg-emerald-500/[0.02]" : 
-              result.status === 'already' ? "border-orange-500/20 bg-orange-500/[0.02]" :
-              "border-red-500/20 bg-red-500/[0.02]"
+              result.status === 'success' ? "border-emerald-500/20 bg-emerald-500/[0.02]" :
+                result.status === 'already' ? "border-orange-500/20 bg-orange-500/[0.02]" :
+                  "border-red-500/20 bg-red-500/[0.02]"
             )}>
               <div className={cn(
                 "h-2 w-full",
-                result.status === 'success' ? "bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]" : 
-                result.status === 'already' ? "bg-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.5)]" :
-                "bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]"
+                result.status === 'success' ? "bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]" :
+                  result.status === 'already' ? "bg-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.5)]" :
+                    "bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]"
               )} />
-              
+
               <CardContent className="p-10 md:p-14 flex flex-col items-center">
                 {result.status === 'success' && (
                   <>
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0 }} animate={{ scale: 1 }}
                       className="w-20 h-20 md:w-28 md:h-28 bg-emerald-500/10 rounded-[2rem] md:rounded-[3rem] flex items-center justify-center text-emerald-400 mb-6 md:mb-10 border border-emerald-500/20 shadow-2xl"
                     >
@@ -404,15 +404,15 @@ export default function Confirm() {
                       <InfoRow icon={<User className="w-5 h-5 text-teal-400" />} label="Participante" value={result.data.nome} />
                       <InfoRow icon={<Building className="w-5 h-5 text-emerald-400" />} label="Instituição" value={result.data.escola} />
                       <InfoRow icon={<MapPin className="w-5 h-5 text-orange-400" />} label="Cidade Base" value={result.data.cidade} />
-                      <InfoRow 
-                        icon={<Clock className="w-5 h-5 text-purple-400" />} 
-                        label="Data/Hora Check-in" 
-                        value={formatEventDate(result.data.confirmado_em, 'time')} 
+                      <InfoRow
+                        icon={<Clock className="w-5 h-5 text-purple-400" />}
+                        label="Data/Hora Check-in"
+                        value={formatEventDate(result.data.confirmado_em, 'time')}
                       />
                     </div>
                   </div>
                 )}
-                
+
                 <Button onClick={reset} className="modern-button w-full max-w-sm mt-16 h-16 shadow-2xl text-lg">
                   Próximo Participante
                 </Button>
