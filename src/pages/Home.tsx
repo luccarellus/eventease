@@ -131,7 +131,7 @@ export default function Home() {
 
   // Controle de Inscrição no Evento Selecionado
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
-  const [activeModalTab, setActiveModalTab] = useState<'cadastro' | 'busca'>('cadastro');
+  const [activeModalTab, setActiveModalTab] = useState<'detalhes' | 'cadastro' | 'busca'>('cadastro');
   const [successData, setSuccessData] = useState<{ nome: string; codigo: string } | null>(null);
   const [submittingRegistration, setSubmittingRegistration] = useState(false);
 
@@ -448,6 +448,12 @@ export default function Home() {
     reset();
   };
 
+  const openEventModal = (event: EventItem, tab: 'detalhes' | 'cadastro' = 'detalhes') => {
+    setSelectedEvent(event);
+    setActiveModalTab(tab);
+    setSuccessData(null);
+  };
+
   // Filtrar eventos por termo de busca
   const filteredEvents = useMemo(() => {
     return eventos.filter(evt =>
@@ -564,7 +570,18 @@ export default function Home() {
               }}
               className="h-full"
             >
-              <Card className="glass-card border-white/[0.08] hover:border-white/[0.15] bg-white/[0.02] transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group hover:shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
+              <Card
+                role="button"
+                tabIndex={0}
+                onClick={() => openEventModal(evento, 'detalhes')}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openEventModal(evento, 'detalhes');
+                  }
+                }}
+                className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group cursor-pointer will-change-transform !shadow-[0_22px_70px_rgba(0,0,0,0.58)] hover:!shadow-[0_32px_90px_rgba(0,0,0,0.78)] hover:-translate-y-2 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              >
                 <CardHeader className="p-5 sm:p-8 pb-4">
                   <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest mb-3">
                     <Calendar className="w-3.5 h-3.5" />
@@ -592,10 +609,9 @@ export default function Home() {
                 </CardContent>
                 <CardFooter className="p-5 sm:p-8 pt-0 border-none bg-transparent">
                   <Button
-                    onClick={() => {
-                      setSelectedEvent(evento);
-                      setActiveModalTab('cadastro');
-                      setSuccessData(null);
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openEventModal(evento, 'cadastro');
                     }}
                     className="modern-button w-full h-12 text-sm uppercase tracking-wider font-bold"
                   >
@@ -604,8 +620,8 @@ export default function Home() {
                   </Button>
                 </CardFooter>
 
-                {/* Efeito decorativo */}
-                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:bg-primary/5 transition-all" />
+                <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent opacity-70" />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.045] via-transparent to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
               </Card>
             </motion.div>
           ))}
@@ -615,13 +631,26 @@ export default function Home() {
       {/* Modal Contextual de Inscrição */}
       <AnimatePresence>
         {selectedEvent && (
-          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-10 md:p-6 bg-black/85 backdrop-blur-md" onClick={closeRegistration}>
+          <div
+            className={cn(
+              "fixed inset-0 z-[100] flex justify-center bg-black/85 backdrop-blur-md",
+              activeModalTab === 'detalhes' && !successData
+                ? "items-center p-4 md:p-6"
+                : "items-end md:items-center p-0 pt-10 md:p-6"
+            )}
+            onClick={closeRegistration}
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 50 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 50 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="w-full max-w-2xl bg-card border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative flex flex-col max-h-[95dvh] md:max-h-[90dvh]"
+              className={cn(
+                "w-full bg-card border border-white/10 overflow-hidden relative flex flex-col",
+                activeModalTab === 'detalhes' && !successData
+                  ? "max-w-xl rounded-[2rem] max-h-[88dvh] shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
+                  : "max-w-2xl rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 max-h-[95dvh] md:max-h-[90dvh] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+              )}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="h-2 bg-gradient-to-r from-primary via-primary to-primary-dark" />
@@ -637,7 +666,9 @@ export default function Home() {
 
               {/* Header do Modal */}
               <div className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
-                <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">Inscrição no Evento</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">
+                  {activeModalTab === 'detalhes' && !successData ? 'Detalhes do Evento' : 'Inscrição no Evento'}
+                </span>
                 <h3 className="text-xl md:text-2xl font-display font-bold text-white mt-1 truncate pr-8">{selectedEvent.titulo}</h3>
                 <p className="text-white/40 text-xs mt-1 flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-primary" /> {selectedEvent.local}
@@ -647,6 +678,15 @@ export default function Home() {
               {/* Tabs Seletoras (Novo Cadastro vs Já Cadastrado) - Ocultas em caso de sucesso */}
               {!successData && (
                 <div className="flex border-b border-white/5 px-4 md:px-8 bg-black/40 overflow-x-auto scrollbar-hide">
+                  <button
+                    onClick={() => { setActiveModalTab('detalhes'); setExistingError(''); }}
+                    className={cn(
+                      "py-4 px-3 sm:px-4 font-bold text-[10px] sm:text-xs uppercase tracking-wider border-b-2 transition-all mr-2 sm:mr-4 whitespace-nowrap",
+                      activeModalTab === 'detalhes' ? "border-primary text-white" : "border-transparent text-white/40 hover:text-white/60"
+                    )}
+                  >
+                    Detalhes
+                  </button>
                   <button
                     onClick={() => { setActiveModalTab('cadastro'); setExistingError(''); }}
                     className={cn(
@@ -727,6 +767,51 @@ export default function Home() {
                           className="modern-button w-full h-12 text-sm"
                         >
                           Fechar e Concluir
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ) : activeModalTab === 'detalhes' ? (
+                    <motion.div
+                      key="event-details"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      className="space-y-6"
+                    >
+                      <div className="space-y-4">
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-white/40 font-bold uppercase tracking-wider">
+                          <span className="inline-flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-primary" />
+                            {formatEventDate(selectedEvent.data)}
+                          </span>
+                          <span className="inline-flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-primary" />
+                            {formatEventDate(selectedEvent.data, "HH:mm'h'")}
+                          </span>
+                        </div>
+                        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
+                          <p className="whitespace-pre-line text-sm md:text-base text-white/65 leading-relaxed font-medium">
+                            {selectedEvent.descricao || 'Sem descrição fornecida.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 flex flex-col sm:flex-row gap-4 border-t border-white/5">
+                        <Button
+                          type="button"
+                          onClick={() => setActiveModalTab('cadastro')}
+                          className="modern-button h-12 flex-1 text-sm font-bold uppercase"
+                        >
+                          Participar
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={closeRegistration}
+                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6"
+                        >
+                          Fechar
                         </Button>
                       </div>
                     </motion.div>
