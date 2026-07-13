@@ -696,7 +696,7 @@ export default function Admin() {
                                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                 : "bg-white/5 text-white/40 border-white/10"
                             )}>
-                              {evt.publicado ? 'Publicado' : 'Rascunho'}
+                              {evt.publicado ? 'Publicado' : 'Inativo'}
                             </span>
                             <span className="text-[10px] text-white/40 font-bold">
                               {format(new Date(evt.data), "dd/MM/yyyy", { locale: ptBR })}
@@ -943,7 +943,7 @@ export default function Admin() {
                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                 : "bg-white/5 text-white/40 border-white/10"
             )}>
-              {selectedEvento.publicado ? 'Evento Publicado' : 'Evento em Rascunho'}
+              {selectedEvento.publicado ? 'Evento Publicado' : 'Evento Inativo'}
             </span>
           </div>
 
