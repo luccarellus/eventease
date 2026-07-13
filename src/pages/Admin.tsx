@@ -177,9 +177,9 @@ export default function Admin() {
 
       if (search.trim()) {
         const s = search.toLowerCase();
-        allP = allP.filter((p) => 
-          p.nome.toLowerCase().includes(s) || 
-          p.email.toLowerCase().includes(s) || 
+        allP = allP.filter((p) =>
+          p.nome.toLowerCase().includes(s) ||
+          p.email.toLowerCase().includes(s) ||
           p.codigo.toLowerCase().includes(s)
         );
       }
@@ -201,7 +201,7 @@ export default function Admin() {
       const res = await api.get(`/registrations/event/${eventoId}`);
       if (!res.ok) throw new Error('Failed to fetch event registrations');
       const data = (await res.json()) as RegistrationRecord[];
-      
+
       // Mapear os dados para o formato esperado pelo frontend
       const mappedData = data.map((item) => ({
         ...item,
@@ -581,9 +581,9 @@ export default function Admin() {
             Controle Administrativo
           </div>
           <h1 className="heading-display text-3xl md:text-4xl mb-2 text-white leading-tight">
-            Painel de <span className="text-primary italic">Liderança</span>
+            Portal do<span className="text-primary">Staff</span>
           </h1>
-          <p className="text-white/40 text-base md:text-lg font-medium">Gestão integrada de múltiplos eventos, inscrições e base de alunos.</p>
+          <p className="text-white/40 text-base md:text-lg font-medium">Gerenciamento integrado de múltiplos eventos, inscrições e cadastro de alunos.</p>
         </motion.div>
       </div>
 
@@ -714,8 +714,7 @@ export default function Admin() {
                           <div className="flex gap-2">
                             <Button
                               onClick={() => setSelectedEvento(evt)}
-                              variant="outline"
-                              className="flex-1 rounded-xl bg-white/5 border-white/10 text-white hover:bg-white/10 h-10 text-xs font-bold uppercase tracking-wider"
+                              className="flex-1 rounded-xl bg-primary text-white hover:bg-primary-dark transition-all h-10 text-xs font-bold uppercase tracking-wider"
                             >
                               Inscritos & Estatísticas
                             </Button>
@@ -802,7 +801,7 @@ export default function Admin() {
                           </Button>
                         </div>
                       </div>
-                      
+
                       {/* Linha 2: Busca e Filtros */}
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 border-t border-white/5">
                         <div className="relative w-full sm:w-80">
