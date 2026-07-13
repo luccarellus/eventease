@@ -93,7 +93,7 @@ function loadStoredCredential(): CredentialSummary | null {
 function saveStoredCredential(credential: CredentialSummary) {
   try {
     sessionStorage.setItem(CREDENTIAL_STORAGE_KEY, JSON.stringify(credential));
-  } catch {}
+  } catch { }
 }
 
 function formatEventDate(value?: string, pattern = "dd 'de' MMMM") {
@@ -295,9 +295,9 @@ export default function Home() {
         if (!createRes.ok) {
           throw new Error('Falha ao criar participante');
         }
-        
+
         const rawPart = await createRes.json();
-        
+
         participantId = rawPart.id;
         participantCode = rawPart.codigo;
         participantName = rawPart.nome;
@@ -472,20 +472,20 @@ export default function Home() {
           </span>
           Eventos com inscrições abertas
         </motion.div>
-        
+
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
           className="heading-display text-3xl sm:text-5xl md:text-7xl mb-6 md:mb-8 tracking-tight font-extrabold leading-[1.1] md:leading-[1.05]"
         >
-          <span className="text-white drop-shadow-sm">Eventos</span>
-          <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">do</span>
+          <span className="text-white drop-shadow-sm">EventEase</span>
+          <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">/</span>
           <span className="bg-gradient-to-r from-primary via-primary to-primary-dark bg-clip-text text-transparent font-black tracking-tighter">
-            Olhar Jovem
+            Instituto Olhar Jovem
           </span>
         </motion.h1>
-        
+
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -625,7 +625,7 @@ export default function Home() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="h-2 bg-gradient-to-r from-primary via-primary to-primary-dark" />
-              
+
               <button
                 onClick={closeRegistration}
                 className="absolute top-6 right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10"
@@ -683,7 +683,7 @@ export default function Home() {
                       <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mx-auto border border-emerald-500/20 shadow-xl">
                         <CheckCircle2 className="w-8 h-8" />
                       </div>
-                      
+
                       <div>
                         <h4 className="text-2xl md:text-3xl font-display font-bold text-white mb-2">Inscrição Confirmada!</h4>
                         <p className="text-sm text-white/50 max-w-md mx-auto leading-relaxed">
@@ -961,7 +961,7 @@ export default function Home() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="h-2 bg-gradient-to-r from-primary via-primary to-primary-dark absolute top-0 left-0 right-0" />
-              
+
               <button
                 onClick={() => setShowCredentialModal(false)}
                 className="absolute top-6 right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10"
