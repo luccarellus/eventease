@@ -89,7 +89,7 @@ export default function Login() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[85vh] px-6 py-12">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-9rem)] px-4 md:px-6 py-8 md:py-12">
       {/* Logo above the card */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -101,7 +101,7 @@ export default function Login() {
           <img
             src="/logo_oficial.png"
             alt="Instituto Olhar Jovem"
-            className="h-16 w-auto object-contain"
+            className="h-12 sm:h-16 w-auto object-contain"
           />
         </div>
       </motion.div>
@@ -113,11 +113,11 @@ export default function Login() {
         className="w-full max-w-md"
       >
         <Card className="glass-card shadow-3xl overflow-hidden border-white/[0.04]">
-          <CardHeader className="text-left px-12 pt-12 pb-2">
+          <CardHeader className="text-left px-6 sm:px-12 pt-8 sm:pt-12 pb-2">
             <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em]">Área da Organização</span>
             <CardTitle className="font-display text-3xl font-extrabold tracking-tight text-white mt-1">Acesso da equipe</CardTitle>
           </CardHeader>
-          <CardContent className="px-12 pt-8 pb-12">
+          <CardContent className="px-6 sm:px-12 pt-6 sm:pt-8 pb-8 sm:pb-12">
             <form id="login-form" onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">E-mail</Label>

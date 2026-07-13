@@ -651,7 +651,7 @@ export default function Admin() {
                 <div className="flex justify-between items-center px-2 md:px-0">
                   <div>
                     <h2 className="text-xl font-bold text-white">Eventos Cadastrados</h2>
-                    <p className="text-white/40 text-xs mt-1">Crie e gerencie as datas dos fóruns.</p>
+                    <p className="text-white/40 text-xs mt-1">Planeje e acompanhe as datas dos eventos.</p>
                   </div>
                   <Button
                     onClick={() => {

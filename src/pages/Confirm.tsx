@@ -274,13 +274,13 @@ export default function Confirm() {
             className="max-w-2xl mx-auto px-2 md:px-0"
           >
             <Card className="glass-card shadow-3xl overflow-hidden border-white/[0.08] rounded-[2rem] md:rounded-[2.5rem]">
-              <CardHeader className="bg-white/[0.02] border-b border-white/[0.08] p-8 md:p-12 pb-8 md:pb-10">
+              <CardHeader className="bg-white/[0.02] border-b border-white/[0.08] p-5 md:p-12 pb-6 md:pb-10">
                 <div>
                   <CardTitle className="font-display text-2xl md:text-3xl text-white leading-none mb-2 md:mb-3 tracking-tight">Credencial de Acesso</CardTitle>
                   <CardDescription className="text-white/30 text-sm md:text-lg font-medium">Escaneie ou digite o código alfanumérico.</CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="p-8 md:p-12 pb-6 md:pb-8">
+              <CardContent className="p-5 md:p-12 pb-5 md:pb-8">
                 <form onSubmit={handleManualCheckin} className="space-y-6 md:space-y-8">
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Selecione o Evento</label>
@@ -308,13 +308,13 @@ export default function Confirm() {
                       value={codigo}
                       onChange={(e) => setCodigo(e.target.value.toUpperCase())}
                       placeholder="EVT-000000"
-                      className="liquid-input pl-14 md:pl-16 h-16 md:h-24 text-2xl md:text-4xl font-display font-black tracking-[0.1em] md:tracking-[0.15em] uppercase placeholder:text-white/5 border-white/[0.05]"
+                      className="liquid-input pl-12 md:pl-16 h-14 md:h-24 text-xl md:text-4xl font-display font-black tracking-[0.08em] md:tracking-[0.15em] uppercase placeholder:text-white/5 border-white/[0.05]"
                       autoFocus
                     />
                   </div>
                   <Button
                     type="submit"
-                    className="modern-button h-16 md:h-20 w-full text-lg md:text-xl shadow-2xl"
+                    className="modern-button h-14 md:h-20 w-full text-base md:text-xl shadow-2xl"
                     disabled={loading || !codigo || !selectedEventoId}
                   >
                     {loading ? 'Validando...' : 'Confirmar Presença'}
@@ -322,7 +322,7 @@ export default function Confirm() {
                   </Button>
                 </form>
               </CardContent>
-              <CardFooter className="bg-white/[0.01] p-8 md:p-10 flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 border-t border-white/[0.08]">
+              <CardFooter className="bg-white/[0.01] p-5 md:p-10 flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 border-t border-white/[0.08]">
                 <span className="text-[9px] md:text-[10px] text-white/20 uppercase tracking-[0.3em] font-black">Módulo de Escaneamento</span>
                 <Button
                   variant="outline"
@@ -356,7 +356,7 @@ export default function Confirm() {
                     "bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]"
               )} />
 
-              <CardContent className="p-10 md:p-14 flex flex-col items-center">
+              <CardContent className="p-6 md:p-14 flex flex-col items-center">
                 {result.status === 'success' && (
                   <>
                     <motion.div
@@ -373,21 +373,21 @@ export default function Confirm() {
 
                 {result.status === 'already' && (
                   <>
-                    <div className="w-28 h-28 bg-orange-500/10 rounded-[3rem] flex items-center justify-center text-orange-400 mb-10 border border-orange-500/20 shadow-2xl">
-                      <AlertCircle className="w-14 h-14" />
+                    <div className="w-20 h-20 md:w-28 md:h-28 bg-orange-500/10 rounded-[2rem] md:rounded-[3rem] flex items-center justify-center text-orange-400 mb-6 md:mb-10 border border-orange-500/20 shadow-2xl">
+                      <AlertCircle className="w-10 h-10 md:w-14 md:h-14" />
                     </div>
-                    <CardTitle className="text-5xl font-display text-center mb-4 text-white leading-tight tracking-tight">Já Confirmado</CardTitle>
+                    <CardTitle className="text-3xl md:text-5xl font-display text-center mb-4 text-white leading-tight tracking-tight">Já Confirmado</CardTitle>
                     <CardDescription className="text-center text-xl mb-12 font-medium text-white/40 italic">Esta credencial já foi validada anteriormente.</CardDescription>
                   </>
                 )}
 
                 {result.status === 'notfound' && (
                   <>
-                    <div className="w-28 h-28 bg-red-500/10 rounded-[3rem] flex items-center justify-center text-red-400 mb-10 border border-red-500/20 shadow-2xl">
-                      <AlertCircle className="w-14 h-14" />
+                    <div className="w-20 h-20 md:w-28 md:h-28 bg-red-500/10 rounded-[2rem] md:rounded-[3rem] flex items-center justify-center text-red-400 mb-6 md:mb-10 border border-red-500/20 shadow-2xl">
+                      <AlertCircle className="w-10 h-10 md:w-14 md:h-14" />
                     </div>
-                    <CardTitle className="text-5xl font-display text-center mb-4 text-white leading-tight tracking-tight">Falha na Busca</CardTitle>
-                    <CardDescription className="text-center text-xl mb-12 font-medium text-white/40 italic">
+                    <CardTitle className="text-3xl md:text-5xl font-display text-center mb-4 text-white leading-tight tracking-tight">Falha na Busca</CardTitle>
+                    <CardDescription className="text-center text-base md:text-xl mb-8 md:mb-12 font-medium text-white/40 italic">
                       Código <span className="font-mono bg-red-500/20 px-3 py-1 rounded-xl text-white font-black tracking-tight">{codigo}</span> inexistente.
                     </CardDescription>
                   </>
@@ -413,7 +413,7 @@ export default function Confirm() {
                   </div>
                 )}
 
-                <Button onClick={reset} className="modern-button w-full max-w-sm mt-16 h-16 shadow-2xl text-lg">
+                <Button onClick={reset} className="modern-button w-full max-w-sm mt-8 md:mt-16 h-14 md:h-16 shadow-2xl text-base md:text-lg">
                   Próximo Participante
                 </Button>
               </CardContent>

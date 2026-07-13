@@ -77,12 +77,12 @@ function Navbar() {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
           <img
             src="/logo_oficial.png"
             alt="Olhar Jovem"
-            className="h-10 md:h-12 w-auto transition-transform group-hover:scale-105"
+            className="h-8 md:h-12 w-auto transition-transform group-hover:scale-105"
             referrerPolicy="no-referrer"
           />
         </Link>
@@ -139,7 +139,7 @@ function BottomNav() {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-black/70 backdrop-blur-3xl saturate-150 border-t border-white/10 rounded-t-3xl p-3 pb-8 flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.8)] pointer-events-auto"
+        className="bg-black/70 backdrop-blur-3xl saturate-150 border-t border-white/10 rounded-t-3xl p-2 pb-6 flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.8)] pointer-events-auto"
       >
         {navItems.map((item) => (
           <MobileNavLink
@@ -159,7 +159,7 @@ function MobileNavLink({ to, icon, active }: { to: string; icon: React.ReactNode
     <Link
       to={to}
       className={cn(
-        'flex flex-col items-center justify-center w-16 h-16 rounded-2xl transition-all duration-500',
+        'flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-500',
         active
           ? 'bg-primary text-white shadow-lg shadow-primary/40 scale-110 -translate-y-2'
           : 'text-white/30 hover:text-white/60',
@@ -223,7 +223,7 @@ function AppContent() {
   const { userIsAdmin } = useAuth();
 
   return (
-    <div className="min-h-[100dvh] pt-24 pb-36 md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col">
+    <div className="min-h-[100dvh] pt-20 md:pt-24 pb-32 md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow">
         <Suspense fallback={<LoadingSpinner />}>

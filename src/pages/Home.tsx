@@ -457,7 +457,7 @@ export default function Home() {
   }, [eventos, searchTerm]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 md:space-y-12 pb-12">
+    <div className="max-w-6xl mx-auto space-y-6 md:space-y-12 pb-8 md:pb-12">
       {/* Hero / Banner Principal */}
       <div className="text-center mb-10 md:mb-16 px-4">
         <motion.div
@@ -477,12 +477,12 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="heading-display text-3xl sm:text-5xl md:text-7xl mb-6 md:mb-8 tracking-tight font-extrabold leading-[1.1] md:leading-[1.05]"
+          className="heading-display text-3xl sm:text-4xl md:text-7xl mb-6 md:mb-8 tracking-tight font-extrabold leading-[1.1] md:leading-[1.05]"
         >
-          <span className="text-white drop-shadow-sm">EventEase</span>
-          <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">/</span>
+          <span className="text-white drop-shadow-sm">Eventos</span>
+          <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">do</span>
           <span className="bg-gradient-to-r from-primary via-primary to-primary-dark bg-clip-text text-transparent font-black tracking-tighter">
-            Instituto Olhar Jovem
+            Olhar Jovem
           </span>
         </motion.h1>
 
@@ -537,7 +537,7 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center p-12 bg-white/[0.02] border border-white/[0.06] rounded-[2rem] max-w-xl mx-auto"
+          className="text-center p-8 md:p-12 bg-white/[0.02] border border-white/[0.06] rounded-[2rem] max-w-xl mx-auto"
         >
           <AlertCircle className="w-12 h-12 text-white/20 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">Nenhum evento localizado</h3>
@@ -565,7 +565,7 @@ export default function Home() {
               className="h-full"
             >
               <Card className="glass-card border-white/[0.08] hover:border-white/[0.15] bg-white/[0.02] transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group hover:shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
-                <CardHeader className="p-8 pb-4">
+                <CardHeader className="p-5 sm:p-8 pb-4">
                   <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest mb-3">
                     <Calendar className="w-3.5 h-3.5" />
                     {formatEventDate(evento.data)}
@@ -574,7 +574,7 @@ export default function Home() {
                     {evento.titulo}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8 pt-0 pb-8 flex-grow">
+                <CardContent className="p-5 sm:p-8 pt-0 pb-6 sm:pb-8 flex-grow">
                   <p className="text-sm text-white/50 leading-relaxed font-medium mb-6 line-clamp-4">
                     {evento.descricao || 'Sem descrição fornecida.'}
                   </p>
@@ -590,7 +590,7 @@ export default function Home() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="p-8 pt-0 border-none bg-transparent">
+                <CardFooter className="p-5 sm:p-8 pt-0 border-none bg-transparent">
                   <Button
                     onClick={() => {
                       setSelectedEvent(evento);
@@ -646,11 +646,11 @@ export default function Home() {
 
               {/* Tabs Seletoras (Novo Cadastro vs Já Cadastrado) - Ocultas em caso de sucesso */}
               {!successData && (
-                <div className="flex border-b border-white/5 px-6 md:px-8 bg-black/40">
+                <div className="flex border-b border-white/5 px-4 md:px-8 bg-black/40 overflow-x-auto scrollbar-hide">
                   <button
                     onClick={() => { setActiveModalTab('cadastro'); setExistingError(''); }}
                     className={cn(
-                      "py-4 px-4 font-bold text-xs uppercase tracking-wider border-b-2 transition-all mr-4",
+                      "py-4 px-3 sm:px-4 font-bold text-[10px] sm:text-xs uppercase tracking-wider border-b-2 transition-all mr-2 sm:mr-4 whitespace-nowrap",
                       activeModalTab === 'cadastro' ? "border-primary text-white" : "border-transparent text-white/40 hover:text-white/60"
                     )}
                   >
@@ -659,7 +659,7 @@ export default function Home() {
                   <button
                     onClick={() => { setActiveModalTab('busca'); setExistingError(''); }}
                     className={cn(
-                      "py-4 px-4 font-bold text-xs uppercase tracking-wider border-b-2 transition-all",
+                      "py-4 px-3 sm:px-4 font-bold text-[10px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap",
                       activeModalTab === 'busca' ? "border-primary text-white" : "border-transparent text-white/40 hover:text-white/60"
                     )}
                   >
@@ -669,7 +669,7 @@ export default function Home() {
               )}
 
               {/* Corpo do Modal com Scroll Interno para telas menores */}
-              <div className="overflow-y-auto p-6 md:p-8 flex-grow">
+              <div className="overflow-y-auto p-4 md:p-8 flex-grow">
                 <AnimatePresence mode="wait">
                   {successData ? (
                     // TELA DE SUCESSO
@@ -951,13 +951,13 @@ export default function Home() {
       {/* Modal Geral de Consulta de Credencial (Minha Credencial) */}
       <AnimatePresence>
         {showCredentialModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md" onClick={() => setShowCredentialModal(false)}>
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/85 backdrop-blur-md" onClick={() => setShowCredentialModal(false)}>
             <motion.div
               initial={{ scale: 0.95, y: 20, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.95, y: 20, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="w-full max-w-lg bg-card border border-white/10 rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative p-6 md:p-10 space-y-6"
+              className="w-full max-w-lg bg-card border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] overflow-y-auto max-h-[92dvh] shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative p-5 md:p-10 space-y-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="h-2 bg-gradient-to-r from-primary via-primary to-primary-dark absolute top-0 left-0 right-0" />
