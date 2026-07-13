@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { RegistrationsService } from './registrations.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateRegistrationDto } from './dto/create-registration.dto';
@@ -16,6 +16,7 @@ export class RegistrationsController {
    * Limitado contra abusos automatizados.
    */
   @Post()
+  @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   create(@Body() data: CreateRegistrationDto) {
     return this.registrationsService.create({

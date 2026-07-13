@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { ParticipantsService } from './participants.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateParticipantDto } from './dto/create-participant.dto';
@@ -13,6 +13,7 @@ export class ParticipantsController {
    * Não requer autenticação pois é usado pelo formulário de inscrição público.
    */
   @Post()
+  @HttpCode(HttpStatus.OK)
   create(@Body() data: CreateParticipantDto) {
     return this.participantsService.create(data);
   }

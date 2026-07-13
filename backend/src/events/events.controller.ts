@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -15,6 +15,7 @@ export class EventsController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.OK)
   @AdminRoute()
   create(@Body() data: CreateEventDto) {
     return this.eventsService.create({

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Res, Body, UnauthorizedException, ServiceUnavailableException, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Res, Body, UnauthorizedException, ServiceUnavailableException, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt.guard';
@@ -19,6 +19,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('set-role')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async setRole(@Body() setRoleDto: SetRoleDto) {
@@ -35,6 +36,7 @@ export class AuthController {
 
 
   @Post('register')
+  @HttpCode(HttpStatus.OK)
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.registerUser(
       registerDto.email,
@@ -44,6 +46,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) response: Response) {
     try {
@@ -66,6 +69,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async refresh(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
     const refreshToken = (req as any).cookies?.refresh_token;
@@ -103,6 +107,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @HttpCode(HttpStatus.OK)
   async logout(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
     try {
       const refreshToken = (req as any).cookies?.refresh_token;
