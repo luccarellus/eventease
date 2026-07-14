@@ -187,7 +187,7 @@ function NavLink({ to, icon, label, active }: { to: string; icon: React.ReactNod
   );
 }
 
-const IS_MAINTENANCE_MODE = false;
+const IS_MAINTENANCE_MODE = true;
 
 function MaintenanceScreen() {
   return (
@@ -196,9 +196,9 @@ function MaintenanceScreen() {
         <div className="flex justify-center">
           <img src="/logo_oficial.png" alt="Olhar Jovem" className="h-16 md:h-20 w-auto" />
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Estamos em ManutenÃ§Ã£o</h1>
+        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Estamos em Manutenção</h1>
         <p className="text-white/60 text-lg md:text-xl leading-relaxed">
-          Nosso sistema estÃ¡ passando por melhorias no momento. Voltaremos em breve com novidades!
+          Nosso sistema está passando por melhorias no momento. Voltaremos em breve com novidades!
         </p>
       </div>
     </div>
