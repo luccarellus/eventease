@@ -22,7 +22,6 @@ import {
   Copy,
   Download,
   Building2,
-  Mail,
   ArrowRight,
   AlertCircle,
   Calendar,
@@ -501,23 +500,6 @@ export default function Home() {
           Escolha um evento na lista abaixo e garanta sua vaga. O cadastro é feito de forma simples e direta, liberando seu <span className="text-white font-semibold">QR Code de presença</span> imediatamente.
         </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="flex justify-center gap-4"
-        >
-          <Button
-            onClick={() => {
-              openCredentialModal(setCredentialData, setCredentialEmail, setCredentialError, setShowCredentialModal);
-            }}
-            variant="outline"
-            className="rounded-2xl border-white/10 hover:bg-white/5 text-white hover:text-white transition-all text-sm px-6 h-12 font-bold uppercase tracking-wider flex items-center gap-2"
-          >
-            <Mail className="w-4 h-4 text-primary" />
-            Minha Credencial
-          </Button>
-        </motion.div>
       </div>
 
       {/* Caixa de Busca de Eventos */}
