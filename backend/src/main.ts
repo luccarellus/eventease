@@ -6,6 +6,7 @@ import { requireEnv } from './common/env.util';
 async function bootstrap() {
   requireEnv('JWT_SECRET');
   requireEnv('JWT_REFRESH_SECRET');
+  requireEnv('COOKIE_SECRET');
   requireEnv('RECAPTCHA_SECRET_KEY');
   requireEnv('DATABASE_URL');
   requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');

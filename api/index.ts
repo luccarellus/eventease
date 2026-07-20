@@ -23,6 +23,7 @@ function maskConnectionString(connStr: string): string {
 function assertRequiredEnvVars() {
   requireEnv('JWT_SECRET');
   requireEnv('JWT_REFRESH_SECRET');
+  requireEnv('COOKIE_SECRET');
   requireEnv('RECAPTCHA_SECRET_KEY');
   requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
   requireEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
