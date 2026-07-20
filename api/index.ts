@@ -11,6 +11,7 @@ import { requireEnv } from '../backend/dist/common/env.util.js';
 type ExpressLikeHandler = (req: Request, res: Response) => unknown;
 
 let cachedServer: ExpressLikeHandler | null = null;
+let bootstrapError: string | null = null;
 
 function maskConnectionString(connStr: string): string {
   try {
@@ -32,12 +33,11 @@ function assertRequiredEnvVars() {
   // Validate DATABASE_URL separately with better error message
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl || !dbUrl.trim()) {
-    console.error('[bootstrap] ERRO: DATABASE_URL não está configurada.');
-    console.error('[bootstrap] Configure a variável DATABASE_URL no dashboard do Vercel:');
-    console.error('[bootstrap]   https://vercel.com/luccarellustech/eventease/settings/environment-variables');
-    throw new Error(
-      'DATABASE_URL não configurada. Acesse o dashboard do Vercel e defina DATABASE_URL com a URL do Supabase PostgreSQL (pooler porta 6543).'
-    );
+    const msg =
+      'DATABASE_URL não configurada. Acesse o dashboard do Vercel e defina DATABASE_URL com a URL do Supabase PostgreSQL (pooler porta 6543).';
+    console.error('[bootstrap] ERRO: ' + msg);
+    console.error('[bootstrap] Dashboard: https://vercel.com/luccarellustech/eventease/settings/environment-variables');
+    throw new Error(msg);
   }
 
   console.log('[bootstrap] DATABASE_URL:', maskConnectionString(dbUrl));
@@ -54,13 +54,30 @@ function assertRequiredEnvVars() {
   console.log('[bootstrap] NODE_ENV:', process.env.NODE_ENV || 'não definido');
 }
 
+// Health check that works WITHOUT NestJS (for testing)
+function handleHealthCheck(_req: Request, res: Response) {
+  res.statusCode = 200;
+  res.setHeader('Content-Type', 'application/json');
+  return res.end(
+    JSON.stringify({
+      status: 'ok',
+      app: 'standalone',
+      nestjs: !!cachedServer,
+      bootstrapError,
+    })
+  );
+}
+
 async function bootstrapServer(): Promise<ExpressLikeHandler | null> {
   if (!cachedServer) {
     try {
+      console.log('[bootstrap] Verificando variáveis de ambiente...');
       assertRequiredEnvVars();
+
+      console.log('[bootstrap] Criando aplicação NestJS...');
       const app = await NestFactory.create(AppModule);
 
-      // Unified configuration (CORS, Helmet, cookies, pipes)
+      console.log('[bootstrap] Configurando aplicação (CORS, Helmet, cookies)...');
       (configureApp as unknown as (application: typeof app) => void)(app);
 
       // Middleware to remove the /api prefix before routing to NestJS controllers
@@ -71,17 +88,26 @@ async function bootstrapServer(): Promise<ExpressLikeHandler | null> {
         next();
       });
 
+      console.log('[bootstrap] Inicializando módulos (conectando ao banco)...');
       await app.init();
 
       cachedServer = app.getHttpAdapter().getInstance() as ExpressLikeHandler;
+      bootstrapError = null;
+      console.log('[bootstrap] Aplicação inicializada com sucesso!');
     } catch (error: unknown) {
-      console.error('[bootstrap] ERRO FATAL ao inicializar a aplicação:');
+      let errorMessage = 'Erro desconhecido ao inicializar a aplicação.';
       if (error instanceof Error) {
-        console.error('[bootstrap] Mensagem:', error.message);
-        console.error('[bootstrap] Stack:', error.stack?.split('\n').slice(0, 4).join('\n'));
+        errorMessage = error.message;
+        console.error('[bootstrap] ERRO FATAL:', error.message);
+        process.stderr.write(`[bootstrap] ERRO FATAL: ${error.message}\n`);
+        process.stderr.write(`[bootstrap] STACK: ${error.stack?.split('\n').slice(0, 6).join('\n') || '(sem stack)'}\n`);
       } else {
-        console.error('[bootstrap] Erro:', error);
+        const errStr = String(error);
+        errorMessage = errStr;
+        console.error('[bootstrap] ERRO FATAL (não-Error):', errStr);
+        process.stderr.write(`[bootstrap] ERRO FATAL: ${errStr}\n`);
       }
+      bootstrapError = errorMessage;
       return null;
     }
   }
@@ -89,26 +115,49 @@ async function bootstrapServer(): Promise<ExpressLikeHandler | null> {
 }
 
 export default async function handler(req: Request, res: Response) {
+  // Handle /api/health without needing NestJS
+  if (req.url === '/api/health') {
+    return handleHealthCheck(req, res);
+  }
+
   try {
     const server = await bootstrapServer();
     if (!server) {
       res.statusCode = 503;
       res.setHeader('Content-Type', 'application/json');
-      return res.end(JSON.stringify({
-        statusCode: 503,
-        message: 'Serviço temporariamente indisponível. O banco de dados pode estar inacessível ou mal configurado.',
-        error: 'Service Unavailable',
-      }));
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.end(
+        JSON.stringify({
+          statusCode: 503,
+          message: 'Serviço temporariamente indisponível.',
+          error: 'Service Unavailable',
+          detail: bootstrapError,
+          hint: [
+            '1) Verifique se TODAS as variáveis de ambiente estão no Vercel Dashboard',
+            '2) DATABASE_URL deve usar o pooler do Supabase (porta 6543) com ?pgbouncer=true',
+            '3) Confirme se JWT_SECRET, JWT_REFRESH_SECRET, COOKIE_SECRET estão definidas',
+            '4) Confirme se SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY estão definidas',
+            '5) Verifique os logs completos da função api/index.ts na Vercel',
+          ].join(' | '),
+        })
+      );
     }
     return server(req, res);
   } catch (error: unknown) {
-    console.error('[handler] Erro inesperado:', error instanceof Error ? error.message : error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[handler] Erro inesperado:', errorMessage);
+    process.stderr.write(`[handler] Erro inesperado: ${errorMessage}\n`);
+
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
-    return res.end(JSON.stringify({
-      statusCode: 500,
-      message: 'Erro interno do servidor.',
-      error: 'Internal Server Error',
-    }));
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.end(
+      JSON.stringify({
+        statusCode: 500,
+        message: 'Erro interno do servidor.',
+        error: 'Internal Server Error',
+        detail: errorMessage,
+      })
+    );
   }
 }
