@@ -239,6 +239,18 @@ function AppContent() {
         </footer>
       )}
 
+      <p className="px-4 pb-20 text-center text-[10px] text-white/30 md:pb-4">
+        Este site é protegido pelo reCAPTCHA e se aplicam a{' '}
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline hover:text-white/60">
+          Política de Privacidade
+        </a>{' '}
+        e os{' '}
+        <a href="https://policies.google.com/terms" target="_blank" rel="noreferrer" className="underline hover:text-white/60">
+          Termos de Serviço
+        </a>{' '}
+        do Google.
+      </p>
+
       <BottomNav />
       <CookieBanner />
       <Toaster theme="dark" position="top-center" expand={true} richColors />

@@ -1,12 +1,40 @@
-import { Controller, Get, Post, Body, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Headers, HttpCode, HttpStatus, Query, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { ParticipantsService } from './participants.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 import { Throttle } from '@nestjs/throttler';
+import { ParticipantCodeLookupDto, ParticipantEmailLookupDto } from './dto/participant-lookup.dto';
+import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { RecaptchaService } from '../common/recaptcha.service';
+
+class ParticipantListQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit = 20;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  search = '';
+}
 
 @Controller('participants')
 export class ParticipantsController {
-  constructor(private readonly participantsService: ParticipantsService) {}
+  constructor(
+    private readonly participantsService: ParticipantsService,
+    private readonly recaptchaService: RecaptchaService,
+  ) {}
 
   /**
    * Endpoint público para criar participante (inscrição inicial no evento).
@@ -14,8 +42,10 @@ export class ParticipantsController {
    */
   @Post()
   @HttpCode(HttpStatus.OK)
-  create(@Body() data: CreateParticipantDto) {
-    return this.participantsService.create(data);
+  async create(@Body() data: CreateParticipantDto, @Req() request: Request) {
+    await this.recaptchaService.verify(data.recaptchaToken, 'participant_create', request.ip);
+    const { recaptchaToken: _recaptchaToken, ...participant } = data;
+    return this.participantsService.create(participant);
   }
 
   /**
@@ -24,8 +54,13 @@ export class ParticipantsController {
    */
   @Get('email/:email')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async findByEmail(@Param('email') email: string) {
-    return this.participantsService.findByEmailPublic(email);
+  async findByEmail(
+    @Param() params: ParticipantEmailLookupDto,
+    @Headers('x-recaptcha-token') recaptchaToken: string | undefined,
+    @Req() request: Request,
+  ) {
+    await this.recaptchaService.verify(recaptchaToken, 'participant_lookup', request.ip);
+    return this.participantsService.findByEmailPublic(params.email);
   }
 
   /**
@@ -34,8 +69,13 @@ export class ParticipantsController {
    */
   @Get('code/:code')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async findByCode(@Param('code') code: string) {
-    return this.participantsService.findByCodePublic(code);
+  async findByCode(
+    @Param() params: ParticipantCodeLookupDto,
+    @Headers('x-recaptcha-token') recaptchaToken: string | undefined,
+    @Req() request: Request,
+  ) {
+    await this.recaptchaService.verify(recaptchaToken, 'participant_lookup', request.ip);
+    return this.participantsService.findByCodePublic(params.code);
   }
 
   /**
@@ -58,8 +98,8 @@ export class ParticipantsController {
 
   @Get()
   @AdminRoute()
-  findAll() {
-    return this.participantsService.findAll();
+  findAll(@Query() query: ParticipantListQueryDto) {
+    return this.participantsService.findPage(query.page, query.limit, query.search);
   }
 
   @Delete(':id')
@@ -68,4 +108,3 @@ export class ParticipantsController {
     return this.participantsService.remove(id);
   }
 }
-

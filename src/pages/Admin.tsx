@@ -60,6 +60,7 @@ import {
 import Papa from 'papaparse';
 import { cn } from '@/lib/utils';
 import { generateCredentialCode } from '@/lib/credential-code';
+import { executeRecaptcha } from '@/lib/recaptcha';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -140,10 +141,10 @@ export default function Admin() {
     setLoading(true);
     try {
       // Obter contagem global leve de Alunos para os Stats
-      const pRes = await api.get('/participants');
+      const pRes = await api.get('/participants?page=1&limit=1');
       if (pRes.ok) {
-        const allP = await pRes.json();
-        setTotalStudents(allP.length);
+        const page = await pRes.json() as { total: number };
+        setTotalStudents(page.total);
       }
 
       // Buscar Eventos
@@ -164,28 +165,20 @@ export default function Admin() {
   const fetchParticipantes = async (page: number, search: string) => {
     setLoading(true);
     try {
-      const from = (page - 1) * itemsPerPage;
-      const to = from + itemsPerPage;
-
-      const res = await api.get('/participants');
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(itemsPerPage),
+        search: search.trim(),
+      });
+      const res = await api.get(`/participants?${params.toString()}`);
       if (!res.ok) throw new Error('Error fetching participants');
-      let allP = (await res.json()) as ParticipantRecord[];
-      allP = allP.map((p) => ({
+      const result = (await res.json()) as { items: ParticipantRecord[]; total: number };
+      const participants = result.items.map((p) => ({
         ...p,
         created_at: p.createdAt || p.created_at,
       }));
-
-      if (search.trim()) {
-        const s = search.toLowerCase();
-        allP = allP.filter((p) =>
-          p.nome.toLowerCase().includes(s) ||
-          p.email.toLowerCase().includes(s) ||
-          p.codigo.toLowerCase().includes(s)
-        );
-      }
-
-      setTotalStudents(allP.length);
-      setParticipantes(allP.slice(from, to));
+      setTotalStudents(result.total);
+      setParticipantes(participants);
     } catch (error) {
       console.error('Error fetching participants:', error);
       toast.error('Erro ao carregar lista de participantes.');
@@ -274,10 +267,12 @@ export default function Admin() {
 
 
     try {
+      const recaptchaToken = await executeRecaptcha('participant_create');
       const res = await api.post('/participants', {
         ...newStudent,
         codigo: finalCode,
         aceitou_termos: true,
+        recaptchaToken,
       });
 
       if (!res.ok) throw new Error('Falha ao adicionar participante');
@@ -410,10 +405,12 @@ export default function Admin() {
   const handleAddStudentToEvent = async (participanteId: string) => {
     if (!selectedEvento) return;
     try {
+      const recaptchaToken = await executeRecaptcha('registration_create');
       const res = await api.post('/registrations', {
         eventoId: selectedEvento.id,
         participanteId: participanteId,
-        presente: false
+        presente: false,
+        recaptchaToken,
       });
 
       if (!res.ok) {

@@ -40,6 +40,7 @@ import rawSchoolsData from '@/data/cidades_escolas.json';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { executeRecaptcha } from '@/lib/recaptcha';
 
 const registrationSchema = z.object({
   nome: z
@@ -235,10 +236,12 @@ export default function Home() {
     const registrationExists = checkRegRes.ok ? (await checkRegRes.json()).registered : false;
 
     if (!registrationExists) {
+      const recaptchaToken = await executeRecaptcha('registration_create');
       const insertRegRes = await api.post('/registrations', {
         eventoId: eventId,
         participanteId: participantId,
         presente: false,
+        recaptchaToken,
       });
 
       if (!insertRegRes.ok) {
@@ -259,7 +262,10 @@ export default function Home() {
       const emailClean = formData.email.trim().toLowerCase();
 
       // 1. Verificar se participante já existe
-      const checkRes = await api.get(`/participants/email/${emailClean}`);
+      const lookupToken = await executeRecaptcha('participant_lookup');
+      const checkRes = await api.get(`/participants/email/${encodeURIComponent(emailClean)}`, {
+        headers: { 'x-recaptcha-token': lookupToken },
+      });
       let existing = null;
       if (checkRes.ok) {
         existing = await checkRes.json();
@@ -279,6 +285,7 @@ export default function Home() {
       } else {
         // Criar participante novo
         const generatedCode = generateCredentialCode();
+        const recaptchaToken = await executeRecaptcha('participant_create');
         const createRes = await api.post('/participants', {
           nome: formData.nome,
           email: formData.email,
@@ -289,6 +296,7 @@ export default function Home() {
           codigo: generatedCode,
           aceitou_termos: true,
           termos_aceitos_em: new Date().toISOString(),
+          recaptchaToken,
         });
 
         if (!createRes.ok) {
@@ -348,7 +356,10 @@ export default function Home() {
 
       if (searchClean.includes('@')) {
         // Buscar por email
-        const checkRes = await api.get(`/participants/email/${searchClean.toLowerCase()}`);
+        const recaptchaToken = await executeRecaptcha('participant_lookup');
+        const checkRes = await api.get(`/participants/email/${encodeURIComponent(searchClean.toLowerCase())}`, {
+          headers: { 'x-recaptcha-token': recaptchaToken },
+        });
 
         if (checkRes.ok) {
           setExistingError(
@@ -364,7 +375,10 @@ export default function Home() {
       } else {
         // Buscar por código
         const formattedCode = searchClean.toUpperCase();
-        const codeRes = await api.get(`/participants/code/${formattedCode}`);
+        const recaptchaToken = await executeRecaptcha('participant_lookup');
+        const codeRes = await api.get(`/participants/code/${encodeURIComponent(formattedCode)}`, {
+          headers: { 'x-recaptcha-token': recaptchaToken },
+        });
 
         if (!codeRes.ok) {
           setExistingError('Código de credencial não encontrado.');
@@ -410,7 +424,11 @@ export default function Home() {
     setCredentialError('');
 
     try {
-      const res = await api.get(`/participants/email/${credentialEmail.trim().toLowerCase()}`);
+      const recaptchaToken = await executeRecaptcha('participant_lookup');
+      const email = credentialEmail.trim().toLowerCase();
+      const res = await api.get(`/participants/email/${encodeURIComponent(email)}`, {
+        headers: { 'x-recaptcha-token': recaptchaToken },
+      });
 
       if (res.ok) {
         const existing = await res.json();

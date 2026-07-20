@@ -1,14 +1,19 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, HttpCode, HttpStatus, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { RegistrationsService } from './registrations.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateRegistrationDto } from './dto/create-registration.dto';
 import { UpdateRegistrationDto } from './dto/update-registration.dto';
 import { Throttle } from '@nestjs/throttler';
 import { toDateOrUndefined } from '../common/date.util';
+import { RecaptchaService } from '../common/recaptcha.service';
 
 @Controller('registrations')
 export class RegistrationsController {
-  constructor(private readonly registrationsService: RegistrationsService) {}
+  constructor(
+    private readonly registrationsService: RegistrationsService,
+    private readonly recaptchaService: RecaptchaService,
+  ) {}
 
   /**
    * Cria uma nova inscrição.
@@ -18,7 +23,8 @@ export class RegistrationsController {
   @Post()
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  create(@Body() data: CreateRegistrationDto) {
+  async create(@Body() data: CreateRegistrationDto, @Req() request: Request) {
+    await this.recaptchaService.verify(data.recaptchaToken, 'registration_create', request.ip);
     return this.registrationsService.create({
       eventoId: data.eventoId,
       participanteId: data.participanteId,

@@ -42,6 +42,10 @@ DIRECT_URL="postgresql://postgres.xxx:senha@aws-0-sa-east-1.pooler.supabase.com:
 
 # Segurança
 JWT_SECRET="gere-um-segredo-hexadecimal-forte-para-jwt"
+JWT_REFRESH_SECRET="gere-outro-segredo-hexadecimal-forte-para-refresh"
+VITE_RECAPTCHA_SITE_KEY="chave-publica-do-recaptcha-v3"
+RECAPTCHA_SECRET_KEY="chave-secreta-do-recaptcha-v3"
+RECAPTCHA_MIN_SCORE="0.5"
 COOKIE_SECRET="gere-outro-segredo-forte-para-cookies"
 
 # CORS / URL do Frontend
@@ -139,6 +143,10 @@ O projeto está totalmente configurado para deploy serverless de monorepos na Ve
    - `DATABASE_URL` (com pooling / porta 6543)
    - `DIRECT_URL` (conexão direta / porta 5432)
    - `JWT_SECRET`
+   - `JWT_REFRESH_SECRET` (deve ser diferente de `JWT_SECRET`)
+   - `VITE_RECAPTCHA_SITE_KEY`
+   - `RECAPTCHA_SECRET_KEY`
+   - `RECAPTCHA_MIN_SCORE` (opcional; padrão `0.5`)
    - `COOKIE_SECRET`
    - `FRONTEND_URL` (o domínio final do seu app gerado na Vercel)
    - `SUPABASE_URL`

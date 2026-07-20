@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+import { executeRecaptcha } from '@/lib/recaptcha';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -202,11 +203,13 @@ export default function Confirm() {
         toast.success(`Check-in realizado para ${participante.nome}!`);
       } else {
         // Se não tiver inscrição, auto-inscrição com check-in já marcado
+        const recaptchaToken = await executeRecaptcha('registration_create');
         const insertRes = await api.post('/registrations', {
           eventoId: selectedEventoId,
           participanteId: participante.id,
           presente: true,
-          confirmado_em: new Date().toISOString()
+          confirmado_em: new Date().toISOString(),
+          recaptchaToken,
         });
 
         if (!insertRes.ok) throw new Error('Falha na auto-inscrição');

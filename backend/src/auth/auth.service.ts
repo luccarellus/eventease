@@ -81,10 +81,12 @@ export class AuthService {
   }
 
   async generateTokens(user: { id: string; email: string; role: string }) {
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const accessPayload = { sub: user.id, email: user.email, role: user.role, tokenType: 'access' };
+    const refreshPayload = { sub: user.id, tokenType: 'refresh' };
 
-    const accessToken = this.jwtService.sign(payload);
-    const refreshToken = this.jwtService.sign(payload, {
+    const accessToken = this.jwtService.sign(accessPayload);
+    const refreshToken = this.jwtService.sign(refreshPayload, {
+      secret: requireEnv('JWT_REFRESH_SECRET'),
       expiresIn: '7d',
     });
 
@@ -105,6 +107,17 @@ export class AuthService {
   }
 
   async validateAndRotateRefreshToken(oldRefreshToken: string): Promise<{ id: string; email: string; role: string; newAccessToken: string; newRefreshToken: string }> {
+    try {
+      const payload = await this.jwtService.verifyAsync<{ sub: string; tokenType: string }>(oldRefreshToken, {
+        secret: requireEnv('JWT_REFRESH_SECRET'),
+      });
+      if (!payload.sub || payload.tokenType !== 'refresh') {
+        throw new Error('Invalid refresh token payload');
+      }
+    } catch {
+      throw new UnauthorizedException('Refresh token inválido.');
+    }
+
     const tokenHash = this.hashToken(oldRefreshToken);
 
     const storedToken = await this.prisma.refreshToken.findFirst({

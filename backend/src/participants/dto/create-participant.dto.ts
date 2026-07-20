@@ -2,6 +2,10 @@ import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MinLengt
 
 export class CreateParticipantDto {
   @IsString()
+  @IsNotEmpty({ message: 'Token reCAPTCHA é obrigatório' })
+  recaptchaToken!: string;
+
+  @IsString()
   @MinLength(3, { message: 'Nome deve ter pelo menos 3 caracteres' })
   nome!: string;
 

@@ -16,6 +16,7 @@ import { AuthModule } from './auth/auth.module';
 import { EventsModule } from './events/events.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { RegistrationsModule } from './registrations/registrations.module';
+import { RecaptchaModule } from './common/recaptcha.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { RegistrationsModule } from './registrations/registrations.module';
       limit: 100,
     }]),
     PrismaModule,
+    RecaptchaModule,
     AuthModule,
     EventsModule,
     ParticipantsModule,

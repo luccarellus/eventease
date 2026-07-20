@@ -72,7 +72,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async refresh(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
-    const refreshToken = (req as any).cookies?.refresh_token;
+    const refreshToken = req.cookies?.refresh_token;
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token não encontrado.');
     }
@@ -102,7 +102,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  getMe(@Req() req: any) {
+  getMe(@Req() req: Request & { user?: unknown }) {
     return { user: req.user };
   }
 
@@ -110,7 +110,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@Req() req: Request, @Res({ passthrough: true }) response: Response) {
     try {
-      const refreshToken = (req as any).cookies?.refresh_token;
+      const refreshToken = req.cookies?.refresh_token;
       if (refreshToken) {
         await this.authService.revokeRefreshToken(refreshToken);
       }

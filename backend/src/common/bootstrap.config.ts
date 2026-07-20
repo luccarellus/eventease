@@ -28,7 +28,7 @@ export function configureApp(app: INestApplication) {
     origin: allowedOrigins.length > 0 ? allowedOrigins : (isProduction ? false : true),
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    allowedHeaders: 'Content-Type, Accept, Authorization, X-Recaptcha-Token',
   });
 
   // Global Validation Pipe

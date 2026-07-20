@@ -61,6 +61,31 @@ export class ParticipantsService {
     });
   }
 
+  async findPage(page: number, limit: number, search: string) {
+    const normalizedSearch = search.trim();
+    const where: Prisma.ParticipanteWhereInput = normalizedSearch
+      ? {
+          OR: [
+            { nome: { contains: normalizedSearch, mode: 'insensitive' } },
+            { email: { contains: normalizedSearch, mode: 'insensitive' } },
+            { codigo: { contains: normalizedSearch, mode: 'insensitive' } },
+          ],
+        }
+      : {};
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.participante.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.participante.count({ where }),
+    ]);
+
+    return { items, total, page, limit };
+  }
+
   async findByEmail(email: string) {
     return this.findByEmailQuery(email);
   }
