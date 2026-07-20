@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ServiceUnavailableException, Unauthorize
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { createClient } from '@supabase/supabase-js';
-import { requireEnv } from '../common/env.util';
+import { requireEnv, requireJwtRefreshSecret } from '../common/env.util';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -86,7 +86,7 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(accessPayload);
     const refreshToken = this.jwtService.sign(refreshPayload, {
-      secret: requireEnv('JWT_REFRESH_SECRET'),
+      secret: requireJwtRefreshSecret(),
       expiresIn: '7d',
     });
 
@@ -109,7 +109,7 @@ export class AuthService {
   async validateAndRotateRefreshToken(oldRefreshToken: string): Promise<{ id: string; email: string; role: string; newAccessToken: string; newRefreshToken: string }> {
     try {
       const payload = await this.jwtService.verifyAsync<{ sub: string; tokenType: string }>(oldRefreshToken, {
-        secret: requireEnv('JWT_REFRESH_SECRET'),
+        secret: requireJwtRefreshSecret(),
       });
       if (!payload.sub || payload.tokenType !== 'refresh') {
         throw new Error('Invalid refresh token payload');

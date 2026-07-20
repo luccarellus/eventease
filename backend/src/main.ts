@@ -1,11 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { configureApp } from './common/bootstrap.config';
-import { requireEnv } from './common/env.util';
+import { requireEnv, requireJwtRefreshSecret } from './common/env.util';
 
 async function bootstrap() {
   requireEnv('JWT_SECRET');
-  requireEnv('JWT_REFRESH_SECRET');
+  requireJwtRefreshSecret();
   requireEnv('COOKIE_SECRET');
   requireEnv('RECAPTCHA_SECRET_KEY');
   requireEnv('DATABASE_URL');

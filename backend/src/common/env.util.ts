@@ -15,3 +15,12 @@ export function requireEnv(...names: string[]): string {
   }
   return value;
 }
+
+export function requireJwtRefreshSecret(): string {
+  const refreshSecret = getEnv('JWT_REFRESH_SECRET');
+  if (refreshSecret) return refreshSecret;
+
+  const accessSecret = requireEnv('JWT_SECRET');
+  console.warn('[config] JWT_REFRESH_SECRET ausente; usando JWT_SECRET como fallback.');
+  return accessSecret;
+}
