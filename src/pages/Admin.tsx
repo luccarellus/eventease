@@ -50,7 +50,8 @@ import {
   EyeOff,
   UserPlus,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Loader2
 } from 'lucide-react';
 import {
   PieChart,
@@ -123,6 +124,7 @@ export default function Admin() {
     dataFimInscricao: ''
   });
 
+  const [submittingEvent, setSubmittingEvent] = useState(false);
   const [searchStudentForEvent, setSearchStudentForEvent] = useState('');
 
   const navigate = useNavigate();
@@ -300,6 +302,7 @@ export default function Admin() {
   // --- Ações de Eventos ---
   const handleCreateEventSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmittingEvent(true);
     try {
       const payload = {
         titulo: newEvent.titulo,
@@ -336,6 +339,8 @@ export default function Admin() {
     } catch (error) {
       console.error('Error saving event:', error);
       toast.error('Erro ao salvar evento.');
+    } finally {
+      setSubmittingEvent(false);
     }
   };
 
@@ -669,7 +674,9 @@ export default function Admin() {
                         descricao: '',
                         data: '',
                         local: '',
-                        publicado: false
+                        publicado: false,
+                        dataInicioInscricao: '',
+                        dataFimInscricao: ''
                       });
                       setShowCreateEventModal(true);
                     }}
@@ -1504,9 +1511,13 @@ export default function Admin() {
                   </Button>
                   <Button
                     type="submit"
-                    className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold"
+                    disabled={submittingEvent}
+                    className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold disabled:opacity-50"
                   >
-                    {editingEventId ? 'Salvar Alterações' : 'Criar Evento'}
+                    {submittingEvent && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                    {submittingEvent
+                      ? (editingEventId ? 'Salvando...' : 'Criando...')
+                      : (editingEventId ? 'Salvar Alterações' : 'Criar Evento')}
                   </Button>
                 </div>
               </form>

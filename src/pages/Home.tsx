@@ -35,7 +35,8 @@ import {
   Sparkles,
   Search,
   UserCheck,
-  XCircle
+  XCircle,
+  Loader2
 } from 'lucide-react';
 import rawSchoolsData from '@/data/cidades_escolas.json';
 import { cn } from '@/lib/utils';
@@ -1083,6 +1084,7 @@ export default function Home() {
                           disabled={submittingRegistration || isEventInactive(selectedEvent)}
                           className="modern-button h-12 flex-1 text-sm font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed"
                         >
+                          {submittingRegistration && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                           {getEventStatus(selectedEvent) === 'em_breve'
                             ? 'Inscrições Em Breve'
                             : getEventStatus(selectedEvent) === 'encerrado'
@@ -1090,7 +1092,7 @@ export default function Home() {
                             : submittingRegistration
                             ? 'Processando Inscrição...'
                             : 'Confirmar e Participar'}
-                          {!submittingRegistration && !isEventInactive(selectedEvent) && <ArrowRight className="w-4 h-4" />}
+                          {!submittingRegistration && !isEventInactive(selectedEvent) && <ArrowRight className="w-4 h-4 ml-1" />}
                         </Button>
                         <Button
                           type="button"
