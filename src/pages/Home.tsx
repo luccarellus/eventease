@@ -536,7 +536,7 @@ export default function Home() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
           </span>
-          Eventos com inscrições abertas
+          Eventos disponiveis
         </motion.div>
 
         <motion.h1
@@ -1088,10 +1088,10 @@ export default function Home() {
                           {getEventStatus(selectedEvent) === 'em_breve'
                             ? 'Inscrições Em Breve'
                             : getEventStatus(selectedEvent) === 'encerrado'
-                            ? 'Inscrições Encerradas'
-                            : submittingRegistration
-                            ? 'Processando Inscrição...'
-                            : 'Confirmar e Participar'}
+                              ? 'Inscrições Encerradas'
+                              : submittingRegistration
+                                ? 'Processando Inscrição...'
+                                : 'Confirmar e Participar'}
                           {!submittingRegistration && !isEventInactive(selectedEvent) && <ArrowRight className="w-4 h-4 ml-1" />}
                         </Button>
                         <Button
