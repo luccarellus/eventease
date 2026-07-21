@@ -48,7 +48,9 @@ import {
   ChevronLeft,
   Eye,
   EyeOff,
-  UserPlus
+  UserPlus,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 import {
   PieChart,
@@ -355,16 +357,21 @@ export default function Admin() {
 
   const handleTogglePublish = async (event: Evento) => {
     try {
-      const res = await api.patch(`/events/${event.id}`, { publicado: !event.publicado });
-      if (!res.ok) throw new Error('Falha ao alterar publicação');
+      const newStatus = !event.publicado;
+      const res = await api.patch(`/events/${event.id}`, { publicado: newStatus });
+      if (!res.ok) throw new Error('Falha ao alterar status');
 
-      toast.success(`Evento ${!event.publicado ? 'publicado' : 'despublicado'} com sucesso!`);
+      toast.success(
+        newStatus
+          ? 'Evento marcado como ATIVO (recebendo inscrições).'
+          : 'Evento marcado como INATIVO (inscrições encerradas).'
+      );
       fetchData();
       if (selectedEvento?.id === event.id) {
-        setSelectedEvento({ ...selectedEvento, publicado: !event.publicado });
+        setSelectedEvento({ ...selectedEvento, publicado: newStatus });
       }
     } catch (err) {
-      toast.error('Erro ao alterar publicação.');
+      toast.error('Erro ao alterar status do evento.');
     }
   };
 
@@ -692,12 +699,13 @@ export default function Admin() {
                         <CardHeader className="p-6">
                           <div className="flex justify-between items-start mb-3">
                             <span className={cn(
-                              "px-2.5 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest border",
+                              "px-2.5 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest border flex items-center gap-1.5",
                               evt.publicado
                                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                : "bg-white/5 text-white/40 border-white/10"
+                                : "bg-amber-500/10 text-amber-400 border-amber-500/20"
                             )}>
-                              {evt.publicado ? 'Publicado' : 'Inativo'}
+                              <span className={cn("w-1.5 h-1.5 rounded-full", evt.publicado ? "bg-emerald-400" : "bg-amber-400")} />
+                              {evt.publicado ? 'Ativo' : 'Inativo'}
                             </span>
                             <span className="text-[10px] text-white/40 font-bold">
                               {format(new Date(evt.data), "dd/MM/yyyy", { locale: ptBR })}
@@ -723,10 +731,22 @@ export default function Admin() {
                               <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white/5 text-white/50 hover:text-white" />}>
                                 <MoreVertical className="w-4 h-4" />
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="rounded-2xl bg-black/90 border-white/10 p-2 min-w-[140px]">
-                                <DropdownMenuItem onClick={() => handleTogglePublish(evt)} className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer">
-                                  {evt.publicado ? <EyeOff className="w-3.5 h-3.5 mr-2" /> : <Eye className="w-3.5 h-3.5 mr-2" />}
-                                  {evt.publicado ? 'Despublicar' : 'Publicar'}
+                              <DropdownMenuContent align="end" className="rounded-2xl bg-black/90 border-white/10 p-2 min-w-[170px]">
+                                <DropdownMenuItem
+                                  onClick={() => handleTogglePublish(evt)}
+                                  className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer flex items-center gap-2"
+                                >
+                                  {evt.publicado ? (
+                                    <>
+                                      <XCircle className="w-3.5 h-3.5 text-amber-400" />
+                                      <span>Marcar como Inativo</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                      <span>Marcar como Ativo</span>
+                                    </>
+                                  )}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => {
@@ -740,18 +760,18 @@ export default function Admin() {
                                     });
                                     setShowCreateEventModal(true);
                                   }}
-                                  className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer"
+                                  className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer flex items-center gap-2"
                                 >
-                                  <Edit className="w-3.5 h-3.5 mr-2" />
-                                  Editar
+                                  <Edit className="w-3.5 h-3.5" />
+                                  <span>Editar</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator className="bg-white/5" />
                                 <DropdownMenuItem
                                   onClick={() => handleDeleteEvent(evt.id, evt.titulo)}
-                                  className="text-xs font-bold text-red-400 rounded-xl px-4 py-2.5 focus:bg-red-500/10 cursor-pointer"
+                                  className="text-xs font-bold text-red-400 rounded-xl px-4 py-2.5 focus:bg-red-500/10 cursor-pointer flex items-center gap-2"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5 mr-2" />
-                                  Excluir
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span>Excluir</span>
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -938,14 +958,29 @@ export default function Admin() {
               Voltar aos Eventos
             </Button>
 
-            <span className={cn(
-              "px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest border",
-              selectedEvento.publicado
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                : "bg-white/5 text-white/40 border-white/10"
-            )}>
-              {selectedEvento.publicado ? 'Evento Publicado' : 'Evento Inativo'}
-            </span>
+            <Button
+              onClick={() => handleTogglePublish(selectedEvento)}
+              variant="outline"
+              size="sm"
+              className={cn(
+                "rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all cursor-pointer",
+                selectedEvento.publicado
+                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-amber-500/20 hover:text-amber-400"
+                  : "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-emerald-500/20 hover:text-emerald-400"
+              )}
+            >
+              {selectedEvento.publicado ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-400" />
+                  Ativo (Inscrições Abertas)
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-3.5 h-3.5 mr-1 text-amber-400" />
+                  Inativo (Inscrições Encerradas)
+                </>
+              )}
+            </Button>
           </div>
 
           {/* Dados do Evento e Stats */}
@@ -1401,17 +1436,36 @@ export default function Admin() {
                       />
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 pl-1 pt-2">
-                    <input
-                      type="checkbox"
-                      id="publish-checkbox"
-                      className="w-5 h-5 rounded border-white/15 bg-white/5 text-primary focus:ring-primary accent-primary"
-                      checked={newEvent.publicado}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, publicado: e.target.checked })}
-                    />
-                    <label htmlFor="publish-checkbox" className="text-xs text-white/70 font-bold uppercase tracking-wider cursor-pointer">
-                      Publicar evento imediatamente para os alunos
-                    </label>
+                  <div className="space-y-2 pt-2">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Status de Inscrições do Evento</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setNewEvent({ ...newEvent, publicado: true })}
+                        className={cn(
+                          "flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer",
+                          newEvent.publicado
+                            ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-lg shadow-emerald-500/10"
+                            : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
+                        )}
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span>Ativo (Recebendo Inscrições)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewEvent({ ...newEvent, publicado: false })}
+                        className={cn(
+                          "flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer",
+                          !newEvent.publicado
+                            ? "bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-lg shadow-amber-500/10"
+                            : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
+                        )}
+                      >
+                        <XCircle className="w-4 h-4 text-amber-400" />
+                        <span>Inativo (Inscrições Encerradas)</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 

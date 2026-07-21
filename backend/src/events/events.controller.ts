@@ -11,7 +11,7 @@ export class EventsController {
 
   @Get()
   findAllPublished() {
-    return this.eventsService.findAll(true);
+    return this.eventsService.findAll(false);
   }
 
   @Post()

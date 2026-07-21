@@ -34,7 +34,8 @@ import {
   ChevronDown,
   Sparkles,
   Search,
-  UserCheck
+  UserCheck,
+  XCircle
 } from 'lucide-react';
 import rawSchoolsData from '@/data/cidades_escolas.json';
 import { cn } from '@/lib/utils';
@@ -74,6 +75,12 @@ type EventItem = {
   createdAt?: string;
   created_at?: string;
 };
+
+function isEventInactive(evento: EventItem): boolean {
+  const eventDate = new Date(evento.data);
+  const isPast = !isNaN(eventDate.getTime()) && eventDate.getTime() < Date.now();
+  return !evento.publicado || isPast;
+}
 
 const CREDENTIAL_STORAGE_KEY = 'eventease_credential';
 
@@ -467,7 +474,7 @@ export default function Home() {
 
   const openEventModal = (event: EventItem, tab: 'detalhes' | 'cadastro' = 'detalhes') => {
     setSelectedEvent(event);
-    setActiveModalTab(tab);
+    setActiveModalTab(isEventInactive(event) ? 'detalhes' : tab);
     setSuccessData(null);
   };
 
@@ -583,9 +590,21 @@ export default function Home() {
                 className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group cursor-pointer will-change-transform !shadow-[0_22px_70px_rgba(0,0,0,0.58)] hover:!shadow-[0_32px_90px_rgba(0,0,0,0.78)] hover:-translate-y-2 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               >
                 <CardHeader className="p-5 sm:p-8 pb-4">
-                  <div className="flex items-center gap-2 text-primary font-bold text-[10px] uppercase tracking-widest mb-3">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {formatEventDate(evento.data)}
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    {isEventInactive(evento) ? (
+                      <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        Inscrições Encerradas
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        Inscrições Abertas
+                      </span>
+                    )}
+                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-wider">
+                      {formatEventDate(evento.data)}
+                    </span>
                   </div>
                   <CardTitle className="font-display font-bold text-2xl text-white tracking-tight leading-tight group-hover:text-primary transition-colors">
                     {evento.titulo}
@@ -608,16 +627,29 @@ export default function Home() {
                   </div>
                 </CardContent>
                 <CardFooter className="p-5 sm:p-8 pt-0 border-none bg-transparent">
-                  <Button
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      openEventModal(evento, 'cadastro');
-                    }}
-                    className="modern-button w-full h-12 text-sm uppercase tracking-wider font-bold"
-                  >
-                    Participar
-                    <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
-                  </Button>
+                  {isEventInactive(evento) ? (
+                    <Button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openEventModal(evento, 'detalhes');
+                      }}
+                      variant="outline"
+                      className="w-full h-12 text-xs uppercase tracking-wider font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 bg-amber-500/5 rounded-2xl cursor-pointer"
+                    >
+                      Inscrições Encerradas
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        openEventModal(evento, 'cadastro');
+                      }}
+                      className="modern-button w-full h-12 text-sm uppercase tracking-wider font-bold"
+                    >
+                      Participar
+                      <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  )}
                 </CardFooter>
 
                 <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent opacity-70" />
@@ -797,22 +829,33 @@ export default function Home() {
                       </div>
 
                       <div className="pt-4 flex flex-col sm:flex-row gap-4 border-t border-white/5">
-                        <Button
-                          type="button"
-                          onClick={() => setActiveModalTab('cadastro')}
-                          className="modern-button h-12 flex-1 text-sm font-bold uppercase"
-                        >
-                          Participar
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={closeRegistration}
-                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6"
-                        >
-                          Fechar
-                        </Button>
+                        {isEventInactive(selectedEvent) ? (
+                          <div className="w-full p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-center space-y-1">
+                            <p className="text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5">
+                              <XCircle className="w-4 h-4" /> Inscrições Encerradas
+                            </p>
+                            <p className="text-white/50 text-xs">Este evento está inativo ou o período de inscrições expirou.</p>
+                          </div>
+                        ) : (
+                          <>
+                            <Button
+                              type="button"
+                              onClick={() => setActiveModalTab('cadastro')}
+                              className="modern-button h-12 flex-1 text-sm font-bold uppercase"
+                            >
+                              Participar
+                              <ArrowRight className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={closeRegistration}
+                              className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6"
+                            >
+                              Fechar
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </motion.div>
                   ) : activeModalTab === 'cadastro' ? (
@@ -949,11 +992,15 @@ export default function Home() {
                       <div className="pt-4 flex flex-col sm:flex-row gap-4 border-t border-white/5 mt-6">
                         <Button
                           type="submit"
-                          disabled={submittingRegistration}
-                          className="modern-button h-12 flex-1 text-sm font-bold uppercase"
+                          disabled={submittingRegistration || isEventInactive(selectedEvent)}
+                          className="modern-button h-12 flex-1 text-sm font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {submittingRegistration ? 'Processando Inscrição...' : 'Confirmar e Participar'}
-                          {!submittingRegistration && <ArrowRight className="w-4 h-4" />}
+                          {isEventInactive(selectedEvent)
+                            ? 'Inscrições Encerradas'
+                            : submittingRegistration
+                            ? 'Processando Inscrição...'
+                            : 'Confirmar e Participar'}
+                          {!submittingRegistration && !isEventInactive(selectedEvent) && <ArrowRight className="w-4 h-4" />}
                         </Button>
                         <Button
                           type="button"
