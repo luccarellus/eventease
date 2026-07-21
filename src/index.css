@@ -1,10 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-/* O badge pode ser ocultado quando a atribuição textual do reCAPTCHA permanece visível. */
-.grecaptcha-badge {
-  visibility: hidden !important;
-}
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
