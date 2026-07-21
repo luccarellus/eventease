@@ -114,7 +114,7 @@ export default function Login() {
       >
         <Card className="glass-card shadow-3xl overflow-hidden border-white/[0.04]">
           <CardHeader className="text-left px-6 sm:px-12 pt-8 sm:pt-12 pb-2">
-            <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em]">Área da Organização</span>
+            <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em]">Insira suas credenciais para acesso</span>
             <CardTitle className="font-display text-3xl font-extrabold tracking-tight text-white mt-1">Acesso da equipe</CardTitle>
           </CardHeader>
           <CardContent className="px-6 sm:px-12 pt-6 sm:pt-8 pb-8 sm:pb-12">
