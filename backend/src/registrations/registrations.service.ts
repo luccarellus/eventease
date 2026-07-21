@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 
@@ -7,6 +7,27 @@ export class RegistrationsService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.InscricaoEventoUncheckedCreateInput) {
+    const evento = await this.prisma.evento.findUnique({
+      where: { id: data.eventoId as string },
+    });
+
+    if (!evento) {
+      throw new NotFoundException('Evento não encontrado.');
+    }
+
+    if (!evento.publicado) {
+      throw new BadRequestException('Este evento está inativo no momento.');
+    }
+
+    const now = new Date();
+    if (evento.dataInicioInscricao && now < evento.dataInicioInscricao) {
+      throw new BadRequestException('As inscrições para este evento ainda não começaram.');
+    }
+
+    if (evento.dataFimInscricao && now > evento.dataFimInscricao) {
+      throw new BadRequestException('As inscrições para este evento já foram encerradas.');
+    }
+
     const existing = await this.prisma.inscricaoEvento.findUnique({
       where: {
         unique_evento_participante: {

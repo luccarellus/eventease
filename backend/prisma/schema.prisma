@@ -52,16 +52,18 @@ model Participante {
 // Eventos
 // ==========================================
 model Evento {
-  id              String    @id @default(uuid()) @db.Uuid
-  titulo          String
-  descricao       String?
-  data            DateTime  @db.Timestamptz
-  local           String
-  publicado       Boolean   @default(false)
+  id                  String    @id @default(uuid()) @db.Uuid
+  titulo              String
+  descricao           String?
+  data                DateTime  @db.Timestamptz
+  local               String
+  publicado           Boolean   @default(false)
+  dataInicioInscricao DateTime? @db.Timestamptz @map("data_inicio_inscricao")
+  dataFimInscricao    DateTime? @db.Timestamptz @map("data_fim_inscricao")
   
-  createdAt       DateTime  @default(now()) @db.Timestamptz @map("created_at")
+  createdAt           DateTime  @default(now()) @db.Timestamptz @map("created_at")
 
-  inscricoes      InscricaoEvento[]
+  inscricoes          InscricaoEvento[]
 
   @@index([publicado])
   @@map("eventos")

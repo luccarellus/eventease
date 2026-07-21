@@ -23,6 +23,10 @@ export interface Evento {
   data: string;
   local: string;
   publicado: boolean;
+  dataInicioInscricao?: string;
+  data_inicio_inscricao?: string;
+  dataFimInscricao?: string;
+  data_fim_inscricao?: string;
   createdAt?: string;
   created_at?: string;
 }

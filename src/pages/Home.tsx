@@ -72,14 +72,49 @@ type EventItem = {
   data: string;
   local: string;
   publicado: boolean;
+  dataInicioInscricao?: string;
+  data_inicio_inscricao?: string;
+  dataFimInscricao?: string;
+  data_fim_inscricao?: string;
   createdAt?: string;
   created_at?: string;
 };
 
-function isEventInactive(evento: EventItem): boolean {
+type EventRegistrationStatus = 'em_breve' | 'aberto' | 'encerrado';
+
+function getEventStatus(evento: EventItem): EventRegistrationStatus {
+  const now = Date.now();
+  const inicioStr = evento.dataInicioInscricao || evento.data_inicio_inscricao;
+  const fimStr = evento.dataFimInscricao || evento.data_fim_inscricao;
+
+  if (inicioStr) {
+    const inicioDate = new Date(inicioStr);
+    if (!isNaN(inicioDate.getTime()) && inicioDate.getTime() > now) {
+      return 'em_breve';
+    }
+  }
+
+  if (!evento.publicado) {
+    return 'encerrado';
+  }
+
+  if (fimStr) {
+    const fimDate = new Date(fimStr);
+    if (!isNaN(fimDate.getTime()) && fimDate.getTime() < now) {
+      return 'encerrado';
+    }
+  }
+
   const eventDate = new Date(evento.data);
-  const isPast = !isNaN(eventDate.getTime()) && eventDate.getTime() < Date.now();
-  return !evento.publicado || isPast;
+  if (!isNaN(eventDate.getTime()) && eventDate.getTime() < now) {
+    return 'encerrado';
+  }
+
+  return 'aberto';
+}
+
+function isEventInactive(evento: EventItem): boolean {
+  return getEventStatus(evento) !== 'aberto';
 }
 
 const CREDENTIAL_STORAGE_KEY = 'eventease_credential';
@@ -591,17 +626,31 @@ export default function Home() {
               >
                 <CardHeader className="p-5 sm:p-8 pb-4">
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    {isEventInactive(evento) ? (
-                      <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                        Inscrições Encerradas
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        Inscrições Abertas
-                      </span>
-                    )}
+                    {(() => {
+                      const status = getEventStatus(evento);
+                      if (status === 'em_breve') {
+                        return (
+                          <span className="px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                            Em Breve
+                          </span>
+                        );
+                      }
+                      if (status === 'encerrado') {
+                        return (
+                          <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            Inscrições Encerradas
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          Inscrições Abertas
+                        </span>
+                      );
+                    })()}
                     <span className="text-[10px] text-white/40 font-bold uppercase tracking-wider">
                       {formatEventDate(evento.data)}
                     </span>
@@ -627,29 +676,49 @@ export default function Home() {
                   </div>
                 </CardContent>
                 <CardFooter className="p-5 sm:p-8 pt-0 border-none bg-transparent">
-                  {isEventInactive(evento) ? (
-                    <Button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        openEventModal(evento, 'detalhes');
-                      }}
-                      variant="outline"
-                      className="w-full h-12 text-xs uppercase tracking-wider font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 bg-amber-500/5 rounded-2xl cursor-pointer"
-                    >
-                      Inscrições Encerradas
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        openEventModal(evento, 'cadastro');
-                      }}
-                      className="modern-button w-full h-12 text-sm uppercase tracking-wider font-bold"
-                    >
-                      Participar
-                      <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
-                    </Button>
-                  )}
+                  {(() => {
+                    const status = getEventStatus(evento);
+                    if (status === 'em_breve') {
+                      return (
+                        <Button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openEventModal(evento, 'detalhes');
+                          }}
+                          variant="outline"
+                          className="w-full h-12 text-xs uppercase tracking-wider font-bold border-sky-500/30 text-sky-400 hover:bg-sky-500/10 bg-sky-500/5 rounded-2xl cursor-pointer"
+                        >
+                          Inscrições Em Breve
+                        </Button>
+                      );
+                    }
+                    if (status === 'encerrado') {
+                      return (
+                        <Button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openEventModal(evento, 'detalhes');
+                          }}
+                          variant="outline"
+                          className="w-full h-12 text-xs uppercase tracking-wider font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 bg-amber-500/5 rounded-2xl cursor-pointer"
+                        >
+                          Inscrições Encerradas
+                        </Button>
+                      );
+                    }
+                    return (
+                      <Button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openEventModal(evento, 'cadastro');
+                        }}
+                        className="modern-button w-full h-12 text-sm uppercase tracking-wider font-bold"
+                      >
+                        Participar
+                        <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                      </Button>
+                    );
+                  })()}
                 </CardFooter>
 
                 <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent opacity-70" />
@@ -829,33 +898,52 @@ export default function Home() {
                       </div>
 
                       <div className="pt-4 flex flex-col sm:flex-row gap-4 border-t border-white/5">
-                        {isEventInactive(selectedEvent) ? (
-                          <div className="w-full p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-center space-y-1">
-                            <p className="text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5">
-                              <XCircle className="w-4 h-4" /> Inscrições Encerradas
-                            </p>
-                            <p className="text-white/50 text-xs">Este evento está inativo ou o período de inscrições expirou.</p>
-                          </div>
-                        ) : (
-                          <>
-                            <Button
-                              type="button"
-                              onClick={() => setActiveModalTab('cadastro')}
-                              className="modern-button h-12 flex-1 text-sm font-bold uppercase"
-                            >
-                              Participar
-                              <ArrowRight className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={closeRegistration}
-                              className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6"
-                            >
-                              Fechar
-                            </Button>
-                          </>
-                        )}
+                        {(() => {
+                          const status = getEventStatus(selectedEvent);
+                          if (status === 'em_breve') {
+                            const inicioStr = selectedEvent.dataInicioInscricao || selectedEvent.data_inicio_inscricao;
+                            return (
+                              <div className="w-full p-4 bg-sky-500/10 border border-sky-500/20 rounded-2xl text-center space-y-1">
+                                <p className="text-sky-400 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5">
+                                  <Clock className="w-4 h-4" /> Inscrições Em Breve
+                                </p>
+                                <p className="text-white/50 text-xs">
+                                  As inscrições iniciam em {formatEventDate(inicioStr, "dd/MM/yyyy 'às' HH:mm'h'")}.
+                                </p>
+                              </div>
+                            );
+                          }
+                          if (status === 'encerrado') {
+                            return (
+                              <div className="w-full p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-center space-y-1">
+                                <p className="text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5">
+                                  <XCircle className="w-4 h-4" /> Inscrições Encerradas
+                                </p>
+                                <p className="text-white/50 text-xs">Este evento está inativo ou o período de inscrições expirou.</p>
+                              </div>
+                            );
+                          }
+                          return (
+                            <>
+                              <Button
+                                type="button"
+                                onClick={() => setActiveModalTab('cadastro')}
+                                className="modern-button h-12 flex-1 text-sm font-bold uppercase"
+                              >
+                                Participar
+                                <ArrowRight className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={closeRegistration}
+                                className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6"
+                              >
+                                Fechar
+                              </Button>
+                            </>
+                          );
+                        })()}
                       </div>
                     </motion.div>
                   ) : activeModalTab === 'cadastro' ? (
@@ -995,7 +1083,9 @@ export default function Home() {
                           disabled={submittingRegistration || isEventInactive(selectedEvent)}
                           className="modern-button h-12 flex-1 text-sm font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isEventInactive(selectedEvent)
+                          {getEventStatus(selectedEvent) === 'em_breve'
+                            ? 'Inscrições Em Breve'
+                            : getEventStatus(selectedEvent) === 'encerrado'
                             ? 'Inscrições Encerradas'
                             : submittingRegistration
                             ? 'Processando Inscrição...'

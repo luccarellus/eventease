@@ -19,4 +19,12 @@ export class CreateEventDto {
   @IsOptional()
   @IsBoolean()
   publicado?: boolean;
+
+  @IsOptional()
+  @IsDateString({}, { message: 'Data de início das inscrições inválida' })
+  dataInicioInscricao?: string;
+
+  @IsOptional()
+  @IsDateString({}, { message: 'Data de término das inscrições inválida' })
+  dataFimInscricao?: string;
 }

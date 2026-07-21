@@ -59,8 +59,14 @@ CREATE TABLE IF NOT EXISTS eventos (
   data TIMESTAMPTZ NOT NULL,
   local TEXT NOT NULL,
   publicado BOOLEAN DEFAULT false,
+  data_inicio_inscricao TIMESTAMPTZ,
+  data_fim_inscricao TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Script de migração para tabelas de eventos já existentes:
+-- ALTER TABLE eventos ADD COLUMN IF NOT EXISTS data_inicio_inscricao TIMESTAMPTZ;
+-- ALTER TABLE eventos ADD COLUMN IF NOT EXISTS data_fim_inscricao TIMESTAMPTZ;
 
 -- Tabela de inscrições de eventos
 CREATE TABLE IF NOT EXISTS inscricoes_evento (

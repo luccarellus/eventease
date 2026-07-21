@@ -118,7 +118,9 @@ export default function Admin() {
     descricao: '',
     data: '',
     local: '',
-    publicado: false
+    publicado: false,
+    dataInicioInscricao: '',
+    dataFimInscricao: ''
   });
 
   const [searchStudentForEvent, setSearchStudentForEvent] = useState('');
@@ -299,26 +301,22 @@ export default function Admin() {
   const handleCreateEventSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (editingEventId) {
-        const res = await api.patch(`/events/${editingEventId}`, {
-          titulo: newEvent.titulo,
-          descricao: newEvent.descricao,
-          data: new Date(newEvent.data).toISOString(),
-          local: newEvent.local,
-          publicado: newEvent.publicado
-        });
+      const payload = {
+        titulo: newEvent.titulo,
+        descricao: newEvent.descricao,
+        data: new Date(newEvent.data).toISOString(),
+        local: newEvent.local,
+        publicado: newEvent.publicado,
+        dataInicioInscricao: newEvent.dataInicioInscricao ? new Date(newEvent.dataInicioInscricao).toISOString() : null,
+        dataFimInscricao: newEvent.dataFimInscricao ? new Date(newEvent.dataFimInscricao).toISOString() : null,
+      };
 
+      if (editingEventId) {
+        const res = await api.patch(`/events/${editingEventId}`, payload);
         if (!res.ok) throw new Error('Falha ao atualizar evento');
         toast.success('Evento atualizado com sucesso!');
       } else {
-        const res = await api.post('/events', {
-          titulo: newEvent.titulo,
-          descricao: newEvent.descricao,
-          data: new Date(newEvent.data).toISOString(),
-          local: newEvent.local,
-          publicado: newEvent.publicado
-        });
-
+        const res = await api.post('/events', payload);
         if (!res.ok) throw new Error('Falha ao criar evento');
         toast.success('Evento criado com sucesso!');
       }
@@ -330,7 +328,9 @@ export default function Admin() {
         descricao: '',
         data: '',
         local: '',
-        publicado: false
+        publicado: false,
+        dataInicioInscricao: '',
+        dataFimInscricao: ''
       });
       fetchData();
     } catch (error) {
@@ -750,13 +750,17 @@ export default function Admin() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => {
+                                    const inicio = evt.dataInicioInscricao || evt.data_inicio_inscricao;
+                                    const fim = evt.dataFimInscricao || evt.data_fim_inscricao;
                                     setEditingEventId(evt.id);
                                     setNewEvent({
                                       titulo: evt.titulo,
                                       descricao: evt.descricao || '',
-                                      data: evt.data.slice(0, 16),
+                                      data: evt.data ? evt.data.slice(0, 16) : '',
                                       local: evt.local,
-                                      publicado: evt.publicado
+                                      publicado: evt.publicado,
+                                      dataInicioInscricao: inicio ? inicio.slice(0, 16) : '',
+                                      dataFimInscricao: fim ? fim.slice(0, 16) : '',
                                     });
                                     setShowCreateEventModal(true);
                                   }}
@@ -1433,6 +1437,26 @@ export default function Admin() {
                         placeholder="Ex: Auditório Municipal"
                         value={newEvent.local}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, local: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-white/5 pt-3">
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Início das Inscrições (Opcional)</label>
+                      <Input
+                        type="datetime-local"
+                        className="liquid-input h-12 text-white/60"
+                        value={newEvent.dataInicioInscricao}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, dataInicioInscricao: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Término das Inscrições (Opcional)</label>
+                      <Input
+                        type="datetime-local"
+                        className="liquid-input h-12 text-white/60"
+                        value={newEvent.dataFimInscricao}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, dataFimInscricao: e.target.value })}
                       />
                     </div>
                   </div>

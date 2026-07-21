@@ -21,6 +21,8 @@ export class EventsController {
     return this.eventsService.create({
       ...data,
       data: toDate(data.data),
+      dataInicioInscricao: toDateOrUndefined(data.dataInicioInscricao),
+      dataFimInscricao: toDateOrUndefined(data.dataFimInscricao),
     });
   }
 
@@ -42,6 +44,8 @@ export class EventsController {
     return this.eventsService.update(id, {
       ...data,
       data: toDateOrUndefined(data.data),
+      dataInicioInscricao: toDateOrUndefined(data.dataInicioInscricao),
+      dataFimInscricao: toDateOrUndefined(data.dataFimInscricao),
     });
   }
 
