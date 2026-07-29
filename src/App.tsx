@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Toaster } from './components/ui/event-toaster';
 import CookieBanner from '@/components/CookieBanner';
@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { initRecaptcha } from '@/lib/recaptcha';
 
 const Home = lazy(() => import('@/pages/Home'));
 const Confirm = lazy(() => import('@/pages/Confirm'));
@@ -188,6 +189,10 @@ function NavLink({ to, icon, label, active }: { to: string; icon: React.ReactNod
 }
 
 export default function App() {
+  useEffect(() => {
+    initRecaptcha();
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

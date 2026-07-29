@@ -28,6 +28,19 @@ function loadRecaptcha(siteKey: string): Promise<void> {
   return scriptPromise;
 }
 
+/**
+ * Pré-carrega o reCAPTCHA assim que a aplicação inicia,
+ * para que o badge de proteção fique visível desde o primeiro acesso.
+ */
+export function initRecaptcha(): void {
+  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim();
+  if (siteKey) {
+    loadRecaptcha(siteKey).catch(() => {
+      // falha silenciosa — o executeRecaptcha() lançará erro se necessário
+    });
+  }
+}
+
 export async function executeRecaptcha(action: RecaptchaAction): Promise<string> {
   const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim();
   if (!siteKey) throw new Error('reCAPTCHA não configurado.');
