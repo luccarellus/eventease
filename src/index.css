@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-/* Badge do reCAPTCHA redimensionado */
+/* Badge do reCAPTCHA — mantido visível conforme exigido pelo Google */
 .grecaptcha-badge {
-  transform: scale(0.5);
-  transform-origin: right bottom;
+  visibility: visible;
+  opacity: 1;
 }
 
 @theme {
