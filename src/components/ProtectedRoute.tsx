@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { AtomSpinner } from '@/components/ui/AtomSpinner';
+import { RefreshCcw } from 'lucide-react';
 
 export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { userIsAdmin, loading } = useAuth();
@@ -11,7 +11,7 @@ export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ childr
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="flex flex-col items-center gap-4">
-          <AtomSpinner className="w-12 h-12 text-primary" />
+          <RefreshCcw className="w-8 h-8 animate-spin text-neutral-400" />
           <p className="text-neutral-500 font-medium tracking-tight">Verificando acesso...</p>
         </div>
       </div>

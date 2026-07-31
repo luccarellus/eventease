@@ -35,14 +35,14 @@ import {
   Sparkles,
   Search,
   UserCheck,
-  XCircle
+  XCircle,
+  Loader2
 } from 'lucide-react';
 import rawSchoolsData from '@/data/cidades_escolas.json';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { executeRecaptcha } from '@/lib/recaptcha';
-import { AtomSpinner } from '@/components/ui/AtomSpinner';
 
 const registrationSchema = z.object({
   nome: z
@@ -578,7 +578,7 @@ export default function Home() {
       {loadingEvents ? (
         <div className="flex items-center justify-center h-[30vh]">
           <div className="flex flex-col items-center gap-4">
-            <AtomSpinner className="w-12 h-12 text-primary" />
+            <RefreshCcw className="w-8 h-8 animate-spin text-primary" />
             <p className="text-neutral-500 font-medium tracking-tight">Carregando eventos...</p>
           </div>
         </div>
@@ -1084,7 +1084,7 @@ export default function Home() {
                           disabled={submittingRegistration || isEventInactive(selectedEvent)}
                           className="modern-button h-12 flex-1 text-sm font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {submittingRegistration && <AtomSpinner className="w-4 h-4 mr-2 text-white" />}
+                          {submittingRegistration && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                           {getEventStatus(selectedEvent) === 'em_breve'
                             ? 'Inscrições Em Breve'
                             : getEventStatus(selectedEvent) === 'encerrado'

@@ -50,7 +50,8 @@ import {
   EyeOff,
   UserPlus,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Loader2
 } from 'lucide-react';
 import {
   PieChart,
@@ -63,7 +64,6 @@ import Papa from 'papaparse';
 import { cn } from '@/lib/utils';
 import { generateCredentialCode } from '@/lib/credential-code';
 import { executeRecaptcha } from '@/lib/recaptcha';
-import { AtomSpinner } from '@/components/ui/AtomSpinner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -578,7 +578,7 @@ export default function Admin() {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="flex flex-col items-center gap-4">
-          <AtomSpinner className="w-12 h-12 text-primary" />
+          <RefreshCcw className="w-8 h-8 animate-spin text-neutral-400" />
           <p className="text-neutral-500 font-medium tracking-tight">Carregando painel...</p>
         </div>
       </div>
@@ -1087,10 +1087,7 @@ export default function Admin() {
                       {loadingInscritos ? (
                         <TableRow>
                           <TableCell colSpan={4} className="h-48 text-center text-white/20 font-medium">
-                            <div className="flex flex-col items-center justify-center gap-3">
-                              <AtomSpinner className="w-8 h-8 text-primary" />
-                              <span>Carregando inscrições...</span>
-                            </div>
+                            Carregando inscrições...
                           </TableCell>
                         </TableRow>
                       ) : filteredInscritos.length === 0 ? (
@@ -1517,7 +1514,7 @@ export default function Admin() {
                     disabled={submittingEvent}
                     className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold disabled:opacity-50"
                   >
-                    {submittingEvent && <AtomSpinner className="w-4 h-4 mr-2 text-white" />}
+                    {submittingEvent && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
                     {submittingEvent
                       ? (editingEventId ? 'Salvando...' : 'Criando...')
                       : (editingEventId ? 'Salvar Alterações' : 'Criar Evento')}
