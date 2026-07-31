@@ -39,11 +39,34 @@
 }
 
 @layer base {
+  html {
+    background-color: #020610;
+    color-scheme: dark;
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply antialiased font-sans text-foreground bg-background;
-    background: 
-      radial-gradient(circle at 50% 30%, var(--color-muted) 0%, var(--color-background) 80%);
+    background-color: #020610;
+    background-image: radial-gradient(circle at 50% 30%, var(--color-muted) 0%, var(--color-background) 80%);
     background-attachment: fixed;
+    min-height: 100%;
+    min-height: 100dvh;
+    width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    touch-action: manipulation;
+  }
+
+  #root {
+    min-height: 100%;
+    min-height: 100dvh;
+    background-color: #020610;
+    display: flex;
+    flex-direction: column;
   }
 
   select {

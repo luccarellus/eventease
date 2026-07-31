@@ -75,7 +75,7 @@ function Navbar() {
   const navItems = userIsAdmin ? ADMIN_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-xl">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/50 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
           <img
@@ -134,11 +134,11 @@ function BottomNav() {
   const navItems = userIsAdmin ? ADMIN_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-[env(safe-area-inset-bottom)]">
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-black/70 backdrop-blur-3xl saturate-150 border-t border-white/10 rounded-t-3xl p-2 pb-6 flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.8)] pointer-events-auto"
+        className="bg-black/80 backdrop-blur-3xl saturate-150 border-t border-white/10 rounded-t-3xl p-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.8)] pointer-events-auto"
       >
         {navItems.map((item) => (
           <MobileNavLink
@@ -204,9 +204,9 @@ function AppContent() {
   const { userIsAdmin } = useAuth();
 
   return (
-    <div className="min-h-[100dvh] pt-20 md:pt-24 pb-32 md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col">
+    <div className="min-h-[100dvh] pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-24 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col bg-[#020610]">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow w-full">
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -242,7 +242,7 @@ function AppContent() {
         </footer>
       )}
 
-      <p className="px-4 pb-20 text-center text-[10px] text-white/30 md:pb-4">
+      <p className="px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] text-center text-[10px] text-white/30 md:pb-4">
         Este site é protegido pelo reCAPTCHA e se aplicam a{' '}
         <a href="https://policies.google.com/privacy" target="_blank" rel="noreferrer" className="underline hover:text-white/60">
           Política de Privacidade
