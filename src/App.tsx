@@ -134,17 +134,19 @@ function BottomNav() {
   const navItems = userIsAdmin ? ADMIN_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-[env(safe-area-inset-bottom)]">
+    <div className="md:hidden fixed bottom-4 inset-x-4 max-w-sm mx-auto z-50 pointer-events-none mb-[env(safe-area-inset-bottom)]">
       <motion.div
-        initial={{ y: 20, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-black/80 backdrop-blur-3xl saturate-150 border-t border-white/10 rounded-t-3xl p-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.8)] pointer-events-auto"
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="bg-[#0a111e]/90 backdrop-blur-2xl border border-white/15 rounded-full p-1.5 flex items-center justify-around shadow-[0_15px_40px_rgba(0,0,0,0.8)] pointer-events-auto"
       >
         {navItems.map((item) => (
           <MobileNavLink
             key={item.to}
             to={item.to}
             icon={item.icon}
+            label={item.label}
             active={item.isActive(location.pathname, location.search)}
           />
         ))}
@@ -153,18 +155,19 @@ function BottomNav() {
   );
 }
 
-function MobileNavLink({ to, icon, active }: { to: string; icon: React.ReactNode; active: boolean }) {
+function MobileNavLink({ to, icon, label, active }: { to: string; icon: React.ReactNode; label: string; active: boolean }) {
   return (
     <Link
       to={to}
       className={cn(
-        'flex flex-col items-center justify-center w-14 h-14 rounded-2xl transition-all duration-500',
+        'relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300',
         active
-          ? 'bg-primary text-white shadow-lg shadow-primary/40 scale-110 -translate-y-2'
-          : 'text-white/30 hover:text-white/60',
+          ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105'
+          : 'text-white/40 hover:text-white hover:bg-white/5'
       )}
     >
-      {icon}
+      {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' }) : icon}
+      <span>{label}</span>
     </Link>
   );
 }
