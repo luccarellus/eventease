@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { createClient } from '@supabase/supabase-js';
@@ -6,7 +6,7 @@ import { requireEnv, requireJwtRefreshSecret } from '../common/env.util';
 import * as crypto from 'crypto';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   private readonly supabase;
   private readonly supabaseAdmin;
 
@@ -32,6 +32,10 @@ export class AuthService {
         detectSessionInUrl: false,
       },
     });
+  }
+
+  async onModuleInit() {
+    await this.cleanupExpiredRefreshTokens();
   }
 
   private normalizeEmail(email: string) {
@@ -94,6 +98,8 @@ export class AuthService {
   }
 
   async storeRefreshToken(userId: string, refreshToken: string) {
+    await this.cleanupExpiredRefreshTokens(userId);
+
     const tokenHash = this.hashToken(refreshToken);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
@@ -279,10 +285,24 @@ export class AuthService {
     }
   }
 
-  async cleanupExpiredRefreshTokens() {
+  async cleanupExpiredRefreshTokens(userId?: string) {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    if (userId) {
+      await this.prisma.refreshToken.deleteMany({
+        where: {
+          userId,
+          revokedAt: { not: null },
+        },
+      });
+    }
+
     await this.prisma.refreshToken.deleteMany({
       where: {
-        expiresAt: { lt: new Date() },
+        OR: [
+          { expiresAt: { lt: new Date() } },
+          { revokedAt: { lt: oneDayAgo } },
+        ],
       },
     });
   }
