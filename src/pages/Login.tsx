@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
-import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
+import { Lock, Mail, ArrowRight } from 'lucide-react';
+import { AtomSpinner } from '@/components/ui/AtomSpinner';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -169,7 +170,7 @@ export default function Login() {
                 className="modern-button w-full h-14 text-base font-bold uppercase tracking-wider mt-4"
                 disabled={loading || (lockoutUntil !== null && Date.now() < lockoutUntil)}
               >
-                {loading && <Loader2 className="w-5 h-5 animate-spin mr-2" />}
+                {loading && <AtomSpinner className="w-5 h-5 mr-2 text-white" />}
                 {loading ? 'Autenticando...' : (lockoutUntil && Date.now() < lockoutUntil ? 'Acesso Bloqueado' : 'Acessar')}
                 {!loading && (!lockoutUntil || Date.now() >= lockoutUntil) && <ArrowRight className="w-5 h-5 ml-1" />}
               </Button>

@@ -110,3 +110,64 @@
     display: none;
   }
 }
+
+/* Atom Spinner Keyframes & Styles */
+@keyframes atomSpin1 {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes atomSpin2 {
+  0% {
+    transform: rotate(60deg);
+  }
+  100% {
+    transform: rotate(420deg);
+  }
+}
+
+@keyframes atomSpin3 {
+  0% {
+    transform: rotate(120deg);
+  }
+  100% {
+    transform: rotate(480deg);
+  }
+}
+
+@keyframes atomPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.22);
+    opacity: 0.85;
+  }
+}
+
+.atom-orbit {
+  transform-origin: 50px 50px;
+}
+
+.atom-orbit-1 {
+  animation: atomSpin1 1.8s linear infinite;
+}
+
+.atom-orbit-2 {
+  animation: atomSpin2 2.2s linear infinite;
+}
+
+.atom-orbit-3 {
+  animation: atomSpin3 1.5s linear infinite;
+}
+
+.atom-nucleus {
+  transform-origin: 50px 50px;
+  animation: atomPulse 1.5s ease-in-out infinite;
+}
+
