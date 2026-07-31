@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { initRecaptcha } from '@/lib/recaptcha';
+import { LoadingSpinner as CustomSpinner } from '@/components/ui/LoadingSpinner';
 
 const Home = lazy(() => import('@/pages/Home'));
 const Confirm = lazy(() => import('@/pages/Confirm'));
@@ -63,10 +64,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center min-h-[50vh]">
-      <div className="relative w-16 h-16">
-        <div className="absolute inset-0 rounded-full border-4 border-white/5 border-t-primary animate-spin" />
-        <div className="absolute inset-2 rounded-full border-4 border-white/5 border-b-primary animate-spin [animation-duration:1.5s] reverse" />
-      </div>
+      <CustomSpinner size="xl" />
     </div>
   );
 }

@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
-import { UserCheck, QrCode, Search, CheckCircle2, AlertCircle, Clock, MapPin, User, Building, RefreshCcw, X, Sparkles, Loader2 } from 'lucide-react';
+import { UserCheck, QrCode, Search, CheckCircle2, AlertCircle, Clock, MapPin, User, Building, RefreshCcw, X, Sparkles } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { cn } from '@/lib/utils';
 import { Participante, Evento } from '@/types/index';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
@@ -337,7 +338,7 @@ export default function Confirm() {
                     disabled={loading || !codigo.trim() || !selectedEventoId}
                     className="modern-button w-full h-14 md:h-20 text-base md:text-2xl tracking-widest font-black uppercase shadow-[0_10px_35px_rgba(0,255,163,0.3)] mt-2"
                   >
-                    {loading && <Loader2 className="w-5 h-5 md:w-7 md:h-7 animate-spin mr-2 text-black" />}
+                    {loading && <LoadingSpinner size="sm" variant="black" className="mr-2 md:w-7 md:h-7" />}
                     {loading ? 'Validando...' : 'Confirmar Presença'}
                     {!loading && <UserCheck className="w-5 h-5 md:w-7 md:h-7 ml-2" />}
                   </Button>
