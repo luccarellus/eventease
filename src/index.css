@@ -43,7 +43,7 @@
   html {
     background-color: #020610;
     color-scheme: dark;
-    height: 100%;
+    min-height: 100%;
     width: 100%;
     overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
@@ -58,8 +58,6 @@
     min-height: 100dvh;
     width: 100%;
     overflow-x: hidden;
-    overscroll-behavior-y: none;
-    touch-action: manipulation;
   }
 
   #root {
