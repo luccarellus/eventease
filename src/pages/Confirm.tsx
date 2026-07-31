@@ -213,7 +213,18 @@ export default function Confirm() {
           recaptchaToken,
         });
 
-        if (!insertRes.ok) throw new Error('Falha na auto-inscrição');
+        if (!insertRes.ok) {
+          let message = 'Falha na auto-inscrição';
+          try {
+            const errorData = (await insertRes.json()) as { message?: string | string[] };
+            if (errorData?.message) {
+              message = Array.isArray(errorData.message) ? errorData.message.join(' ') : errorData.message;
+            }
+          } catch {
+            // mantém a mensagem genérica se o corpo não for JSON válido
+          }
+          throw new Error(message);
+        }
 
         setResult({
           status: 'success',

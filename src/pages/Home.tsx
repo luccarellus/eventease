@@ -119,6 +119,7 @@ function isEventInactive(evento: EventItem): boolean {
 }
 
 const CREDENTIAL_STORAGE_KEY = 'eventease_credential';
+const INACTIVE_EVENT_MESSAGE = 'As inscrições para este evento estão encerradas no momento.';
 
 function loadStoredCredential(): CredentialSummary | null {
   try {
@@ -288,7 +289,16 @@ export default function Home() {
       });
 
       if (!insertRegRes.ok) {
-        throw new Error('Falha ao registrar evento');
+        let message = 'Falha ao registrar evento';
+        try {
+          const errorData = (await insertRegRes.json()) as { message?: string | string[] };
+          if (errorData?.message) {
+            message = Array.isArray(errorData.message) ? errorData.message.join(' ') : errorData.message;
+          }
+        } catch {
+          // mantém a mensagem genérica se o corpo não for JSON válido
+        }
+        throw new Error(message);
       }
 
       return false;
@@ -387,6 +397,12 @@ export default function Home() {
   const handleSubscribeExisting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEvent || !existingCredentialSearch.trim()) return;
+
+    // Bloqueia a vinculação quando o evento está inativo/encerrado
+    if (isEventInactive(selectedEvent)) {
+      setExistingError(INACTIVE_EVENT_MESSAGE);
+      return;
+    }
 
     setSearchingExisting(true);
     setExistingError('');
@@ -1132,6 +1148,19 @@ export default function Home() {
                         </p>
                       </div>
 
+                      {isEventInactive(selectedEvent) && !existingError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3"
+                        >
+                          <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                          <p className="text-xs text-amber-300 font-medium leading-relaxed">
+                            {INACTIVE_EVENT_MESSAGE}
+                          </p>
+                        </motion.div>
+                      )}
+
                       {existingError && (
                         <motion.div
                           initial={{ opacity: 0, y: -5 }}
@@ -1148,7 +1177,7 @@ export default function Home() {
                       <div className="pt-4 flex flex-col sm:flex-row gap-4 border-t border-white/5">
                         <Button
                           type="submit"
-                          disabled={searchingExisting || !existingCredentialSearch.trim()}
+                          disabled={searchingExisting || !existingCredentialSearch.trim() || isEventInactive(selectedEvent)}
                           className="modern-button h-12 flex-1 text-sm font-bold uppercase"
                         >
                           {searchingExisting ? 'Localizando...' : 'Confirmar Inscrição'}
