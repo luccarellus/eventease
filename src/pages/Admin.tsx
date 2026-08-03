@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Participante, Evento, InscricaoEvento } from '@/types/index';
+import rawSchoolsData from '@/data/cidades_escolas.json';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -119,10 +120,19 @@ export default function Admin() {
     descricao: '',
     data: '',
     local: '',
+    cidade: '',
     publicado: false,
     dataInicioInscricao: '',
     dataFimInscricao: ''
   });
+
+  const adminCitiesList = useMemo(() => {
+    const cities = new Set<string>();
+    (rawSchoolsData as Array<{ city: string; school: string }>).forEach((item) => {
+      if (item.city) cities.add(item.city);
+    });
+    return Array.from(cities).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, []);
 
   const [submittingEvent, setSubmittingEvent] = useState(false);
   const [searchStudentForEvent, setSearchStudentForEvent] = useState('');
@@ -309,6 +319,7 @@ export default function Admin() {
         descricao: newEvent.descricao,
         data: new Date(newEvent.data).toISOString(),
         local: newEvent.local,
+        cidade: newEvent.cidade || null,
         publicado: newEvent.publicado,
         dataInicioInscricao: newEvent.dataInicioInscricao ? new Date(newEvent.dataInicioInscricao).toISOString() : null,
         dataFimInscricao: newEvent.dataFimInscricao ? new Date(newEvent.dataFimInscricao).toISOString() : null,
@@ -331,6 +342,7 @@ export default function Admin() {
         descricao: '',
         data: '',
         local: '',
+        cidade: '',
         publicado: false,
         dataInicioInscricao: '',
         dataFimInscricao: ''
@@ -765,6 +777,7 @@ export default function Admin() {
                                       descricao: evt.descricao || '',
                                       data: evt.data ? evt.data.slice(0, 16) : '',
                                       local: evt.local,
+                                      cidade: evt.cidade || '',
                                       publicado: evt.publicado,
                                       dataInicioInscricao: inicio ? inicio.slice(0, 16) : '',
                                       dataFimInscricao: fim ? fim.slice(0, 16) : '',
@@ -1449,6 +1462,19 @@ export default function Admin() {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, local: e.target.value })}
                       />
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Cidade do Evento (Restrição de Inscrição)</label>
+                    <select
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 px-4 text-white text-sm focus:outline-none focus:border-primary transition-all duration-300"
+                      value={newEvent.cidade}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewEvent({ ...newEvent, cidade: e.target.value })}
+                    >
+                      <option value="" className="bg-neutral-900 text-white/60">Todas as cidades (Sem restrição)</option>
+                      {adminCitiesList.map((c) => (
+                        <option key={c} value={c} className="bg-neutral-900 text-white">{c}</option>
+                      ))}
+                    </select>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-white/5 pt-3">
                     <div className="space-y-2">

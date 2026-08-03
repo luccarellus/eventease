@@ -6,6 +6,7 @@ const PUBLIC_PARTICIPANT_SELECT = {
   id: true,
   nome: true,
   codigo: true,
+  cidade: true,
 } as const;
 
 @Injectable()

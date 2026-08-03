@@ -57,6 +57,7 @@ model Evento {
   descricao           String?
   data                DateTime  @db.Timestamptz
   local               String
+  cidade              String?
   publicado           Boolean   @default(false)
   dataInicioInscricao DateTime? @db.Timestamptz @map("data_inicio_inscricao")
   dataFimInscricao    DateTime? @db.Timestamptz @map("data_fim_inscricao")

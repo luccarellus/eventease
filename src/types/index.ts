@@ -22,6 +22,7 @@ export interface Evento {
   descricao?: string;
   data: string;
   local: string;
+  cidade?: string;
   publicado: boolean;
   dataInicioInscricao?: string;
   data_inicio_inscricao?: string;

@@ -19,6 +19,10 @@ export class UpdateEventDto {
   local?: string;
 
   @IsOptional()
+  @IsString()
+  cidade?: string;
+
+  @IsOptional()
   @IsBoolean()
   publicado?: boolean;
 

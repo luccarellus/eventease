@@ -275,6 +275,15 @@ export default function Home() {
     return [...schools].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [selectedCity, schoolsData]);
 
+  const normalizeCityStr = (str?: string | null) => {
+    if (!str) return '';
+    return str
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  };
+
   const linkParticipantToEvent = async (eventId: string, participantId: string) => {
     const checkRegRes = await api.get(`/registrations/check/${eventId}/${participantId}`);
     const registrationExists = checkRegRes.ok ? (await checkRegRes.json()).registered : false;
@@ -312,6 +321,17 @@ export default function Home() {
     if (!selectedEvent) return;
     setSubmittingRegistration(true);
     try {
+      if (selectedEvent.cidade && selectedEvent.cidade.trim() !== '') {
+        if (normalizeCityStr(formData.cidade) !== normalizeCityStr(selectedEvent.cidade)) {
+          toast.error(
+            `Inscrição bloqueada: Este evento é exclusivo para participantes da cidade de ${selectedEvent.cidade}. Seu cadastro é de ${formData.cidade}.`,
+            { duration: 6000 }
+          );
+          setSubmittingRegistration(false);
+          return;
+        }
+      }
+
       const emailClean = formData.email.trim().toLowerCase();
 
       // 1. Verificar se participante já existe
@@ -449,6 +469,16 @@ export default function Home() {
         participantId = participant.id;
         participantName = participant.nome;
         participantCode = formattedCode;
+
+        if (selectedEvent.cidade && selectedEvent.cidade.trim() !== '') {
+          if (participant.cidade && normalizeCityStr(participant.cidade) !== normalizeCityStr(selectedEvent.cidade)) {
+            setExistingError(
+              `Sua credencial pertence à cidade de ${participant.cidade}. Este evento é exclusivo para participantes de ${selectedEvent.cidade}.`
+            );
+            setSearchingExisting(false);
+            return;
+          }
+        }
       }
 
       if (!participantId) {
@@ -789,7 +819,7 @@ export default function Home() {
                 </span>
                 <h3 className="text-xl md:text-2xl font-display font-bold text-white mt-1 truncate pr-8">{selectedEvent.titulo}</h3>
                 <p className="text-white/40 text-xs mt-1 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-primary" /> {selectedEvent.local}
+                  <MapPin className="w-3.5 h-3.5 text-primary" /> {selectedEvent.local}{selectedEvent.cidade ? ` • ${selectedEvent.cidade}` : ''}
                 </p>
               </div>
 
