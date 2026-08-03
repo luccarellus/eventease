@@ -10,6 +10,7 @@ import * as z from 'zod';
 import { useSearchParams, Link } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { generateCredentialCode } from '@/lib/credential-code';
+import { downloadCredentialImage } from '@/lib/downloadCredential';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -976,7 +977,7 @@ export default function Home() {
 
                       {/* QR CODE DE CREDENCIAMENTO */}
                       <div className="flex flex-col items-center space-y-3">
-                        <div className="p-4 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-white/10 flex items-center justify-center">
+                        <div id="registration-qr-code" className="p-4 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-white/10 flex items-center justify-center">
                           <QRCodeSVG
                             value={successData.codigo}
                             size={qrSize}
@@ -985,9 +986,22 @@ export default function Home() {
                             bgColor="#ffffff"
                           />
                         </div>
-                        <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.2em] flex items-center gap-1.5">
-                          <Download className="w-4 h-4" /> Dica: Tire um print desta tela
-                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            downloadCredentialImage({
+                              nome: successData.nome,
+                              email: successData.email,
+                              eventoTitulo: successData.eventoTitulo,
+                              codigo: successData.codigo,
+                              qrContainerId: 'registration-qr-code',
+                            })
+                          }
+                          className="text-emerald-400 hover:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10 bg-emerald-500/10 rounded-xl gap-2 text-xs font-bold transition-all px-5 h-10 w-full sm:w-auto active:scale-95"
+                        >
+                          <Download className="w-4 h-4" /> Baixar Credencial (PNG)
+                        </Button>
                       </div>
 
                       <div className="pt-2 max-w-sm mx-auto">
@@ -1445,7 +1459,7 @@ export default function Home() {
                       </Button>
                     </div>
 
-                    <div className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl w-48 h-48 mx-auto shadow-xl border border-white/10">
+                    <div id="credential-search-qr-code" className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl w-48 h-48 mx-auto shadow-xl border border-white/10">
                       <QRCodeSVG
                         value={credentialData.codigo}
                         size={144}
@@ -1454,6 +1468,21 @@ export default function Home() {
                         bgColor="#ffffff"
                       />
                     </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        downloadCredentialImage({
+                          nome: credentialData.nome,
+                          codigo: credentialData.codigo,
+                          qrContainerId: 'credential-search-qr-code',
+                        })
+                      }
+                      className="text-emerald-400 hover:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10 bg-emerald-500/10 rounded-xl gap-2 text-xs font-bold transition-all px-5 h-10 mx-auto active:scale-95"
+                    >
+                      <Download className="w-4 h-4" /> Baixar Credencial (PNG)
+                    </Button>
 
                     <p className="text-xs text-white/40 max-w-xs mx-auto leading-relaxed">
                       Mostre este QR Code ou informe o código acima no credenciamento físico dos eventos.
