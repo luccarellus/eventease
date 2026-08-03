@@ -35,7 +35,9 @@ import {
   Sparkles,
   Search,
   UserCheck,
-  XCircle
+  XCircle,
+  Gift,
+  Mail
 } from 'lucide-react';
 import rawSchoolsData from '@/data/cidades_escolas.json';
 import { cn } from '@/lib/utils';
@@ -176,7 +178,12 @@ export default function Home() {
   // Controle de Inscrição no Evento Selecionado
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [activeModalTab, setActiveModalTab] = useState<'detalhes' | 'cadastro' | 'busca'>('cadastro');
-  const [successData, setSuccessData] = useState<{ nome: string; codigo: string } | null>(null);
+  const [successData, setSuccessData] = useState<{
+    nome: string;
+    codigo: string;
+    email?: string;
+    eventoTitulo?: string;
+  } | null>(null);
   const [submittingRegistration, setSubmittingRegistration] = useState(false);
 
   // Controle de Busca de Credencial Existente (Geral)
@@ -402,7 +409,12 @@ export default function Home() {
         codigo: participantCode,
       });
 
-      setSuccessData({ nome: participantName, codigo: participantCode });
+      setSuccessData({
+        nome: participantName,
+        codigo: participantCode,
+        email: formData.email,
+        eventoTitulo: selectedEvent.titulo,
+      });
       reset();
     } catch (error) {
       console.error('Registration/Subscription error:', error);
@@ -432,6 +444,8 @@ export default function Home() {
       let participantCode = '';
       let participantName = '';
       let participantId = '';
+
+      let participantEmail = '';
 
       if (searchClean.includes('@')) {
         // Buscar por email
@@ -469,6 +483,7 @@ export default function Home() {
         participantId = participant.id;
         participantName = participant.nome;
         participantCode = formattedCode;
+        participantEmail = participant.email || '';
 
         if (selectedEvent.cidade && selectedEvent.cidade.trim() !== '') {
           if (participant.cidade && normalizeCityStr(participant.cidade) !== normalizeCityStr(selectedEvent.cidade)) {
@@ -494,7 +509,12 @@ export default function Home() {
         toast.info('Você já está inscrito neste evento!');
       }
 
-      setSuccessData({ nome: participantName, codigo: participantCode });
+      setSuccessData({
+        nome: participantName,
+        codigo: participantCode,
+        email: participantEmail || undefined,
+        eventoTitulo: selectedEvent.titulo,
+      });
       setExistingCredentialSearch('');
     } catch (err) {
       console.error('Error linking existing participant:', err);
@@ -874,28 +894,89 @@ export default function Home() {
 
                       <div>
                         <h4 className="text-2xl md:text-3xl font-display font-bold text-white mb-2">Inscrição Confirmada!</h4>
-                        <p className="text-sm text-white/50 max-w-md mx-auto leading-relaxed">
-                          Olá, <strong className="text-white">{successData.nome}</strong>! Sua presença está vinculada ao evento. Use o QR Code ou informe o código no credenciamento físico.
+                        <p className="text-sm text-white/60 max-w-md mx-auto leading-relaxed">
+                          Olá, <strong className="text-white">{successData.nome}</strong>! Sua vaga está garantida. Apresente seu QR Code ou informe seu código no credenciamento.
                         </p>
                       </div>
 
-                      <div className="p-6 sm:p-8 bg-white/[0.02] rounded-[2rem] border border-white/[0.08] max-w-sm mx-auto flex flex-col items-center space-y-4 shadow-inner">
-                        <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-white/30">Código da Credencial</p>
-                        <span className="font-display text-4xl sm:text-5xl font-black tracking-tight text-white select-all">
-                          {successData.codigo}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyText(successData.codigo)}
-                          className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl gap-2 text-xs font-bold transition-all px-4 h-9 border border-white/5"
-                        >
-                          <Copy className="w-4 h-4" /> Copiar Código
-                        </Button>
+                      {/* 🎁 CARD DE NOTIFICAÇÃO VISUAL DA SURPRESA NO E-MAIL */}
+                      <div className="relative overflow-hidden p-6 rounded-[2rem] bg-gradient-to-br from-amber-500/15 via-primary/20 to-purple-600/15 border border-amber-500/30 text-left max-w-md mx-auto shadow-[0_15px_40px_rgba(245,158,11,0.15)]">
+                        <div className="absolute top-0 right-0 -mt-6 -mr-6 w-24 h-24 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
+                        <div className="flex items-start gap-4 relative z-10">
+                          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 shadow-lg">
+                            <Gift className="w-6 h-6 animate-bounce" />
+                          </div>
+                          <div className="space-y-1.5 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                                🎁 Surpresa Especial
+                              </span>
+                              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                            </div>
+                            <h5 className="text-base font-bold text-white">Verifique o seu e-mail de cadastro!</h5>
+                            <p className="text-xs text-white/80 leading-relaxed font-medium">
+                              Preparamos uma <strong className="text-amber-300">surpresa exclusiva</strong> para você! Enviamos a confirmação e o seu presente para{' '}
+                              <strong className="text-white underline underline-offset-2">
+                                {successData.email || 'o seu e-mail cadastrado'}
+                              </strong>.
+                            </p>
+                            <p className="text-[11px] text-white/50 pt-1 flex items-center gap-1.5">
+                              <Mail className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                              <span>Importante: Verifique sua caixa de entrada e a pasta de <strong>Spam/Lixo Eletrônico</strong>.</span>
+                            </p>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex flex-col items-center space-y-6">
-                        <div className="p-4 sm:p-6 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-white/10 flex items-center justify-center">
+                      {/* RESUMO DAS INFORMAÇÕES DO CADASTRO */}
+                      <div className="p-6 bg-white/[0.02] rounded-[2rem] border border-white/[0.08] max-w-md mx-auto text-left space-y-4 shadow-inner">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                          <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/40">Informações da Inscrição</span>
+                          <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Ativo
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <p className="text-white/40 font-bold uppercase tracking-wider text-[9px]">Participante</p>
+                            <p className="text-white font-semibold mt-0.5 truncate">{successData.nome}</p>
+                          </div>
+                          {successData.email && (
+                            <div>
+                              <p className="text-white/40 font-bold uppercase tracking-wider text-[9px]">E-mail</p>
+                              <p className="text-white font-semibold mt-0.5 truncate">{successData.email}</p>
+                            </div>
+                          )}
+                          {successData.eventoTitulo && (
+                            <div className="sm:col-span-2">
+                              <p className="text-white/40 font-bold uppercase tracking-wider text-[9px]">Evento</p>
+                              <p className="text-white font-semibold mt-0.5 truncate">{successData.eventoTitulo}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="pt-3 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/30">Código da Credencial</p>
+                            <span className="font-display text-2xl font-black tracking-tight text-white select-all">
+                              {successData.codigo}
+                            </span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyText(successData.codigo)}
+                            className="text-white/70 hover:text-white hover:bg-white/10 rounded-xl gap-2 text-xs font-bold transition-all px-4 h-9 border border-white/10 w-full sm:w-auto"
+                          >
+                            <Copy className="w-3.5 h-3.5" /> Copiar Código
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* QR CODE DE CREDENCIAMENTO */}
+                      <div className="flex flex-col items-center space-y-3">
+                        <div className="p-4 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-white/10 flex items-center justify-center">
                           <QRCodeSVG
                             value={successData.codigo}
                             size={qrSize}
@@ -905,16 +986,16 @@ export default function Home() {
                           />
                         </div>
                         <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.2em] flex items-center gap-1.5">
-                          <Download className="w-4 h-4" /> Dica: Tire um print da tela
+                          <Download className="w-4 h-4" /> Dica: Tire um print desta tela
                         </p>
                       </div>
 
-                      <div className="pt-4 max-w-sm mx-auto">
+                      <div className="pt-2 max-w-sm mx-auto">
                         <Button
                           onClick={closeRegistration}
                           className="modern-button w-full h-12 text-sm"
                         >
-                          Fechar e Concluir
+                          Concluir e Fechar
                         </Button>
                       </div>
                     </motion.div>
