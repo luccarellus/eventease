@@ -3,7 +3,7 @@ import { EventsService } from './events.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
-import { toDate, toDateOrUndefined } from '../common/date.util';
+import { toDate, toDateOrUndefined, toDateOrNull } from '../common/date.util';
 
 @Controller('events')
 export class EventsController {
@@ -21,8 +21,8 @@ export class EventsController {
     return this.eventsService.create({
       ...data,
       data: toDate(data.data),
-      dataInicioInscricao: toDateOrUndefined(data.dataInicioInscricao),
-      dataFimInscricao: toDateOrUndefined(data.dataFimInscricao),
+      dataInicioInscricao: toDateOrNull(data.dataInicioInscricao),
+      dataFimInscricao: toDateOrNull(data.dataFimInscricao),
     });
   }
 
@@ -43,9 +43,9 @@ export class EventsController {
   update(@Param('id') id: string, @Body() data: UpdateEventDto) {
     return this.eventsService.update(id, {
       ...data,
-      data: toDateOrUndefined(data.data),
-      dataInicioInscricao: toDateOrUndefined(data.dataInicioInscricao),
-      dataFimInscricao: toDateOrUndefined(data.dataFimInscricao),
+      data: data.data ? toDate(data.data) : undefined,
+      dataInicioInscricao: toDateOrNull(data.dataInicioInscricao),
+      dataFimInscricao: toDateOrNull(data.dataFimInscricao),
     });
   }
 

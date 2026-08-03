@@ -79,6 +79,21 @@ type RegistrationRecord = InscricaoEvento & {
   participante_id?: string;
 };
 
+function formatToDatetimeLocal(dateStr?: string | null): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export default function Admin() {
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
@@ -775,12 +790,12 @@ export default function Admin() {
                                     setNewEvent({
                                       titulo: evt.titulo,
                                       descricao: evt.descricao || '',
-                                      data: evt.data ? evt.data.slice(0, 16) : '',
+                                      data: formatToDatetimeLocal(evt.data),
                                       local: evt.local,
                                       cidade: evt.cidade || '',
                                       publicado: evt.publicado,
-                                      dataInicioInscricao: inicio ? inicio.slice(0, 16) : '',
-                                      dataFimInscricao: fim ? fim.slice(0, 16) : '',
+                                      dataInicioInscricao: formatToDatetimeLocal(inicio),
+                                      dataFimInscricao: formatToDatetimeLocal(fim),
                                     });
                                     setShowCreateEventModal(true);
                                   }}
