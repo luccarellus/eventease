@@ -59,6 +59,37 @@ export class AuthService implements OnModuleInit {
     );
   }
 
+  private async syncToNevaPro(userData: { email: string; fullName?: string; city?: string; school?: string }) {
+    const webhookUrl = process.env.NEVAPRO_WEBHOOK_URL;
+    const webhookSecret = process.env.NEVAPRO_WEBHOOK_SECRET;
+
+    if (!webhookUrl || !webhookSecret) {
+      console.warn('[NevaPro Sync] Variáveis NEVAPRO_WEBHOOK_URL ou NEVAPRO_WEBHOOK_SECRET não configuradas.');
+      return;
+    }
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Webhook-Secret': webhookSecret,
+        },
+        body: JSON.stringify({
+          email: userData.email,
+          name: userData.fullName,
+          city: userData.city,
+          school: userData.school,
+        }),
+      });
+
+      const result = await response.json();
+      console.log('[NevaPro Sync] Resultado:', result);
+    } catch (err) {
+      console.error('[NevaPro Sync] Erro ao sincronizar usuário com NevaPro:', err);
+    }
+  }
+
   async updateUserRole(userId: string, role: string) {
     const user = await this.prisma.adminUser.findUnique({ where: { id: userId } });
 
@@ -271,6 +302,12 @@ export class AuthService implements OnModuleInit {
         },
       });
 
+      // 🚀 Dispara a sincronização automática com o NevaPro
+      void this.syncToNevaPro({
+        email: user.email,
+        fullName: fullName ?? undefined,
+      });
+
       return {
         id: user.id,
         email: user.email,
@@ -307,3 +344,5 @@ export class AuthService implements OnModuleInit {
     });
   }
 }
+
+
