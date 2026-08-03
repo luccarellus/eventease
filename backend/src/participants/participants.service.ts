@@ -52,8 +52,20 @@ export class ParticipantsService {
       throw new ConflictException('Participante com este código ou email já existe.');
     }
 
-    return this.prisma.participante.create({ data });
+    const created = await this.prisma.participante.create({ data });
+
+    // 🚀 Sincronização automática de novo participante com NevaPro
+    void this.syncToNevaPro({
+      email: created.email,
+      fullName: created.nome,
+      city: (created as any).cidade,
+      school: (created as any).escola,
+      gremio: (created as any).gremio,
+    });
+
+    return created;
   }
+
 
   async findAll() {
     return this.prisma.participante.findMany({
@@ -111,4 +123,37 @@ export class ParticipantsService {
       throw new NotFoundException('Participante não encontrado para exclusão');
     }
   }
+
+  private async syncToNevaPro(userData: { email: string; fullName?: string; city?: string; school?: string; gremio?: string }) {
+    const webhookUrl = process.env.NEVAPRO_WEBHOOK_URL;
+    const webhookSecret = process.env.NEVAPRO_WEBHOOK_SECRET;
+
+    if (!webhookUrl || !webhookSecret) {
+      console.warn('[NevaPro Sync] Variáveis NEVAPRO_WEBHOOK_URL ou NEVAPRO_WEBHOOK_SECRET não configuradas.');
+      return;
+    }
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Webhook-Secret': webhookSecret,
+        },
+        body: JSON.stringify({
+          email: userData.email,
+          name: userData.fullName,
+          city: userData.city,
+          school: userData.school,
+          gremio: userData.gremio,
+        }),
+      });
+
+      const result = await response.json();
+      console.log('[NevaPro Sync] Resultado:', result);
+    } catch (err) {
+      console.error('[NevaPro Sync] Erro ao sincronizar participante com NevaPro:', err);
+    }
+  }
 }
+
