@@ -39,7 +39,7 @@ import {
   Mail
 } from 'lucide-react';
 import rawSchoolsData from '@/data/cidades_escolas.json';
-import { cn } from '@/lib/utils';
+import { cn, formatPhone } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { executeRecaptcha } from '@/lib/recaptcha';
@@ -55,7 +55,7 @@ const registrationSchema = z.object({
       { message: 'Por favor, insira seu nome completo (nome e sobrenome)' }
     ),
   email: z.string().email('Email inválido'),
-  telefone: z.string().min(10, 'Telefone inválido'),
+  telefone: z.string().regex(/^\(\d{2}\) \d{4,5}-\d{4}$/, 'Telefone inválido — use o formato (99) 99999-9999'),
   cidade: z.string().min(2, 'Cidade obrigatória'),
   escola: z.string().min(2, 'Escola obrigatória'),
   gremio: z.string().optional(),
@@ -73,6 +73,7 @@ type EventItem = {
   descricao?: string;
   data: string;
   local: string;
+  cidade?: string;
   publicado: boolean;
   dataInicioInscricao?: string;
   data_inicio_inscricao?: string;
@@ -1148,8 +1149,12 @@ export default function Home() {
                           <Input
                             id="telefone"
                             type="tel"
-                            placeholder="(00) 00000-0000"
+                            inputMode="tel"
+                            autoComplete="tel"
+                            placeholder="(99) 99999-9999"
+                            maxLength={15}
                             {...register('telefone')}
+                            onChange={(e) => setValue('telefone', formatPhone(e.target.value))}
                             className={cn("liquid-input h-12 text-sm", errors.telefone && "border-red-500/50 focus:border-red-500/50")}
                           />
                           {errors.telefone && <p className="text-[10px] text-red-400 font-bold uppercase pl-1">{errors.telefone.message}</p>}

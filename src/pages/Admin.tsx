@@ -61,7 +61,7 @@ import {
   Tooltip
 } from 'recharts';
 import Papa from 'papaparse';
-import { cn } from '@/lib/utils';
+import { cn, formatPhone } from '@/lib/utils';
 import { generateCredentialCode } from '@/lib/credential-code';
 import { executeRecaptcha } from '@/lib/recaptcha';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -701,6 +701,7 @@ export default function Admin() {
                         descricao: '',
                         data: '',
                         local: '',
+                        cidade: '',
                         publicado: false,
                         dataInicioInscricao: '',
                         dataFimInscricao: ''
@@ -1355,9 +1356,16 @@ export default function Admin() {
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Telefone</label>
                     <Input
                       required
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      maxLength={15}
+                      pattern="\(\d{2}\) \d{4,5}-\d{4}"
+                      title="Formato esperado: (99) 99999-9999"
+                      placeholder="(99) 99999-9999"
                       className="liquid-input h-12"
                       value={newStudent.telefone}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, telefone: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, telefone: formatPhone(e.target.value) })}
                     />
                   </div>
                   <div className="space-y-2">

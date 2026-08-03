@@ -112,7 +112,7 @@ function QRScanner({ onScan, onClose }: { onScan: (text: string) => void; onClos
 }
 
 export default function Confirm() {
-  const [codigo, setCodigo] = useState('');
+  const [codigo, setCodigo] = useState('EVT-');
   const [loading, setLoading] = useState(false);
   const [scannerActive, setScannerActive] = useState(false);
   const [result, setResult] = useState<{ status: 'success' | 'already' | 'notfound'; data?: CheckinParticipant; eventTitle?: string } | null>(null);
@@ -140,8 +140,11 @@ export default function Confirm() {
 
   const handleManualCheckin = async (e?: React.FormEvent, codeOverride?: string) => {
     if (e) e.preventDefault();
-    const finalCode = codeOverride || codigo;
-    if (!finalCode) return;
+    let finalCode = codeOverride || codigo;
+    if (!finalCode || finalCode.trim() === 'EVT-') return;
+    if (!finalCode.startsWith('EVT-')) {
+      finalCode = `EVT-${finalCode.replace(/^EVT-?/, '')}`;
+    }
 
     if (!selectedEventoId) {
       toast.warning('Selecione um evento antes de realizar o check-in.');
@@ -244,12 +247,16 @@ export default function Confirm() {
 
   const onScanSuccess = (decodedText: string) => {
     setScannerActive(false);
-    setCodigo(decodedText);
-    handleManualCheckin(undefined, decodedText);
+    let codeToUse = decodedText.trim().toUpperCase();
+    if (!codeToUse.startsWith('EVT-')) {
+      codeToUse = `EVT-${codeToUse.replace(/^EVT-?/, '')}`;
+    }
+    setCodigo(codeToUse);
+    handleManualCheckin(undefined, codeToUse);
   };
 
   const reset = () => {
-    setCodigo('');
+    setCodigo('EVT-');
     setResult(null);
   };
 
@@ -338,7 +345,14 @@ export default function Confirm() {
                     <Search className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 w-6 h-6 md:w-8 md:h-8 text-white/10 transition-colors group-focus-within:text-primary" />
                     <Input
                       value={codigo}
-                      onChange={(e) => setCodigo(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        let val = e.target.value.toUpperCase();
+                        if (!val.startsWith('EVT-')) {
+                          const clean = val.replace(/^EVT-?/, '');
+                          val = `EVT-${clean}`;
+                        }
+                        setCodigo(val);
+                      }}
                       placeholder="EVT-000000"
                       className="liquid-input pl-12 md:pl-16 h-14 md:h-24 text-xl md:text-4xl font-display font-black tracking-[0.08em] md:tracking-[0.15em] uppercase placeholder:text-white/5 border-white/[0.05]"
                       autoFocus
@@ -346,7 +360,7 @@ export default function Confirm() {
                   </div>
                   <Button
                     type="submit"
-                    disabled={loading || !codigo.trim() || !selectedEventoId}
+                    disabled={loading || !codigo.trim() || codigo.trim() === 'EVT-' || !selectedEventoId}
                     className="modern-button w-full h-14 md:h-20 text-base md:text-2xl tracking-widest font-black uppercase shadow-[0_10px_35px_rgba(0,255,163,0.3)] mt-2"
                   >
                     {loading && <LoadingSpinner size="sm" variant="black" className="mr-2 md:w-7 md:h-7" />}

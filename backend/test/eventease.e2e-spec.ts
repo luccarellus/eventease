@@ -142,7 +142,7 @@ describe('EventEase E2E Test Suite', () => {
         .send({
           nome: 'Participante E2E Test',
           email: testParticipantEmail,
-          telefone: '11999998888',
+          telefone: '(11) 99999-8888',
           cidade: 'São Paulo',
           escola: 'Escola Modelo E2E',
           gremio: 'Grêmio União',

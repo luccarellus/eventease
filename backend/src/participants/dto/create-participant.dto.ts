@@ -14,7 +14,7 @@ export class CreateParticipantDto {
 
   @IsString()
   @IsNotEmpty({ message: 'Telefone é obrigatório' })
-  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Telefone deve estar no formato E.164 (ex: +5511999998888)' })
+  @Matches(/^\(\d{2}\) \d{4,5}-\d{4}$/, { message: 'Telefone deve estar no formato (99) 99999-9999' })
   telefone!: string;
 
   @IsString()
