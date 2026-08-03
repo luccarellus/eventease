@@ -2,14 +2,6 @@ import { Injectable, ConflictException, NotFoundException, BadRequestException }
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 
-function normalizeCity(city?: string | null): string {
-  if (!city) return '';
-  return city
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
 
 @Injectable()
 export class RegistrationsService {
@@ -45,16 +37,6 @@ export class RegistrationsService {
       throw new NotFoundException('Participante não encontrado.');
     }
 
-    const eventoCidade = (evento as any).cidade;
-    if (eventoCidade && eventoCidade.trim() !== '') {
-      const normEventoCidade = normalizeCity(eventoCidade);
-      const normPartCidade = normalizeCity(participante.cidade);
-      if (normEventoCidade !== normPartCidade) {
-        throw new BadRequestException(
-          `Inscrição não permitida: este evento é exclusivo para participantes de ${eventoCidade}. Seu cadastro pertence a ${participante.cidade}.`
-        );
-      }
-    }
 
     const existing = await this.prisma.inscricaoEvento.findUnique({
       where: {

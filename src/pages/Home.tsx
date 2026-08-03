@@ -10,7 +10,6 @@ import * as z from 'zod';
 import { useSearchParams, Link } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { generateCredentialCode } from '@/lib/credential-code';
-import { downloadCredentialImage } from '@/lib/downloadCredential';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,7 +20,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   CheckCircle2,
   Copy,
-  Download,
   Building2,
   ArrowRight,
   AlertCircle,
@@ -283,15 +281,6 @@ export default function Home() {
     return [...schools].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [selectedCity, schoolsData]);
 
-  const normalizeCityStr = (str?: string | null) => {
-    if (!str) return '';
-    return str
-      .trim()
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-  };
-
   const linkParticipantToEvent = async (eventId: string, participantId: string) => {
     const checkRegRes = await api.get(`/registrations/check/${eventId}/${participantId}`);
     const registrationExists = checkRegRes.ok ? (await checkRegRes.json()).registered : false;
@@ -329,16 +318,6 @@ export default function Home() {
     if (!selectedEvent) return;
     setSubmittingRegistration(true);
     try {
-      if (selectedEvent.cidade && selectedEvent.cidade.trim() !== '') {
-        if (normalizeCityStr(formData.cidade) !== normalizeCityStr(selectedEvent.cidade)) {
-          toast.error(
-            `Inscrição bloqueada: Este evento é exclusivo para participantes da cidade de ${selectedEvent.cidade}. Seu cadastro é de ${formData.cidade}.`,
-            { duration: 6000 }
-          );
-          setSubmittingRegistration(false);
-          return;
-        }
-      }
 
       const emailClean = formData.email.trim().toLowerCase();
 
@@ -486,15 +465,6 @@ export default function Home() {
         participantCode = formattedCode;
         participantEmail = participant.email || '';
 
-        if (selectedEvent.cidade && selectedEvent.cidade.trim() !== '') {
-          if (participant.cidade && normalizeCityStr(participant.cidade) !== normalizeCityStr(selectedEvent.cidade)) {
-            setExistingError(
-              `Sua credencial pertence à cidade de ${participant.cidade}. Este evento é exclusivo para participantes de ${selectedEvent.cidade}.`
-            );
-            setSearchingExisting(false);
-            return;
-          }
-        }
       }
 
       if (!participantId) {
@@ -986,22 +956,6 @@ export default function Home() {
                             bgColor="#ffffff"
                           />
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            downloadCredentialImage({
-                              nome: successData.nome,
-                              email: successData.email,
-                              eventoTitulo: successData.eventoTitulo,
-                              codigo: successData.codigo,
-                              qrContainerId: 'registration-qr-code',
-                            })
-                          }
-                          className="text-emerald-400 hover:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10 bg-emerald-500/10 rounded-xl gap-2 text-xs font-bold transition-all px-5 h-10 w-full sm:w-auto active:scale-95"
-                        >
-                          <Download className="w-4 h-4" /> Baixar Credencial (PNG)
-                        </Button>
                       </div>
 
                       <div className="pt-2 max-w-sm mx-auto">
@@ -1469,20 +1423,7 @@ export default function Home() {
                       />
                     </div>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        downloadCredentialImage({
-                          nome: credentialData.nome,
-                          codigo: credentialData.codigo,
-                          qrContainerId: 'credential-search-qr-code',
-                        })
-                      }
-                      className="text-emerald-400 hover:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/10 bg-emerald-500/10 rounded-xl gap-2 text-xs font-bold transition-all px-5 h-10 mx-auto active:scale-95"
-                    >
-                      <Download className="w-4 h-4" /> Baixar Credencial (PNG)
-                    </Button>
+
 
                     <p className="text-xs text-white/40 max-w-xs mx-auto leading-relaxed">
                       Mostre este QR Code ou informe o código acima no credenciamento físico dos eventos.
