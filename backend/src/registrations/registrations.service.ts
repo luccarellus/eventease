@@ -5,7 +5,7 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class RegistrationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(data: Prisma.InscricaoEventoUncheckedCreateInput) {
     const evento = await this.prisma.evento.findUnique({
@@ -17,7 +17,7 @@ export class RegistrationsService {
     }
 
     if (!evento.publicado) {
-      throw new BadRequestException('Este evento está inativo no momento.');
+      throw new BadRequestException('Este evento está inativo momentaneamente.');
     }
 
     const now = new Date();
