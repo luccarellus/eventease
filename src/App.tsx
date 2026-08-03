@@ -16,6 +16,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { initRecaptcha } from '@/lib/recaptcha';
 import { LoadingSpinner as CustomSpinner } from '@/components/ui/LoadingSpinner';
+import { useSecurityProtection } from '@/hooks/useSecurityProtection';
 
 const Home = lazy(() => import('@/pages/Home'));
 const Confirm = lazy(() => import('@/pages/Confirm'));
@@ -205,6 +206,10 @@ export default function App() {
 
 function AppContent() {
   const { userIsAdmin } = useAuth();
+  useSecurityProtection({
+    disableContextMenu: false,
+    disableInspectKeys: true,
+  });
 
   return (
     <div className="min-h-[100dvh] pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-24 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col bg-[#020610]">
