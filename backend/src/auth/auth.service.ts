@@ -8,7 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { createClient } from '@supabase/supabase-js';
-import { requireEnv, requireJwtRefreshSecret } from '../common/env.util';
+import { getEnv, requireEnv, requireJwtRefreshSecret } from '../common/env.util';
 import { isNetworkError } from '../common/network.util';
 import { NevaProService } from '../common/nevapro.service';
 import * as crypto from 'crypto';
@@ -28,10 +28,9 @@ export class AuthService implements OnModuleInit {
       'SUPABASE_ANON_KEY',
       'VITE_SUPABASE_ANON_KEY',
     );
-    const supabaseServiceRoleKey = requireEnv(
-      'SUPABASE_SERVICE_ROLE_KEY',
-      'VITE_SUPABASE_SERVICE_ROLE_KEY',
-    );
+    const supabaseServiceRoleKey =
+      getEnv('SUPABASE_SERVICE_ROLE_KEY', 'VITE_SUPABASE_SERVICE_ROLE_KEY') ||
+      supabaseAnonKey;
 
     this.supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {

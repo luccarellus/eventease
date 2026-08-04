@@ -12,10 +12,10 @@ export function configureApp(app: INestApplication) {
   // Confia no primeiro proxy (Vercel/Nginx) para IP correto em rate-limit e reCAPTCHA
   (app as NestExpressApplication).set('trust proxy', 1);
 
-  // Cookie Parser for secure JWT handling - fail in production if secret not set
-  const cookieSecret = isProduction
-    ? requireEnv('COOKIE_SECRET')
-    : process.env.COOKIE_SECRET || 'dev-cookie-secret-change-in-production';
+  // Cookie Parser for secure JWT handling - fallback to JWT_SECRET or dev secret if not set
+  const cookieSecret =
+    getEnv('COOKIE_SECRET', 'JWT_SECRET') ||
+    'dev-cookie-secret-change-in-production';
   app.use(cookieParser(cookieSecret));
 
   // Security HTTP Headers

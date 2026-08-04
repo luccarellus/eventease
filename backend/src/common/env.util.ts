@@ -34,13 +34,15 @@ export function requireJwtRefreshSecret(): string {
   const refreshSecret = getEnv('JWT_REFRESH_SECRET');
   if (refreshSecret) return refreshSecret;
 
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('FATAL: JWT_REFRESH_SECRET é obrigatória em produção.');
+  const accessSecret = getEnv('JWT_SECRET');
+  if (accessSecret) {
+    console.warn(
+      '[config] JWT_REFRESH_SECRET ausente; usando JWT_SECRET como fallback.',
+    );
+    return accessSecret;
   }
 
-  const accessSecret = requireEnv('JWT_SECRET');
-  console.warn(
-    '[config] JWT_REFRESH_SECRET ausente; usando JWT_SECRET como fallback (apenas desenvolvimento).',
+  throw new Error(
+    'FATAL: variáveis de ambiente ausentes: JWT_REFRESH_SECRET e JWT_SECRET.',
   );
-  return accessSecret;
 }
