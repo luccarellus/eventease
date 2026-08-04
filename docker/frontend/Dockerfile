@@ -3,6 +3,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Build args injectados pelo docker-compose (variáveis públicas do Vite)
+ARG VITE_RECAPTCHA_SITE_KEY
+ARG VITE_API_URL
+ENV VITE_RECAPTCHA_SITE_KEY=${VITE_RECAPTCHA_SITE_KEY:-}
+ENV VITE_API_URL=${VITE_API_URL:-/api}
+
 # Copy package.json and install dependencies
 COPY package*.json ./
 RUN npm install
@@ -10,7 +16,7 @@ RUN npm install
 # Copy source code
 COPY . .
 
-# Build the Vite project (sem variáveis do Supabase)
+# Build the Vite project
 RUN npm run build
 
 # Stage 2: Serve the frontend using Nginx

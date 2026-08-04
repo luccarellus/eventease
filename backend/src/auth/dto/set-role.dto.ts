@@ -8,7 +8,9 @@ export class SetRoleDto {
   @IsNotEmpty({ message: 'O userId é obrigatório.' })
   userId!: string;
 
-  @IsIn(VALID_ROLES, { message: `A role deve ser uma das seguintes: ${VALID_ROLES.join(', ')}.` })
+  @IsIn(VALID_ROLES, {
+    message: `A role deve ser uma das seguintes: ${VALID_ROLES.join(', ')}.`,
+  })
   @IsString({ message: 'A role deve ser uma string.' })
   @IsNotEmpty({ message: 'A role é obrigatória.' })
   role!: string;

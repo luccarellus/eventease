@@ -1,9 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { EventsService } from './events.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
-import { toDate, toDateOrUndefined, toDateOrNull } from '../common/date.util';
+import { toDate, toDateOrNull } from '../common/date.util';
 
 @Controller('events')
 export class EventsController {
@@ -11,7 +21,8 @@ export class EventsController {
 
   @Get()
   findAllPublished() {
-    return this.eventsService.findAll(false);
+    // Apenas eventos publicados devem ficar visíveis publicamente.
+    return this.eventsService.findAll(true);
   }
 
   @Post()

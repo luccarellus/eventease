@@ -10,25 +10,36 @@ services:
     restart: always
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - COOKIE_SECRET=${COOKIE_SECRET}
       - FRONTEND_URL=${FRONTEND_URL}
+      - RECAPTCHA_SECRET_KEY=${RECAPTCHA_SECRET_KEY}
+      - RECAPTCHA_MIN_SCORE=${RECAPTCHA_MIN_SCORE}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - NEVAPRO_WEBHOOK_URL=${NEVAPRO_WEBHOOK_URL}
+      - NEVAPRO_WEBHOOK_SECRET=${NEVAPRO_WEBHOOK_SECRET}
       - NODE_ENV=production
     # Permite que o container acesse o PostgreSQL que roda no host da VPS
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    command: >
-      sh -c "npx prisma migrate deploy && node dist/main.js"
+    command: >-
+      sh -c "npx prisma migrate deploy && node dist/main"
     networks:
       - backend_network
     deploy:
+      # Obs: `deploy.replicas` só é aplicado em modo Swarm (docker stack deploy).
       replicas: 2
       resources:
         limits:
           cpus: '0.5'
           memory: 512M
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      # node:20-alpine não inclui curl; usa o wget do BusyBox.
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,6 +49,10 @@ services:
     build:
       context: .
       dockerfile: ./docker/frontend/Dockerfile
+      args:
+        # Necessários no build do Vite (não ficam acessíveis em runtime após o bundle).
+        VITE_RECAPTCHA_SITE_KEY: ${VITE_RECAPTCHA_SITE_KEY}
+        VITE_API_URL: ${VITE_API_URL:-/api}
     image: eventease-frontend:latest
     restart: always
     networks:

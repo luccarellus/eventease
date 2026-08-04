@@ -28,7 +28,7 @@ model AdminUser {
 model Participante {
   id              String    @id @default(uuid()) @db.Uuid
   nome            String
-  email           String
+  email           String    @unique
   telefone        String
   empresa         String?   // 'Instituição' no UI
   cidade          String
@@ -44,7 +44,6 @@ model Participante {
   inscricoes      InscricaoEvento[]
 
   @@index([codigo])
-  @@index([email])
   @@map("participantes")
 }
 

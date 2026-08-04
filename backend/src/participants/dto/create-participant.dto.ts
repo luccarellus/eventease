@@ -1,4 +1,12 @@
-import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
 
 export class CreateParticipantDto {
   @IsString()
@@ -14,7 +22,9 @@ export class CreateParticipantDto {
 
   @IsString()
   @IsNotEmpty({ message: 'Telefone é obrigatório' })
-  @Matches(/^\(\d{2}\) \d{4,5}-\d{4}$/, { message: 'Telefone deve estar no formato (99) 99999-9999' })
+  @Matches(/^\(\d{2}\) \d{4,5}-\d{4}$/, {
+    message: 'Telefone deve estar no formato (99) 99999-9999',
+  })
   telefone!: string;
 
   @IsString()

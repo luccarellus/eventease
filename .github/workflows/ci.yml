@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (typecheck, lint, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run build
+      - run: npm run lint
+
+  frontend:
+    name: Frontend (typecheck, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      # O build raiz compila o backend primeiro (npm run build --prefix backend),
+      # então as dependências do backend também precisam estar instaladas.
+      - run: npm ci
+        working-directory: backend
+      - run: npx prisma generate
+        working-directory: backend
+      - run: npm run build
+
+  e2e:
+    name: E2E (backend)
+    runs-on: ubuntu-latest
+    # Só executa se as credenciais de teste forem configuradas nos Secrets do repositório.
+    if: ${{ secrets.E2E_DATABASE_URL != '' && secrets.E2E_SUPABASE_URL != '' }}
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run test:e2e
+        env:
+          DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.E2E_DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.E2E_JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.E2E_JWT_REFRESH_SECRET }}
+          COOKIE_SECRET: ${{ secrets.E2E_COOKIE_SECRET }}
+          SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          RECAPTCHA_SECRET_KEY: ${{ secrets.E2E_RECAPTCHA_SECRET_KEY }}
+          RECAPTCHA_MIN_SCORE: '0.5'
+          FRONTEND_URL: http://localhost:3000
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}

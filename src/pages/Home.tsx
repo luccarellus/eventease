@@ -291,7 +291,6 @@ export default function Home() {
       const insertRegRes = await api.post('/registrations', {
         eventoId: eventId,
         participanteId: participantId,
-        presente: false,
         recaptchaToken,
       });
 

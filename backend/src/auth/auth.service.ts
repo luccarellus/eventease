@@ -1,8 +1,16 @@
-import { Injectable, NotFoundException, OnModuleInit, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { createClient } from '@supabase/supabase-js';
 import { requireEnv, requireJwtRefreshSecret } from '../common/env.util';
+import { isNetworkError } from '../common/network.util';
+import { NevaProService } from '../common/nevapro.service';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -13,10 +21,17 @@ export class AuthService implements OnModuleInit {
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
+    private nevaProService: NevaProService,
   ) {
     const supabaseUrl = requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
-    const supabaseAnonKey = requireEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
-    const supabaseServiceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY', 'VITE_SUPABASE_SERVICE_ROLE_KEY');
+    const supabaseAnonKey = requireEnv(
+      'SUPABASE_ANON_KEY',
+      'VITE_SUPABASE_ANON_KEY',
+    );
+    const supabaseServiceRoleKey = requireEnv(
+      'SUPABASE_SERVICE_ROLE_KEY',
+      'VITE_SUPABASE_SERVICE_ROLE_KEY',
+    );
 
     this.supabase = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -46,52 +61,10 @@ export class AuthService implements OnModuleInit {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  private isNetworkError(error: unknown): boolean {
-    if (!(error instanceof Error)) {
-      return false;
-    }
-
-    return (
-      error.message.includes('fetch failed') ||
-      error.message.includes('getaddrinfo ENOTFOUND') ||
-      error.message.includes('ECONNREFUSED') ||
-      error.message.includes('ETIMEDOUT')
-    );
-  }
-
-  private async syncToNevaPro(userData: { email: string; fullName?: string; city?: string; school?: string }) {
-    const webhookUrl = process.env.NEVAPRO_WEBHOOK_URL;
-    const webhookSecret = process.env.NEVAPRO_WEBHOOK_SECRET;
-
-    if (!webhookUrl || !webhookSecret) {
-      console.warn('[NevaPro Sync] Variáveis NEVAPRO_WEBHOOK_URL ou NEVAPRO_WEBHOOK_SECRET não configuradas.');
-      return;
-    }
-
-    try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Webhook-Secret': webhookSecret,
-        },
-        body: JSON.stringify({
-          email: userData.email,
-          name: userData.fullName,
-          city: userData.city,
-          school: userData.school,
-        }),
-      });
-
-      const result = await response.json();
-      console.log('[NevaPro Sync] Resultado:', result);
-    } catch (err) {
-      console.error('[NevaPro Sync] Erro ao sincronizar usuário com NevaPro:', err);
-    }
-  }
-
   async updateUserRole(userId: string, role: string) {
-    const user = await this.prisma.adminUser.findUnique({ where: { id: userId } });
+    const user = await this.prisma.adminUser.findUnique({
+      where: { id: userId },
+    });
 
     if (!user) {
       throw new NotFoundException(`Usuário com ID ${userId} não encontrado.`);
@@ -115,8 +88,13 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  async generateTokens(user: { id: string; email: string; role: string }) {
-    const accessPayload = { sub: user.id, email: user.email, role: user.role, tokenType: 'access' };
+  generateTokens(user: { id: string; email: string; role: string }) {
+    const accessPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      tokenType: 'access',
+    };
     const refreshPayload = { sub: user.id, tokenType: 'refresh' };
 
     const accessToken = this.jwtService.sign(accessPayload);
@@ -143,9 +121,18 @@ export class AuthService implements OnModuleInit {
     });
   }
 
-  async validateAndRotateRefreshToken(oldRefreshToken: string): Promise<{ id: string; email: string; role: string; newAccessToken: string; newRefreshToken: string }> {
+  async validateAndRotateRefreshToken(oldRefreshToken: string): Promise<{
+    id: string;
+    email: string;
+    role: string;
+    newAccessToken: string;
+    newRefreshToken: string;
+  }> {
     try {
-      const payload = await this.jwtService.verifyAsync<{ sub: string; tokenType: string }>(oldRefreshToken, {
+      const payload = await this.jwtService.verifyAsync<{
+        sub: string;
+        tokenType: string;
+      }>(oldRefreshToken, {
         secret: requireJwtRefreshSecret(),
       });
       if (!payload.sub || payload.tokenType !== 'refresh') {
@@ -166,7 +153,9 @@ export class AuthService implements OnModuleInit {
     }
 
     if (storedToken.revokedAt) {
-      throw new UnauthorizedException('Refresh token revogado. Faça login novamente.');
+      throw new UnauthorizedException(
+        'Refresh token revogado. Faça login novamente.',
+      );
     }
 
     if (storedToken.expiresAt < new Date()) {
@@ -174,26 +163,40 @@ export class AuthService implements OnModuleInit {
         where: { id: storedToken.id },
         data: { revokedAt: new Date() },
       });
-      throw new UnauthorizedException('Refresh token expirado. Faça login novamente.');
+      throw new UnauthorizedException(
+        'Refresh token expirado. Faça login novamente.',
+      );
     }
 
-    const user = await this.prisma.adminUser.findUnique({ where: { id: storedToken.userId } });
+    const user = await this.prisma.adminUser.findUnique({
+      where: { id: storedToken.userId },
+    });
     if (!user) {
       throw new UnauthorizedException('Usuário não encontrado.');
     }
 
-    await this.prisma.refreshToken.update({
-      where: { id: storedToken.id },
-      data: { revokedAt: new Date() },
-    });
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+      this.generateTokens({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      });
 
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = await this.generateTokens({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    });
-
-    await this.storeRefreshToken(user.id, newRefreshToken);
+    // Revoga o token antigo e armazena o novo em uma única transação,
+    // evitando emissão concorrente de tokens a partir do mesmo refresh token.
+    await this.prisma.$transaction([
+      this.prisma.refreshToken.update({
+        where: { id: storedToken.id },
+        data: { revokedAt: new Date() },
+      }),
+      this.prisma.refreshToken.create({
+        data: {
+          userId: user.id,
+          tokenHash: this.hashToken(newRefreshToken),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      }),
+    ]);
 
     return {
       id: user.id,
@@ -219,7 +222,15 @@ export class AuthService implements OnModuleInit {
     });
   }
 
-  async validateUser(email: string, pass: string): Promise<{ id: string; email: string; role: string; fullName: string | null } | null> {
+  async validateUser(
+    email: string,
+    pass: string,
+  ): Promise<{
+    id: string;
+    email: string;
+    role: string;
+    fullName: string | null;
+  } | null> {
     const normalizedEmail = this.normalizeEmail(email);
 
     try {
@@ -237,12 +248,14 @@ export class AuthService implements OnModuleInit {
       });
 
       if (!dbUser) {
-        throw new UnauthorizedException('Usuário não autorizado. Contate um administrador.');
+        throw new UnauthorizedException('Credenciais inválidas.');
       }
 
-      const { data: authData } = await this.supabaseAdmin.auth.admin.getUserById(data.user.id);
+      const { data: authData } =
+        await this.supabaseAdmin.auth.admin.getUserById(data.user.id);
       const authUser = authData?.user ?? data.user;
-      const fullName = authUser.user_metadata?.full_name ?? dbUser.fullName ?? null;
+      const fullName =
+        authUser.user_metadata?.full_name ?? dbUser.fullName ?? null;
 
       const syncedUser = await this.prisma.adminUser.update({
         where: { id: authUser.id },
@@ -259,8 +272,10 @@ export class AuthService implements OnModuleInit {
         fullName: syncedUser.fullName ?? null,
       };
     } catch (error) {
-      if (this.isNetworkError(error)) {
-        throw new ServiceUnavailableException('Serviço de autenticação indisponível no momento.');
+      if (isNetworkError(error)) {
+        throw new ServiceUnavailableException(
+          'Serviço de autenticação indisponível no momento.',
+        );
       }
 
       throw error;
@@ -284,7 +299,13 @@ export class AuthService implements OnModuleInit {
       });
 
       if (error || !data.user) {
-        throw new UnauthorizedException(error?.message || 'Falha ao registrar usuário no Supabase Auth.');
+        console.error(
+          '[Auth] Erro ao criar usuário no Supabase:',
+          error?.message ?? 'resposta vazia',
+        );
+        throw new UnauthorizedException(
+          'Falha ao registrar usuário. Tente novamente ou contate o suporte.',
+        );
       }
 
       const user = await this.prisma.adminUser.upsert({
@@ -302,8 +323,8 @@ export class AuthService implements OnModuleInit {
         },
       });
 
-      // 🚀 Dispara a sincronização automática com o NevaPro
-      void this.syncToNevaPro({
+      // 🚀 Dispara a sincronização automática com o NevaPro (fire-and-forget)
+      void this.nevaProService.sync({
         email: user.email,
         fullName: fullName ?? undefined,
       });
@@ -314,8 +335,10 @@ export class AuthService implements OnModuleInit {
         role: user.role,
       };
     } catch (error) {
-      if (this.isNetworkError(error)) {
-        throw new ServiceUnavailableException('Serviço de autenticação indisponível no momento.');
+      if (isNetworkError(error)) {
+        throw new ServiceUnavailableException(
+          'Serviço de autenticação indisponível no momento.',
+        );
       }
 
       throw error;
@@ -344,5 +367,3 @@ export class AuthService implements OnModuleInit {
     });
   }
 }
-
-

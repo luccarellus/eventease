@@ -1,30 +1,20 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
-
-function maskConnectionString(connStr: string): string {
-  try {
-    return connStr.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@');
-  } catch {
-    return '<invalid-connection-string>';
-  }
-}
-
-function isDatabaseNetworkError(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  return (
-    error.message.includes('ENOTFOUND') ||
-    error.message.includes('getaddrinfo') ||
-    error.message.includes('ECONNREFUSED') ||
-    error.message.includes('ETIMEDOUT') ||
-    error.message.includes('tenant/user') ||
-    error.message.includes('not found')
-  );
-}
+import { maskConnectionString } from './common/env.util';
+import { isNetworkError } from './common/network.util';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly connectionString: string;
 
   constructor() {
@@ -33,13 +23,19 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     if (!connectionString) {
       throw new Error(
         'DATABASE_URL não está configurada. ' +
-        'Defina a variável de ambiente DATABASE_URL no dashboard do Vercel ' +
-        'com a URL de conexão do PostgreSQL (Supabase Pooler: porta 6543).'
+          'Defina a variável de ambiente DATABASE_URL no dashboard do Vercel ' +
+          'com a URL de conexão do PostgreSQL (Supabase Pooler: porta 6543).',
       );
     }
 
-    console.log('[PrismaService] Conectando ao banco:', maskConnectionString(connectionString));
-    console.log('[PrismaService] DIRECT_URL definida:', !!process.env.DIRECT_URL);
+    console.log(
+      '[PrismaService] Conectando ao banco:',
+      maskConnectionString(connectionString),
+    );
+    console.log(
+      '[PrismaService] DIRECT_URL definida:',
+      !!process.env.DIRECT_URL,
+    );
 
     const pool = new pg.Pool({
       connectionString,
@@ -62,16 +58,29 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   async onModuleInit() {
     try {
       await this.$connect();
-      console.log('[PrismaService] Conexão com banco estabelecida com sucesso.');
+      console.log(
+        '[PrismaService] Conexão com banco estabelecida com sucesso.',
+      );
     } catch (error: unknown) {
-      if (isDatabaseNetworkError(error)) {
-        console.error('[PrismaService] ERRO DE CONEXÃO - Banco de dados inacessível.');
-        console.error('[PrismaService] URL configurada:', maskConnectionString(this.connectionString));
-        console.error('[PrismaService] Verifique se o DATABASE_URL no Vercel está correto.');
-        console.error('[PrismaService] O .env.example mostra o formato esperado:');
-        console.error('[PrismaService]   postgresql://postgres.xxxx:senha@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true');
+      if (isNetworkError(error)) {
+        console.error(
+          '[PrismaService] ERRO DE CONEXÃO - Banco de dados inacessível.',
+        );
+        console.error(
+          '[PrismaService] URL configurada:',
+          maskConnectionString(this.connectionString),
+        );
+        console.error(
+          '[PrismaService] Verifique se o DATABASE_URL no Vercel está correto.',
+        );
+        console.error(
+          '[PrismaService] O .env.example mostra o formato esperado:',
+        );
+        console.error(
+          '[PrismaService]   postgresql://postgres.xxxx:senha@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true',
+        );
         throw new ServiceUnavailableException(
-          'Banco de dados indisponível. Verifique a configuração de DATABASE_URL no ambiente de produção.'
+          'Banco de dados indisponível. Verifique a configuração de DATABASE_URL no ambiente de produção.',
         );
       }
       throw error;
@@ -82,7 +91,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     try {
       await this.$disconnect();
     } catch (error: unknown) {
-      console.error('[PrismaService] Erro ao desconectar:', error instanceof Error ? error.message : error);
+      console.error(
+        '[PrismaService] Erro ao desconectar:',
+        error instanceof Error ? error.message : error,
+      );
     }
   }
 }

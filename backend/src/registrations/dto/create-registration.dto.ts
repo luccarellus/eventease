@@ -1,7 +1,8 @@
-import { IsBoolean, IsOptional, IsUUID, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CreateRegistrationDto {
   @IsString()
+  @IsNotEmpty()
   recaptchaToken!: string;
 
   @IsUUID('4', { message: 'ID do evento inválido' })
@@ -9,12 +10,4 @@ export class CreateRegistrationDto {
 
   @IsUUID('4', { message: 'ID do participante inválido' })
   participanteId!: string;
-
-  @IsOptional()
-  @IsBoolean()
-  presente?: boolean;
-
-  @IsOptional()
-  @IsString()
-  confirmado_em?: string;
 }

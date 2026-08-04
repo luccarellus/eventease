@@ -206,13 +206,13 @@ export default function Confirm() {
         });
         toast.success(`Check-in realizado para ${participante.nome}!`);
       } else {
-        // Se não tiver inscrição, auto-inscrição com check-in já marcado
+        // Sem inscrição: cria a inscrição (presente fica false por segurança —
+        // o endpoint público nunca marca presença) e depois confirma o check-in
+        // exclusivamente pela rota admin.
         const recaptchaToken = await executeRecaptcha('registration_create');
         const insertRes = await api.post('/registrations', {
           eventoId: selectedEventoId,
           participanteId: participante.id,
-          presente: true,
-          confirmado_em: new Date().toISOString(),
           recaptchaToken,
         });
 
@@ -227,6 +227,12 @@ export default function Confirm() {
             // mantém a mensagem genérica se o corpo não for JSON válido
           }
           throw new Error(message);
+        }
+
+        const createdRegistration = await insertRes.json();
+        const checkinRes = await api.patch(`/registrations/${createdRegistration.id}/checkin`, {});
+        if (!checkinRes.ok) {
+          throw new Error('Falha ao confirmar o check-in.');
         }
 
         setResult({

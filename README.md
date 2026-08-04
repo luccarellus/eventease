@@ -91,10 +91,11 @@ Certifique-se de configurar as strings do Supabase no `.env` e aplique as tabela
 npm run prisma:db-push
 
 # Popula o banco com o usuário administrador inicial
+# Para definir uma senha conhecida, configure ADMIN_SEED_PASSWORD (e opcionalmente ADMIN_SEED_EMAIL):
 npx prisma db seed --schema=backend/prisma/schema.prisma
 ```
 
-*(O administrador padrão gerado é `lucassantos.-@outlook.com` com a senha `presidente123`)*.
+> **Segurança:** o seed nunca imprime a senha no console. Se `ADMIN_SEED_PASSWORD` não for definida, uma senha aleatória é gerada e você deve redefini-la pelo painel do Supabase Auth. Nunca use credenciais padrão fixas em produção.
 
 ### Passo 3: Iniciar as Aplicações
 

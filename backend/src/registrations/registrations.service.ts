@@ -1,15 +1,19 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 
-
 @Injectable()
 export class RegistrationsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.InscricaoEventoUncheckedCreateInput) {
     const evento = await this.prisma.evento.findUnique({
-      where: { id: data.eventoId as string },
+      where: { id: data.eventoId },
     });
 
     if (!evento) {
@@ -17,38 +21,45 @@ export class RegistrationsService {
     }
 
     if (!evento.publicado) {
-      throw new BadRequestException('Este evento está inativo momentaneamente.');
+      throw new BadRequestException(
+        'Este evento está inativo momentaneamente.',
+      );
     }
 
     const now = new Date();
     if (evento.dataInicioInscricao && now < evento.dataInicioInscricao) {
-      throw new BadRequestException('As inscrições para este evento ainda não começaram.');
+      throw new BadRequestException(
+        'As inscrições para este evento ainda não começaram.',
+      );
     }
 
     if (evento.dataFimInscricao && now > evento.dataFimInscricao) {
-      throw new BadRequestException('As inscrições para este evento já foram encerradas.');
+      throw new BadRequestException(
+        'As inscrições para este evento já foram encerradas.',
+      );
     }
 
     const participante = await this.prisma.participante.findUnique({
-      where: { id: data.participanteId as string },
+      where: { id: data.participanteId },
     });
 
     if (!participante) {
       throw new NotFoundException('Participante não encontrado.');
     }
 
-
     const existing = await this.prisma.inscricaoEvento.findUnique({
       where: {
         unique_evento_participante: {
-          eventoId: data.eventoId as string,
-          participanteId: data.participanteId as string,
+          eventoId: data.eventoId,
+          participanteId: data.participanteId,
         },
       },
     });
 
     if (existing) {
-      throw new ConflictException('Participante já está inscrito neste evento.');
+      throw new ConflictException(
+        'Participante já está inscrito neste evento.',
+      );
     }
 
     return this.prisma.inscricaoEvento.create({ data });
@@ -94,7 +105,7 @@ export class RegistrationsService {
       include: {
         participante: true,
         evento: true,
-      }
+      },
     });
   }
 

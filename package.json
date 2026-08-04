@@ -11,7 +11,9 @@
     "lint": "tsc --noEmit",
     "postinstall": "npx prisma generate --schema=backend/prisma/schema.prisma",
     "prisma:validate": "npx prisma validate --schema=backend/prisma/schema.prisma",
-    "prisma:db-push": "npx prisma db push --schema=backend/prisma/schema.prisma"
+    "prisma:db-push": "npx prisma db push --schema=backend/prisma/schema.prisma",
+    "prisma:migrate:dev": "npx prisma migrate dev --schema=backend/prisma/schema.prisma",
+    "prisma:migrate:deploy": "npx prisma migrate deploy --schema=backend/prisma/schema.prisma"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

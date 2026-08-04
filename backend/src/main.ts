@@ -24,4 +24,4 @@ async function bootstrap() {
   console.log(`✅ EventEase API rodando em: http://localhost:${port}`);
   console.log(`   Ambiente: ${process.env.NODE_ENV ?? 'development'}`);
 }
-bootstrap();
+void bootstrap();

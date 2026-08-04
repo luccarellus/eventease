@@ -1,20 +1,35 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
+import { throwUniqueConstraintError } from '../common/prisma-error.util';
+import { NevaProService } from '../common/nevapro.service';
 
+// Dados mínimos expostos publicamente.
+// ATENÇÃO: `codigo` é mantido para o fluxo de recuperação de credencial
+// (o participante recupera o próprio código informando o e-mail).
+// `email` e `telefone` NÃO são devolvidos (LGPD).
 const PUBLIC_PARTICIPANT_SELECT = {
   id: true,
   nome: true,
   codigo: true,
   cidade: true,
-  email: true,
 } as const;
 
 @Injectable()
 export class ParticipantsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private nevaProService: NevaProService,
+  ) {}
 
-  private async findByEmailQuery(email: string, select?: Prisma.ParticipanteSelect) {
+  private async findByEmailQuery(
+    email: string,
+    select?: Prisma.ParticipanteSelect,
+  ) {
     const participant = await this.prisma.participante.findFirst({
       where: { email: { equals: email, mode: 'insensitive' } },
       select,
@@ -27,7 +42,10 @@ export class ParticipantsService {
     return participant;
   }
 
-  private async findByCodeQuery(codigo: string, select?: Prisma.ParticipanteSelect) {
+  private async findByCodeQuery(
+    codigo: string,
+    select?: Prisma.ParticipanteSelect,
+  ) {
     const participant = await this.prisma.participante.findUnique({
       where: { codigo },
       select,
@@ -41,33 +59,45 @@ export class ParticipantsService {
   }
 
   async create(data: Prisma.ParticipanteCreateInput) {
-    const email = data.email as string;
-    const codigo = data.codigo as string;
+    const email = data.email;
+    const codigo = data.codigo;
 
-    const existing = await this.prisma.participante.findFirst({
-      where: {
-        OR: [{ email: { equals: email, mode: 'insensitive' } }, { codigo }],
-      },
-    });
+    try {
+      const created = await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.participante.findFirst({
+          where: {
+            OR: [{ email: { equals: email, mode: 'insensitive' } }, { codigo }],
+          },
+          select: { id: true },
+        });
 
-    if (existing) {
-      throw new ConflictException('Participante com este código ou email já existe.');
+        if (existing) {
+          throw new ConflictException(
+            'Participante com este código ou email já existe.',
+          );
+        }
+
+        return tx.participante.create({ data });
+      });
+
+      // 🚀 Sincronização automática de novo participante com NevaPro (fire-and-forget)
+      void this.nevaProService.sync({
+        email: created.email,
+        fullName: created.nome,
+        city: created.cidade,
+        school: created.escola,
+        gremio: created.gremio ?? undefined,
+      });
+
+      return created;
+    } catch (error) {
+      // Converte violação de unicidade (P2002) em 409 Conflict
+      return throwUniqueConstraintError(
+        error,
+        'Participante com este código ou email já existe.',
+      );
     }
-
-    const created = await this.prisma.participante.create({ data });
-
-    // 🚀 Sincronização automática de novo participante com NevaPro
-    void this.syncToNevaPro({
-      email: created.email,
-      fullName: created.nome,
-      city: (created as any).cidade,
-      school: (created as any).escola,
-      gremio: (created as any).gremio,
-    });
-
-    return created;
   }
-
 
   async findAll() {
     return this.prisma.participante.findMany({
@@ -117,45 +147,9 @@ export class ParticipantsService {
   }
 
   async remove(id: string) {
-    try {
-      return await this.prisma.participante.delete({
-        where: { id },
-      });
-    } catch {
-      throw new NotFoundException('Participante não encontrado para exclusão');
-    }
-  }
-
-  private async syncToNevaPro(userData: { email: string; fullName?: string; city?: string; school?: string; gremio?: string }) {
-    const webhookUrl = process.env.NEVAPRO_WEBHOOK_URL;
-    const webhookSecret = process.env.NEVAPRO_WEBHOOK_SECRET;
-
-    if (!webhookUrl || !webhookSecret) {
-      console.warn('[NevaPro Sync] Variáveis NEVAPRO_WEBHOOK_URL ou NEVAPRO_WEBHOOK_SECRET não configuradas.');
-      return;
-    }
-
-    try {
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Webhook-Secret': webhookSecret,
-        },
-        body: JSON.stringify({
-          email: userData.email,
-          name: userData.fullName,
-          city: userData.city,
-          school: userData.school,
-          gremio: userData.gremio,
-        }),
-      });
-
-      const result = await response.json();
-      console.log('[NevaPro Sync] Resultado:', result);
-    } catch (err) {
-      console.error('[NevaPro Sync] Erro ao sincronizar participante com NevaPro:', err);
-    }
+    // P2025 (registro inexistente) é convertido em 404 pelo filtro global de exceções.
+    return this.prisma.participante.delete({
+      where: { id },
+    });
   }
 }
-

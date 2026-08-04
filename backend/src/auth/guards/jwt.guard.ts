@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { PrismaService } from '../../prisma.service';
@@ -26,8 +31,12 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Token não encontrado.');
     }
     try {
-      const payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token);
-      if (!payload.sub || (payload.tokenType && payload.tokenType !== 'access')) {
+      const payload =
+        await this.jwtService.verifyAsync<AccessTokenPayload>(token);
+      if (
+        !payload.sub ||
+        (payload.tokenType && payload.tokenType !== 'access')
+      ) {
         throw new UnauthorizedException('Token invalido.');
       }
 
@@ -39,17 +48,24 @@ export class JwtAuthGuard implements CanActivate {
         throw new UnauthorizedException('Usuario nao autorizado.');
       }
 
-      request.user = { sub: user.id, email: user.email, role: user.role, tokenType: 'access' };
+      request.user = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        tokenType: 'access',
+      };
     } catch {
       throw new UnauthorizedException('Token inválido.');
     }
     return true;
   }
-
   private extractTokenFromHeaderOrCookie(request: Request): string | undefined {
-    let token = request.cookies?.access_token;
+    let token: string | undefined = request.cookies?.access_token as
+      | string
+      | undefined;
     if (!token) {
-      const [type, authHeaderToken] = request.headers.authorization?.split(' ') ?? [];
+      const [type, authHeaderToken] =
+        request.headers.authorization?.split(' ') ?? [];
       token = type === 'Bearer' ? authHeaderToken : undefined;
     }
     return token;

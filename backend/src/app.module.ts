@@ -17,6 +17,7 @@ import { EventsModule } from './events/events.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { RegistrationsModule } from './registrations/registrations.module';
 import { RecaptchaModule } from './common/recaptcha.module';
+import { NevaProModule } from './common/nevapro.module';
 
 @Module({
   imports: [
@@ -24,13 +25,16 @@ import { RecaptchaModule } from './common/recaptcha.module';
       isGlobal: true,
       envFilePath: ['.env', '../.env'],
     }),
-    ThrottlerModule.forRoot([{
-      name: 'default',
-      ttl: 60000,
-      limit: 100,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     PrismaModule,
     RecaptchaModule,
+    NevaProModule,
     AuthModule,
     EventsModule,
     ParticipantsModule,

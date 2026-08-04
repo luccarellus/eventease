@@ -1,11 +1,34 @@
-import { Controller, Get, Post, Body, Param, Delete, Headers, HttpCode, HttpStatus, Query, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Query,
+  Req,
+  BadRequestException,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { ParticipantsService } from './participants.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateParticipantDto } from './dto/create-participant.dto';
 import { Throttle } from '@nestjs/throttler';
-import { ParticipantCodeLookupDto, ParticipantEmailLookupDto } from './dto/participant-lookup.dto';
-import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import {
+  ParticipantCodeLookupDto,
+  ParticipantEmailLookupDto,
+} from './dto/participant-lookup.dto';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { RecaptchaService } from '../common/recaptcha.service';
 
@@ -43,7 +66,19 @@ export class ParticipantsController {
   @Post()
   @HttpCode(HttpStatus.OK)
   async create(@Body() data: CreateParticipantDto, @Req() request: Request) {
-    await this.recaptchaService.verify(data.recaptchaToken, 'participant_create', request.ip);
+    await this.recaptchaService.verify(
+      data.recaptchaToken,
+      'participant_create',
+      request.ip,
+    );
+
+    // LGPD: o consentimento é obrigatório para cadastro público.
+    if (data.aceitou_termos !== true) {
+      throw new BadRequestException(
+        'É obrigatório aceitar os termos de uso e a política de privacidade.',
+      );
+    }
+
     const { recaptchaToken: _recaptchaToken, ...participant } = data;
     return this.participantsService.create(participant);
   }
@@ -59,7 +94,11 @@ export class ParticipantsController {
     @Headers('x-recaptcha-token') recaptchaToken: string | undefined,
     @Req() request: Request,
   ) {
-    await this.recaptchaService.verify(recaptchaToken, 'participant_lookup', request.ip);
+    await this.recaptchaService.verify(
+      recaptchaToken,
+      'participant_lookup',
+      request.ip,
+    );
     return this.participantsService.findByEmailPublic(params.email);
   }
 
@@ -74,7 +113,11 @@ export class ParticipantsController {
     @Headers('x-recaptcha-token') recaptchaToken: string | undefined,
     @Req() request: Request,
   ) {
-    await this.recaptchaService.verify(recaptchaToken, 'participant_lookup', request.ip);
+    await this.recaptchaService.verify(
+      recaptchaToken,
+      'participant_lookup',
+      request.ip,
+    );
     return this.participantsService.findByCodePublic(params.code);
   }
 
@@ -99,7 +142,11 @@ export class ParticipantsController {
   @Get()
   @AdminRoute()
   findAll(@Query() query: ParticipantListQueryDto) {
-    return this.participantsService.findPage(query.page, query.limit, query.search);
+    return this.participantsService.findPage(
+      query.page,
+      query.limit,
+      query.search,
+    );
   }
 
   @Delete(':id')

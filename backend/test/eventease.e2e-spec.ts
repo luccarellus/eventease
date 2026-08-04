@@ -4,6 +4,13 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from '../src/prisma.service';
+import { RecaptchaService } from '../src/common/recaptcha.service';
+
+const adminCreds = {
+  email: process.env.E2E_ADMIN_EMAIL,
+  password: process.env.E2E_ADMIN_PASSWORD,
+};
+const hasAdminCreds = Boolean(adminCreds.email && adminCreds.password);
 
 describe('EventEase E2E Test Suite', () => {
   let app: INestApplication<App>;
@@ -20,13 +27,17 @@ describe('EventEase E2E Test Suite', () => {
   // Emails únicos para evitar colisão no banco de dados persistente
   const randomSuffix = Math.floor(Math.random() * 1000000);
   const testUserEmail = `staff_test_${randomSuffix}@eventease.com`;
-  const testUserPassword = 'password123';
+  const testUserPassword = 'Password123!';
   const testParticipantEmail = `student_test_${randomSuffix}@school.com`;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      // reCAPTCHA é um serviço externo — não deve ser chamado em testes e2e.
+      .overrideProvider(RecaptchaService)
+      .useValue({ verify: jest.fn().mockResolvedValue(undefined) })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     prisma = moduleFixture.get<PrismaService>(PrismaService);
@@ -37,21 +48,29 @@ describe('EventEase E2E Test Suite', () => {
     // Limpeza de registros criados pelo teste para manter a integridade do banco
     try {
       if (testRegistrationId) {
-        await prisma.inscricaoEvento.delete({ where: { id: testRegistrationId } }).catch(() => {});
+        await prisma.inscricaoEvento
+          .delete({ where: { id: testRegistrationId } })
+          .catch(() => {});
       }
       if (testEventId) {
-        await prisma.evento.delete({ where: { id: testEventId } }).catch(() => {});
+        await prisma.evento
+          .delete({ where: { id: testEventId } })
+          .catch(() => {});
       }
       if (testParticipantId) {
-        await prisma.participante.delete({ where: { id: testParticipantId } }).catch(() => {});
+        await prisma.participante
+          .delete({ where: { id: testParticipantId } })
+          .catch(() => {});
       }
       if (testUserId) {
-        await prisma.adminUser.delete({ where: { id: testUserId } }).catch(() => {});
+        await prisma.adminUser
+          .delete({ where: { id: testUserId } })
+          .catch(() => {});
       }
     } catch (cleanupError) {
       console.warn('Erro ao limpar dados de teste:', cleanupError);
     }
-    
+
     await prisma.$disconnect();
     await app.close();
   });
@@ -82,7 +101,7 @@ describe('EventEase E2E Test Suite', () => {
           password: testUserPassword,
           fullName: 'Staff E2E Tester',
         })
-        .expect(201);
+        .expect(200);
 
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('email', testUserEmail);
@@ -100,35 +119,44 @@ describe('EventEase E2E Test Suite', () => {
         .expect(401);
     });
 
-    it('deve autenticar o usuário administrador do seed e reter os cookies', async () => {
-      // O seed cria lucassantos.-@outlook.com com senha presidente123
-      const response = await request(app.getHttpServer())
-        .post('/auth/login')
-        .send({
-          email: 'lucassantos.-@outlook.com',
-          password: 'presidente123',
-        })
-        .expect(201);
+    it.skipIf(!hasAdminCreds)(
+      'deve autenticar o usuário administrador e reter os cookies',
+      async () => {
+        const response = await request(app.getHttpServer())
+          .post('/auth/login')
+          .send({
+            email: adminCreds.email,
+            password: adminCreds.password,
+          })
+          .expect(200);
 
-      expect(response.body).toHaveProperty('user');
-      expect(response.body.user).toHaveProperty('role', 'admin');
-      
-      const cookies = response.headers['set-cookie'];
-      expect(cookies).toBeDefined();
-      expect(cookies.length).toBeGreaterThan(0);
-      adminCookies = Array.isArray(cookies) ? cookies : cookies ? [cookies] : [];
-    });
+        expect(response.body).toHaveProperty('user');
+        expect(response.body.user).toHaveProperty('role', 'admin');
 
-    it('deve permitir acesso a /auth/me usando cookies de administrador', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/auth/me')
-        .set('Cookie', adminCookies)
-        .expect(200);
+        const cookies = response.headers['set-cookie'];
+        expect(cookies).toBeDefined();
+        expect(cookies.length).toBeGreaterThan(0);
+        adminCookies = Array.isArray(cookies)
+          ? cookies
+          : cookies
+            ? [cookies]
+            : [];
+      },
+    );
 
-      expect(response.body).toHaveProperty('user');
-      expect(response.body.user).toHaveProperty('email', 'lucassantos.-@outlook.com');
-      expect(response.body.user).toHaveProperty('role', 'admin');
-    });
+    it.skipIf(!hasAdminCreds)(
+      'deve permitir acesso a /auth/me usando cookies de administrador',
+      async () => {
+        const response = await request(app.getHttpServer())
+          .get('/auth/me')
+          .set('Cookie', adminCookies)
+          .expect(200);
+
+        expect(response.body).toHaveProperty('user');
+        expect(response.body.user).toHaveProperty('email', adminCreds.email);
+        expect(response.body.user).toHaveProperty('role', 'admin');
+      },
+    );
   });
 
   // ==========================================
@@ -149,8 +177,9 @@ describe('EventEase E2E Test Suite', () => {
           codigo: generatedCode,
           aceitou_termos: true,
           termos_aceitos_em: new Date().toISOString(),
+          recaptchaToken: 'test-token',
         })
-        .expect(201);
+        .expect(200);
 
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('email', testParticipantEmail);
@@ -158,6 +187,21 @@ describe('EventEase E2E Test Suite', () => {
 
       testParticipantId = response.body.id;
       testParticipantCode = response.body.codigo;
+    });
+
+    it('deve rejeitar cadastro sem consentimento dos termos (LGPD)', async () => {
+      await request(app.getHttpServer())
+        .post('/participants')
+        .send({
+          nome: 'Sem Consentimento',
+          email: `no_consent_${randomSuffix}@school.com`,
+          telefone: '(11) 98888-7777',
+          cidade: 'São Paulo',
+          escola: 'Escola Modelo',
+          codigo: `EVT-NC${randomSuffix}`,
+          recaptchaToken: 'test-token',
+        })
+        .expect(400);
     });
 
     it('deve recuperar dados públicos simplificados por e-mail', async () => {
@@ -183,53 +227,64 @@ describe('EventEase E2E Test Suite', () => {
     });
 
     it('deve rejeitar busca de todos os participantes se não for admin', async () => {
-      await request(app.getHttpServer())
-        .get('/participants')
-        .expect(401);
+      await request(app.getHttpServer()).get('/participants').expect(401);
     });
 
-    it('deve listar todos os participantes quando autenticado como admin', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/participants')
-        .set('Cookie', adminCookies)
-        .expect(200);
+    it.skipIf(!hasAdminCreds)(
+      'deve listar todos os participantes quando autenticado como admin',
+      async () => {
+        const response = await request(app.getHttpServer())
+          .get('/participants')
+          .set('Cookie', adminCookies)
+          .expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
-      expect(response.body.length).toBeGreaterThan(0);
-    });
+        expect(response.body).toHaveProperty('items');
+        expect(Array.isArray(response.body.items)).toBe(true);
+        expect(response.body).toHaveProperty('total');
+      },
+    );
   });
 
   // ==========================================
   // 4. Eventos e Inscrições
   // ==========================================
   describe('Eventos e Inscrições (/events e /registrations)', () => {
-    it('deve permitir criar um evento quando autenticado como admin', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/events')
-        .set('Cookie', adminCookies)
-        .send({
-          titulo: 'Fórum de Liderança E2E Test',
-          descricao: 'Descrição do evento de testes e2e',
-          data: new Date(Date.now() + 86400000).toISOString(), // Amanhã
-          local: 'Auditório Principal E2E',
-          publicado: true,
-        })
-        .expect(201);
+    it.skipIf(!hasAdminCreds)(
+      'deve permitir criar um evento quando autenticado como admin',
+      async () => {
+        const response = await request(app.getHttpServer())
+          .post('/events')
+          .set('Cookie', adminCookies)
+          .send({
+            titulo: 'Fórum de Liderança E2E Test',
+            descricao: 'Descrição do evento de testes e2e',
+            data: new Date(Date.now() + 86400000).toISOString(), // Amanhã
+            local: 'Auditório Principal E2E',
+            publicado: true,
+          })
+          .expect(200);
 
-      expect(response.body).toHaveProperty('id');
-      expect(response.body).toHaveProperty('titulo', 'Fórum de Liderança E2E Test');
-      testEventId = response.body.id;
-    });
+        expect(response.body).toHaveProperty('id');
+        expect(response.body).toHaveProperty(
+          'titulo',
+          'Fórum de Liderança E2E Test',
+        );
+        testEventId = response.body.id;
+      },
+    );
 
-    it('deve listar eventos publicados na rota pública', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/events')
-        .expect(200);
+    it.skipIf(!hasAdminCreds)(
+      'deve listar eventos publicados na rota pública',
+      async () => {
+        const response = await request(app.getHttpServer())
+          .get('/events')
+          .expect(200);
 
-      expect(Array.isArray(response.body)).toBe(true);
-      const testEvent = response.body.find((e: any) => e.id === testEventId);
-      expect(testEvent).toBeDefined();
-    });
+        expect(Array.isArray(response.body)).toBe(true);
+        const testEvent = response.body.find((e: any) => e.id === testEventId);
+        expect(testEvent).toBeDefined();
+      },
+    );
 
     it('deve permitir registrar o participante no evento', async () => {
       const response = await request(app.getHttpServer())
@@ -237,9 +292,9 @@ describe('EventEase E2E Test Suite', () => {
         .send({
           eventoId: testEventId,
           participanteId: testParticipantId,
-          presente: false,
+          recaptchaToken: 'test-token',
         })
-        .expect(201);
+        .expect(200);
 
       expect(response.body).toHaveProperty('id');
       expect(response.body).toHaveProperty('eventoId', testEventId);
@@ -256,14 +311,17 @@ describe('EventEase E2E Test Suite', () => {
       expect(response.body).toHaveProperty('registered', true);
     });
 
-    it('deve permitir realizar check-in (presença) no evento como admin', async () => {
-      const response = await request(app.getHttpServer())
-        .patch(`/registrations/${testRegistrationId}/checkin`)
-        .set('Cookie', adminCookies)
-        .expect(200);
+    it.skipIf(!hasAdminCreds)(
+      'deve permitir realizar check-in (presença) no evento como admin',
+      async () => {
+        const response = await request(app.getHttpServer())
+          .patch(`/registrations/${testRegistrationId}/checkin`)
+          .set('Cookie', adminCookies)
+          .expect(200);
 
-      expect(response.body).toHaveProperty('presente', true);
-      expect(response.body.confirmado_em).toBeDefined();
-    });
+        expect(response.body).toHaveProperty('presente', true);
+        expect(response.body.confirmado_em).toBeDefined();
+      },
+    );
   });
 });

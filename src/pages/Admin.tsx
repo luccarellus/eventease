@@ -448,7 +448,6 @@ export default function Admin() {
       const res = await api.post('/registrations', {
         eventoId: selectedEvento.id,
         participanteId: participanteId,
-        presente: false,
         recaptchaToken,
       });
 

@@ -1,11 +1,21 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, HttpCode, HttpStatus, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  Req,
+} from '@nestjs/common';
 import type { Request } from 'express';
 import { RegistrationsService } from './registrations.service';
 import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateRegistrationDto } from './dto/create-registration.dto';
 import { UpdateRegistrationDto } from './dto/update-registration.dto';
 import { Throttle } from '@nestjs/throttler';
-import { toDateOrUndefined } from '../common/date.util';
 import { RecaptchaService } from '../common/recaptcha.service';
 
 @Controller('registrations')
@@ -16,20 +26,25 @@ export class RegistrationsController {
   ) {}
 
   /**
-   * Cria uma nova inscrição.
+   * Cria uma nova inscrição (fluxo público).
    * Nota: o frontend público usa este endpoint via cookie JWT do usuário logado ou anonimamente se cadastrando pela primeira vez.
    * Limitado contra abusos automatizados.
+   * Segurança: o check-in (presente/confirmado_em) NUNCA pode ser definido por este endpoint público —
+   * apenas o fluxo admin (PATCH /registrations/:id/checkin) pode marcar presença.
    */
   @Post()
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   async create(@Body() data: CreateRegistrationDto, @Req() request: Request) {
-    await this.recaptchaService.verify(data.recaptchaToken, 'registration_create', request.ip);
+    await this.recaptchaService.verify(
+      data.recaptchaToken,
+      'registration_create',
+      request.ip,
+    );
     return this.registrationsService.create({
       eventoId: data.eventoId,
       participanteId: data.participanteId,
-      presente: data.presente ?? false,
-      confirmado_em: toDateOrUndefined(data.confirmado_em),
+      presente: false,
     });
   }
 
@@ -39,7 +54,10 @@ export class RegistrationsController {
     @Param('eventoId') eventoId: string,
     @Param('participanteId') participanteId: string,
   ) {
-    return this.registrationsService.checkRegistration(eventoId, participanteId);
+    return this.registrationsService.checkRegistration(
+      eventoId,
+      participanteId,
+    );
   }
 
   @Get()
@@ -65,7 +83,7 @@ export class RegistrationsController {
   update(@Param('id') id: string, @Body() data: UpdateRegistrationDto) {
     return this.registrationsService.update(id, {
       presente: data.presente,
-      confirmado_em: toDateOrUndefined(data.confirmado_em),
+      confirmado_em: data.confirmado_em ? new Date(data.confirmado_em) : null,
     });
   }
 

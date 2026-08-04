@@ -19,6 +19,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const ADMIN_EMAIL = process.env.ADMIN_SEED_EMAIL || 'lucassantos.-@outlook.com';
+const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD;
+
 function generateSecurePassword(length = 32): string {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
   const bytes = randomBytes(length);
@@ -30,27 +33,28 @@ function generateSecurePassword(length = 32): string {
 }
 
 async function main() {
-  const email = 'lucassantos.-@outlook.com';
+  const email = ADMIN_EMAIL;
 
   const existingUser = await prisma.adminUser.findUnique({
     where: { email },
   });
 
   if (!existingUser) {
-    const rawPassword = generateSecurePassword();
-    
-    console.log(`Criando usuário administrador no Supabase Auth...`);
-    
+    const rawPassword = ADMIN_PASSWORD || generateSecurePassword();
+    const generated = !ADMIN_PASSWORD;
+
+    console.log(`Criando usuário administrador no Supabase Auth (${email})...`);
+
     const { data, error } = await supabase.auth.admin.createUser({
       email,
       password: rawPassword,
       email_confirm: true,
       user_metadata: {
-        full_name: 'Lucas Santos',
+        full_name: 'Administrador',
       },
       app_metadata: {
         role: 'admin',
-      }
+      },
     });
 
     if (error) {
@@ -58,10 +62,14 @@ async function main() {
       return;
     }
 
-    console.log(`✅ Usuário administrador criado com sucesso no Supabase Auth:`);
-    console.log(`- E-mail: ${email}`);
-    console.log(`- Senha gerada (salve agora, não será mostrada novamente): ${rawPassword}`);
-    console.log(`⚠️  IMPORTANTE: Altere a senha no primeiro login!`);
+    console.log(`✅ Usuário administrador criado com sucesso no Supabase Auth: ${data.user?.id}`);
+    if (generated) {
+      // Nunca logar a senha. Defina ADMIN_SEED_PASSWORD no ambiente e rode o seed de novo
+      // se precisar de uma senha conhecida.
+      console.log('ℹ️  A senha foi gerada aleatoriamente e NÃO é exibida por segurança.');
+      console.log('ℹ️  Para definir uma senha conhecida, configure ADMIN_SEED_PASSWORD antes de rodar o seed.');
+      console.log('ℹ️  Você pode redefinir a senha via painel do Supabase Auth.');
+    }
   } else {
     await prisma.adminUser.update({
       where: { email },
@@ -79,4 +87,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-
