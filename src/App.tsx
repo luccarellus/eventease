@@ -24,6 +24,7 @@ const Admin = lazy(() => import('@/pages/Admin'));
 const Login = lazy(() => import('@/pages/Login'));
 const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
+const Maintenance = lazy(() => import('@/pages/Maintenance'));
 
 type NavItem = {
   to: string;
@@ -206,10 +207,47 @@ export default function App() {
 
 function AppContent() {
   const { userIsAdmin } = useAuth();
+  const location = useLocation();
   useSecurityProtection({
     disableContextMenu: false,
     disableInspectKeys: true,
   });
+
+  const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+  const isLoginPage = location.pathname === '/login';
+
+  if (isMaintenanceMode && !userIsAdmin && !isLoginPage) {
+    return (
+      <div className="min-h-[100dvh] pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-24 pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col bg-[#020610]">
+        <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/50 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
+          <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-3 group">
+              <img
+                src="/logo_oficial.png"
+                alt="Olhar Jovem"
+                className="h-8 md:h-12 w-auto transition-transform group-hover:scale-105"
+                referrerPolicy="no-referrer"
+              />
+            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/login">
+                <Button variant="ghost" size="sm" className="text-xs font-semibold text-white/60 hover:text-white">
+                  Staff / Login
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </nav>
+        <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow w-full flex items-center justify-center">
+          <Suspense fallback={<LoadingSpinner />}>
+            <Maintenance />
+          </Suspense>
+        </main>
+        <CookieBanner />
+        <Toaster theme="dark" position="top-center" expand={true} richColors />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-24 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col bg-[#020610]">
@@ -219,6 +257,7 @@ function AppContent() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/eventos" element={<Home />} />
+            <Route path="/manutencao" element={<Maintenance />} />
             <Route
               path="/confirmar"
               element={
