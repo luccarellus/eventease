@@ -207,16 +207,15 @@ export default function App() {
 
 function AppContent() {
   const { userIsAdmin } = useAuth();
-  const location = useLocation();
   useSecurityProtection({
     disableContextMenu: false,
     disableInspectKeys: true,
   });
 
-  const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
-  const isLoginPage = location.pathname === '/login';
+  // O modo de manutenção fica ATIVO por padrão ao abrir o sistema no navegador.
+  const isMaintenanceMode = true;
 
-  if (isMaintenanceMode && !userIsAdmin && !isLoginPage) {
+  if (isMaintenanceMode) {
     return (
       <div className="min-h-[100dvh] pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-24 pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col bg-[#020610]">
         <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/50 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
@@ -229,13 +228,6 @@ function AppContent() {
                 referrerPolicy="no-referrer"
               />
             </Link>
-            <div className="flex items-center gap-2">
-              <Link to="/login">
-                <Button variant="ghost" size="sm" className="text-xs font-semibold text-white/60 hover:text-white">
-                  Staff / Login
-                </Button>
-              </Link>
-            </div>
           </div>
         </nav>
         <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow w-full flex items-center justify-center">

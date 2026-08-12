@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Wrench, ShieldAlert, Sparkles, RefreshCw, Lock, Clock, CheckCircle2 } from 'lucide-react';
+import { Wrench, ShieldAlert, Sparkles, RefreshCw, Clock, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -13,7 +12,7 @@ export default function Maintenance() {
     toast.info('Verificando status do sistema...');
     setTimeout(() => {
       setIsChecking(false);
-      if (import.meta.env.VITE_MAINTENANCE_MODE === 'true') {
+      if (import.meta.env.VITE_MAINTENANCE_MODE !== 'false') {
         toast.warning('O sistema permanece em manutenção no momento.');
       } else {
         toast.success('O sistema está online! Redirecionando...');
@@ -93,15 +92,6 @@ export default function Maintenance() {
             Verificar Novamente
           </Button>
 
-          <Link to="/login" className="w-full sm:w-auto">
-            <Button
-              variant="outline"
-              className="w-full h-12 px-6 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-medium transition-all flex items-center justify-center gap-2"
-            >
-              <Lock className="w-4 h-4 text-amber-400" />
-              Área de Staff / Login
-            </Button>
-          </Link>
         </div>
       </motion.div>
 

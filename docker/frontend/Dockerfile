@@ -6,8 +6,11 @@ WORKDIR /app
 # Build args injectados pelo docker-compose (variáveis públicas do Vite)
 ARG VITE_RECAPTCHA_SITE_KEY
 ARG VITE_API_URL
+ARG VITE_MAINTENANCE_MODE
 ENV VITE_RECAPTCHA_SITE_KEY=${VITE_RECAPTCHA_SITE_KEY:-}
 ENV VITE_API_URL=${VITE_API_URL:-/api}
+# Manutenção ativa por padrão; defina "false" para desativar
+ENV VITE_MAINTENANCE_MODE=${VITE_MAINTENANCE_MODE:-true}
 
 # Copy package.json and install dependencies
 COPY package*.json ./
