@@ -25,7 +25,7 @@ export class EventsService {
     const ttl = publishedOnly ? CACHE_TTL.events : CACHE_TTL.eventsAdmin;
 
     const cached = safeParse<Evento[]>(await this.redis.get(key));
-    if (cached) return cached;
+    if (cached && Array.isArray(cached) && cached.length > 0) return cached;
 
     const events = await this.prisma.evento.findMany({
       where: publishedOnly ? { publicado: true } : undefined,
