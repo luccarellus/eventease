@@ -3,6 +3,8 @@
 # ==========================================
 FROM node:22-alpine AS frontend-builder
 
+RUN apk update && apk upgrade --no-cache
+
 WORKDIR /app
 COPY package*.json ./
 COPY backend/package*.json ./backend/
@@ -25,6 +27,8 @@ RUN npm run build
 # ==========================================
 FROM node:22-alpine AS backend-builder
 
+RUN apk update && apk upgrade --no-cache
+
 WORKDIR /app/backend
 COPY backend/package*.json ./
 RUN npm install --ignore-scripts
@@ -40,10 +44,14 @@ RUN npm run build
 # ==========================================
 FROM node:22-alpine
 
-# Instala apenas o Nginx
-RUN apk update && apk upgrade --no-cache && apk add --no-cache nginx
+# Instala Nginx + Redis (embutidos na mesma imagem)
+RUN apk update && apk upgrade --no-cache && apk add --no-cache nginx redis
 
 WORKDIR /app
+
+# Redis roda dentro do próprio container (127.0.0.1:6379)
+ENV REDIS_HOST=127.0.0.1
+ENV REDIS_PORT=6379
 
 # 1. Copia o frontend compilado para o Nginx
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
@@ -74,8 +82,10 @@ COPY --from=backend-builder /app/backend/prisma ./backend/prisma
 COPY --from=backend-builder /app/backend/prisma.config.ts ./backend/
 COPY --from=backend-builder /app/backend/tsconfig.json ./backend/
 
-# 4. Script de inicialização direto (sem Supervisor)
+# 4. Script de inicialização direto (sem Supervisor): Redis + API + Nginx
 RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'mkdir -p /data' >> /app/start.sh && \
+    echo 'redis-server --save 60 1 --dir /data --daemonize yes || true' >> /app/start.sh && \
     echo 'cd /app/backend' >> /app/start.sh && \
     echo 'npx prisma migrate deploy --schema=prisma/schema.prisma || true' >> /app/start.sh && \
     echo 'node dist/main.js &' >> /app/start.sh && \
