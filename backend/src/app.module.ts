@@ -18,6 +18,7 @@ import { ParticipantsModule } from './participants/participants.module';
 import { RegistrationsModule } from './registrations/registrations.module';
 import { RecaptchaModule } from './common/recaptcha.module';
 import { NevaProModule } from './common/nevapro.module';
+import { RedisModule } from './common/redis.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { NevaProModule } from './common/nevapro.module';
       },
     ]),
     PrismaModule,
+    RedisModule,
     RecaptchaModule,
     NevaProModule,
     AuthModule,

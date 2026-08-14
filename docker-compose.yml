@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  # Redis Cache & Storage
+  redis:
+    image: redis:7-alpine
+    container_name: eventease-redis
+    restart: always
+    command: redis-server --save 60 1 --loglevel notice
+    ports:
+      - "127.0.0.1:6980:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # NestJS API
   api:
     build:
@@ -22,7 +40,13 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - NEVAPRO_WEBHOOK_URL=${NEVAPRO_WEBHOOK_URL}
       - NEVAPRO_WEBHOOK_SECRET=${NEVAPRO_WEBHOOK_SECRET}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - NODE_ENV=production
+    depends_on:
+      redis:
+        condition: service_healthy
     # Permite que o container acesse o PostgreSQL que roda no host da VPS
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -85,3 +109,6 @@ services:
 networks:
   backend_network:
     driver: bridge
+
+volumes:
+  redis_data:
