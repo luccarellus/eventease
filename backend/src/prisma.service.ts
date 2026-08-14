@@ -2,7 +2,6 @@ import {
   Injectable,
   OnModuleInit,
   OnModuleDestroy,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -62,6 +61,11 @@ export class PrismaService
         '[PrismaService] Conexão com banco estabelecida com sucesso.',
       );
     } catch (error: unknown) {
+      // Não derruba mais a API no boot: registra o erro e segue em modo
+      // degradado. O endpoint /health reporta o status do banco (503).
+      console.error(
+        '[PrismaService] ⚠️ Banco de dados indisponível no boot — API em modo degradado.',
+      );
       if (isNetworkError(error)) {
         console.error(
           '[PrismaService] ERRO DE CONEXÃO - Banco de dados inacessível.',
@@ -71,19 +75,16 @@ export class PrismaService
           maskConnectionString(this.connectionString),
         );
         console.error(
-          '[PrismaService] Verifique se o DATABASE_URL no Vercel está correto.',
-        );
-        console.error(
-          '[PrismaService] O .env.example mostra o formato esperado:',
+          '[PrismaService] Formato esperado (Supabase Pooler):',
         );
         console.error(
           '[PrismaService]   postgresql://postgres.xxxx:senha@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true',
         );
-        throw new ServiceUnavailableException(
-          'Banco de dados indisponível. Verifique a configuração de DATABASE_URL no ambiente de produção.',
-        );
       }
-      throw error;
+      console.error(
+        '[PrismaService] Detalhes:',
+        error instanceof Error ? error.message : error,
+      );
     }
   }
 

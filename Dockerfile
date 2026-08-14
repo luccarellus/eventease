@@ -72,6 +72,10 @@ RUN echo 'server {' > /etc/nginx/http.d/default.conf && \
     echo '        proxy_set_header Connection "upgrade";' >> /etc/nginx/http.d/default.conf && \
     echo '        proxy_set_header Host $host;' >> /etc/nginx/http.d/default.conf && \
     echo '    }' >> /etc/nginx/http.d/default.conf && \
+    echo '    location /health {' >> /etc/nginx/http.d/default.conf && \
+    echo '        proxy_pass http://127.0.0.1:3000/health;' >> /etc/nginx/http.d/default.conf && \
+    echo '        access_log off;' >> /etc/nginx/http.d/default.conf && \
+    echo '    }' >> /etc/nginx/http.d/default.conf && \
     echo '}' >> /etc/nginx/http.d/default.conf
 
 # 3. Copia o backend compilado
