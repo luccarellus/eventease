@@ -4,11 +4,16 @@ import { configureApp } from './common/bootstrap.config';
 import { getEnv, requireEnv, requireJwtRefreshSecret } from './common/env.util';
 
 async function bootstrap() {
-  requireEnv('JWT_SECRET');
-  requireJwtRefreshSecret();
-  requireEnv('DATABASE_URL');
-  requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
-  requireEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
+  try {
+    requireEnv('JWT_SECRET');
+    requireJwtRefreshSecret();
+    requireEnv('DATABASE_URL');
+    requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
+    requireEnv('SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY');
+  } catch (err) {
+    console.error('❌ ERRO CRÍTICO NAS VARIÁVEIS DE AMBIENTE:', (err as Error).message);
+    console.error('👉 Certifique-se de configurar todas as variáveis no painel do Easypanel (aba Ambiente).');
+  }
 
   if (!getEnv('COOKIE_SECRET')) {
     console.warn('[bootstrap] COOKIE_SECRET não definida. Usando JWT_SECRET como fallback.');

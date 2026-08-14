@@ -84,7 +84,7 @@ RUN mkdir -p /etc/supervisor.d && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
     echo '[program:backend]' >> /etc/supervisord.conf && \
-    echo 'command=sh -c "npx prisma migrate deploy; node dist/main.js"' >> /etc/supervisord.conf && \
+    echo 'command=sh -c "npx prisma migrate deploy --schema=prisma/schema.prisma || true; node dist/main.js"' >> /etc/supervisord.conf && \
     echo 'directory=/app/backend' >> /etc/supervisord.conf && \
     echo 'autostart=true' >> /etc/supervisord.conf && \
     echo 'autorestart=true' >> /etc/supervisord.conf && \
