@@ -5,69 +5,86 @@ import Redis from 'ioredis';
 @Injectable()
 export class RedisService implements OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
-  private readonly client: Redis;
+  private readonly client: Redis | null = null;
+  private isConnected = false;
 
   constructor(private configService: ConfigService) {
-    const host = this.configService.get<string>('REDIS_HOST', 'redis');
+    const host = this.configService.get<string>('REDIS_HOST', '');
     const port = this.configService.get<number>('REDIS_PORT', 6379);
     const password = this.configService.get<string>('REDIS_PASSWORD', '');
 
-    this.client = new Redis({
-      host,
-      port: Number(port),
-      password: password || undefined,
-      lazyConnect: true,
-      maxRetriesPerRequest: 3,
-      retryStrategy(times: number) {
-        const delay = Math.min(times * 100, 3000);
-        return delay;
-      },
-    });
+    if (!host) {
+      this.logger.warn('REDIS_HOST não definida. Redis operando em modo fallback.');
+      return;
+    }
 
-    this.client.on('connect', () => {
-      this.logger.log(`Conectado ao Redis com sucesso (${host}:${port})`);
-    });
+    try {
+      this.client = new Redis({
+        host,
+        port: Number(port),
+        password: password || undefined,
+        lazyConnect: true,
+        maxRetriesPerRequest: 1,
+        enableOfflineQueue: false,
+        retryStrategy(times: number) {
+          if (times > 3) {
+            return null; // Para de reconectar após 3 tentativas para não travar a API
+          }
+          return Math.min(times * 200, 1000);
+        },
+      });
 
-    this.client.on('error', (err: Error) => {
-      this.logger.error(`Erro de conexão com Redis: ${err.message}`);
-    });
+      this.client.on('connect', () => {
+        this.isConnected = true;
+        this.logger.log(`Conectado ao Redis com sucesso (${host}:${port})`);
+      });
+
+      this.client.on('error', (err: Error) => {
+        this.isConnected = false;
+        this.logger.warn(`Redis indisponível (${host}:${port}): ${err.message}`);
+      });
+    } catch (err) {
+      this.logger.warn(`Erro ao instanciar Redis: ${(err as Error).message}`);
+    }
   }
 
-  getClient(): Redis {
+  getClient(): Redis | null {
     return this.client;
   }
 
   async get(key: string): Promise<string | null> {
+    if (!this.client || !this.isConnected) return null;
     try {
       return await this.client.get(key);
     } catch (error) {
-      this.logger.error(`Erro ao buscar chave '${key}': ${(error as Error).message}`);
       return null;
     }
   }
 
   async set(key: string, value: string, ttlSeconds?: number): Promise<'OK' | null> {
+    if (!this.client || !this.isConnected) return null;
     try {
       if (ttlSeconds) {
         return await this.client.set(key, value, 'EX', ttlSeconds);
       }
       return await this.client.set(key, value);
     } catch (error) {
-      this.logger.error(`Erro ao definir chave '${key}': ${(error as Error).message}`);
       return null;
     }
   }
 
   async del(key: string): Promise<number> {
+    if (!this.client || !this.isConnected) return 0;
     try {
       return await this.client.del(key);
     } catch (error) {
-      this.logger.error(`Erro ao remover chave '${key}': ${(error as Error).message}`);
       return 0;
     }
   }
 
   async onModuleDestroy() {
-    await this.client.quit();
+    if (this.client) {
+      await this.client.quit().catch(() => {});
+    }
   }
 }
