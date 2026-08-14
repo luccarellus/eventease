@@ -7,13 +7,14 @@ WORKDIR /app
 COPY package*.json ./
 COPY backend/package*.json ./backend/
 
-# Instala dependências da raiz e do backend para garantir compilação do Prisma/NestJS
-RUN npm install
-RUN npm install --prefix backend
+# Instala dependências da raiz e do backend (ignora scripts automáticos até que o código seja copiado)
+RUN npm install --ignore-scripts
+RUN npm install --prefix backend --ignore-scripts
 
+# Copia todo o código-fonte (incluindo backend/prisma/schema.prisma)
 COPY . .
 
-# Gera o client do Prisma antes de executar o build
+# Gera o client do Prisma com as tipagens completas do banco de dados
 RUN npx prisma generate --schema=backend/prisma/schema.prisma
 
 # Compila o backend e o frontend React
@@ -27,7 +28,7 @@ FROM node:20-alpine3.20 AS backend-builder
 
 WORKDIR /app/backend
 COPY backend/package*.json ./
-RUN npm install
+RUN npm install --ignore-scripts
 
 COPY backend/ .
 # Gera o client do Prisma antes de compilar
