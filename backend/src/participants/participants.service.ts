@@ -5,8 +5,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
+import type { Participante } from '@prisma/client';
 import { throwUniqueConstraintError } from '../common/prisma-error.util';
 import { NevaProService } from '../common/nevapro.service';
+import { RedisService } from '../common/redis.service';
+import { CACHE_KEYS, CACHE_TTL, safeParse } from '../common/cache.keys';
 
 // Dados mínimos expostos publicamente.
 // ATENÇÃO: `codigo` é mantido para o fluxo de recuperação de credencial
@@ -19,11 +22,15 @@ const PUBLIC_PARTICIPANT_SELECT = {
   cidade: true,
 } as const;
 
+/** Forma pública retornada nas buscas de credencial (LGPD-safe). */
+type PublicParticipant = Pick<Participante, 'id' | 'nome' | 'codigo' | 'cidade'>;
+
 @Injectable()
 export class ParticipantsService {
   constructor(
     private prisma: PrismaService,
     private nevaProService: NevaProService,
+    private redis: RedisService,
   ) {}
 
   private async findByEmailQuery(
@@ -80,6 +87,9 @@ export class ParticipantsService {
         return tx.participante.create({ data });
       });
 
+      // Novo participante altera a contagem do dashboard
+      await this.redis.del(CACHE_KEYS.participantsCount);
+
       // 🚀 Sincronização automática de novo participante com NevaPro (fire-and-forget)
       void this.nevaProService.sync({
         email: created.email,
@@ -107,6 +117,19 @@ export class ParticipantsService {
 
   async findPage(page: number, limit: number, search: string) {
     const normalizedSearch = search.trim();
+
+    // Chamada de métricas do dashboard (page=1&limit=1 sem busca) — cacheada.
+    const isMetricsCall = page === 1 && limit === 1 && !normalizedSearch;
+    if (isMetricsCall) {
+      const cached = safeParse<{
+        items: Participante[];
+        total: number;
+        page: number;
+        limit: number;
+      }>(await this.redis.get(CACHE_KEYS.participantsCount));
+      if (cached) return cached;
+    }
+
     const where: Prisma.ParticipanteWhereInput = normalizedSearch
       ? {
           OR: [
@@ -127,29 +150,79 @@ export class ParticipantsService {
       this.prisma.participante.count({ where }),
     ]);
 
-    return { items, total, page, limit };
+    const result = { items, total, page, limit };
+
+    if (isMetricsCall) {
+      await this.redis.set(
+        CACHE_KEYS.participantsCount,
+        JSON.stringify(result),
+        CACHE_TTL.participantsCount,
+      );
+    }
+
+    return result;
   }
 
   async findByEmail(email: string) {
     return this.findByEmailQuery(email);
   }
 
-  async findByEmailPublic(email: string) {
-    return this.findByEmailQuery(email, PUBLIC_PARTICIPANT_SELECT);
+  async findByEmailPublic(email: string): Promise<PublicParticipant> {
+    const key = CACHE_KEYS.participantByEmail(email);
+    const cached = safeParse<PublicParticipant>(
+      await this.redis.get(key),
+    );
+    if (cached) return cached;
+
+    const participant = await this.findByEmailQuery(
+      email,
+      PUBLIC_PARTICIPANT_SELECT,
+    );
+
+    // Só cacheia respostas positivas (não cacheia 404 para não bloquear cadastros novos)
+    await this.redis.set(
+      key,
+      JSON.stringify(participant),
+      CACHE_TTL.participantLookup,
+    );
+    return participant;
   }
 
   async findByCode(codigo: string) {
     return this.findByCodeQuery(codigo);
   }
 
-  async findByCodePublic(codigo: string) {
-    return this.findByCodeQuery(codigo, PUBLIC_PARTICIPANT_SELECT);
+  async findByCodePublic(codigo: string): Promise<PublicParticipant> {
+    const key = CACHE_KEYS.participantByCode(codigo);
+    const cached = safeParse<PublicParticipant>(
+      await this.redis.get(key),
+    );
+    if (cached) return cached;
+
+    const participant = await this.findByCodeQuery(
+      codigo,
+      PUBLIC_PARTICIPANT_SELECT,
+    );
+
+    await this.redis.set(
+      key,
+      JSON.stringify(participant),
+      CACHE_TTL.participantLookup,
+    );
+    return participant;
   }
 
   async remove(id: string) {
     // P2025 (registro inexistente) é convertido em 404 pelo filtro global de exceções.
-    return this.prisma.participante.delete({
+    const removed = await this.prisma.participante.delete({
       where: { id },
     });
+
+    // Invalida cache de credencial e contagem do dashboard
+    await this.redis.del(CACHE_KEYS.participantsCount);
+    await this.redis.del(CACHE_KEYS.participantByEmail(removed.email));
+    await this.redis.del(CACHE_KEYS.participantByCode(removed.codigo));
+
+    return removed;
   }
 }

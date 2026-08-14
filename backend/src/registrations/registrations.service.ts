@@ -6,10 +6,19 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
+import { RedisService } from '../common/redis.service';
+import { CACHE_KEYS, CACHE_TTL, safeParse } from '../common/cache.keys';
+
+type InscricaoComParticipante = Prisma.InscricaoEventoGetPayload<{
+  include: { participante: true };
+}>;
 
 @Injectable()
 export class RegistrationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private redis: RedisService,
+  ) {}
 
   async create(data: Prisma.InscricaoEventoUncheckedCreateInput) {
     const evento = await this.prisma.evento.findUnique({
@@ -62,7 +71,9 @@ export class RegistrationsService {
       );
     }
 
-    return this.prisma.inscricaoEvento.create({ data });
+    const inscricao = await this.prisma.inscricaoEvento.create({ data });
+    await this.redis.del(CACHE_KEYS.registrationsByEvent(data.eventoId));
+    return inscricao;
   }
 
   async checkRegistration(eventoId: string, participanteId: string) {
@@ -87,16 +98,29 @@ export class RegistrationsService {
     });
   }
 
-  async findByEvent(eventoId: string) {
-    return this.prisma.inscricaoEvento.findMany({
+  async findByEvent(eventoId: string): Promise<InscricaoComParticipante[]> {
+    const key = CACHE_KEYS.registrationsByEvent(eventoId);
+
+    const cached = safeParse<InscricaoComParticipante[]>(
+      await this.redis.get(key),
+    );
+    if (cached) return cached;
+
+    const inscricoes = await this.prisma.inscricaoEvento.findMany({
       where: { eventoId },
       include: { participante: true },
-      orderBy: { createdAt: 'desc' },
     });
+
+    await this.redis.set(
+      key,
+      JSON.stringify(inscricoes),
+      CACHE_TTL.registrationsByEvent,
+    );
+    return inscricoes;
   }
 
   async checkIn(id: string) {
-    return this.prisma.inscricaoEvento.update({
+    const inscricao = await this.prisma.inscricaoEvento.update({
       where: { id },
       data: {
         presente: true,
@@ -107,18 +131,28 @@ export class RegistrationsService {
         evento: true,
       },
     });
+
+    // Check-in muda o estado da lista de inscritos do evento
+    await this.redis.del(CACHE_KEYS.registrationsByEvent(inscricao.eventoId));
+    return inscricao;
   }
 
   async update(id: string, data: Prisma.InscricaoEventoUpdateInput) {
-    return this.prisma.inscricaoEvento.update({
+    const inscricao = await this.prisma.inscricaoEvento.update({
       where: { id },
       data,
     });
+
+    await this.redis.del(CACHE_KEYS.registrationsByEvent(inscricao.eventoId));
+    return inscricao;
   }
 
   async remove(id: string) {
-    return this.prisma.inscricaoEvento.delete({
+    const inscricao = await this.prisma.inscricaoEvento.delete({
       where: { id },
     });
+
+    await this.redis.del(CACHE_KEYS.registrationsByEvent(inscricao.eventoId));
+    return inscricao;
   }
 }
