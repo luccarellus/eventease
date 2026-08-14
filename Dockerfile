@@ -7,11 +7,10 @@ WORKDIR /app
 COPY package*.json ./
 COPY backend/package*.json ./backend/
 
-# Instala dependências da raiz e do backend (ignora scripts automáticos até que o código seja copiado)
+# Instala dependências sem rodar scripts de postinstall pré-maturos
 RUN npm install --ignore-scripts
 RUN npm install --prefix backend --ignore-scripts
 
-# Copia todo o código-fonte (incluindo backend/prisma/schema.prisma)
 COPY . .
 
 # Gera o client do Prisma com as tipagens completas do banco de dados
@@ -41,8 +40,8 @@ RUN npm run build
 # ==========================================
 FROM node:20-alpine3.20
 
-# Instala o Nginx e Supervisor (para rodar 2 processos juntos)
-RUN apk update && apk upgrade --no-cache && apk add --no-cache nginx supervisor
+# Instala apenas o Nginx
+RUN apk update && apk upgrade --no-cache && apk add --no-cache nginx
 
 WORKDIR /app
 
@@ -75,25 +74,14 @@ COPY --from=backend-builder /app/backend/prisma ./backend/prisma
 COPY --from=backend-builder /app/backend/prisma.config.ts ./backend/
 COPY --from=backend-builder /app/backend/tsconfig.json ./backend/
 
-# 4. Configura o Supervisor para rodar Nginx + Node simultaneamente
-RUN mkdir -p /etc/supervisor.d && \
-    echo '[supervisord]' > /etc/supervisord.conf && \
-    echo 'nodaemon=true' >> /etc/supervisord.conf && \
-    echo '[program:nginx]' >> /etc/supervisord.conf && \
-    echo 'command=nginx -g "daemon off;"' >> /etc/supervisord.conf && \
-    echo 'autostart=true' >> /etc/supervisord.conf && \
-    echo 'autorestart=true' >> /etc/supervisord.conf && \
-    echo '[program:backend]' >> /etc/supervisord.conf && \
-    echo 'command=sh -c "npx prisma migrate deploy --schema=prisma/schema.prisma || true; node dist/main.js"' >> /etc/supervisord.conf && \
-    echo 'directory=/app/backend' >> /etc/supervisord.conf && \
-    echo 'autostart=true' >> /etc/supervisord.conf && \
-    echo 'autorestart=true' >> /etc/supervisord.conf && \
-    echo 'stdout_logfile=/dev/stdout' >> /etc/supervisord.conf && \
-    echo 'stdout_logfile_maxbytes=0' >> /etc/supervisord.conf && \
-    echo 'stderr_logfile=/dev/stderr' >> /etc/supervisord.conf && \
-    echo 'stderr_logfile_maxbytes=0' >> /etc/supervisord.conf
+# 4. Script de inicialização direto (sem Supervisor)
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'cd /app/backend' >> /app/start.sh && \
+    echo 'npx prisma migrate deploy --schema=prisma/schema.prisma || true' >> /app/start.sh && \
+    echo 'node dist/main.js &' >> /app/start.sh && \
+    echo 'exec nginx -g "daemon off;"' >> /app/start.sh && \
+    chmod +x /app/start.sh
 
 EXPOSE 80
 
-# Inicia o Supervisor (ele vai ligar o Nginx e o Backend juntos)
-CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["/app/start.sh"]
