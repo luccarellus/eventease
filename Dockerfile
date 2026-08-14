@@ -44,8 +44,8 @@ RUN npm run build
 # ==========================================
 FROM node:22-alpine
 
-# Instala Nginx + Redis (embutidos na mesma imagem)
-RUN apk update && apk upgrade --no-cache && apk add --no-cache nginx redis
+# Instala Nginx + Redis + Bash (para o terminal do Easypanel funcionar)
+RUN apk update && apk upgrade --no-cache && apk add --no-cache nginx redis bash
 
 WORKDIR /app
 
@@ -89,7 +89,8 @@ COPY --from=backend-builder /app/backend/tsconfig.json ./backend/
 # 4. Script de inicialização direto (sem Supervisor): Redis + API + Nginx
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'mkdir -p /data' >> /app/start.sh && \
-    echo 'redis-server --save 60 1 --dir /data --daemonize yes || true' >> /app/start.sh && \
+    echo 'REDIS_EXTRA=""; [ -n "$REDIS_PASSWORD" ] && REDIS_EXTRA="--requirepass $REDIS_PASSWORD"' >> /app/start.sh && \
+    echo 'redis-server --save 60 1 --dir /data $REDIS_EXTRA --daemonize yes || true' >> /app/start.sh && \
     echo 'cd /app/backend' >> /app/start.sh && \
     echo 'npx prisma migrate deploy --schema=prisma/schema.prisma || true' >> /app/start.sh && \
     echo 'node dist/main.js &' >> /app/start.sh && \
