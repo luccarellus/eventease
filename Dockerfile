@@ -1,7 +1,7 @@
 # ==========================================
 # STAGE 1: Build Frontend (Vite)
 # ==========================================
-FROM node:20-alpine3.20 AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 
 WORKDIR /app
 COPY package*.json ./
@@ -23,7 +23,7 @@ RUN npm run build
 # ==========================================
 # STAGE 2: Build Backend (NestJS)
 # ==========================================
-FROM node:20-alpine3.20 AS backend-builder
+FROM node:22-alpine AS backend-builder
 
 WORKDIR /app/backend
 COPY backend/package*.json ./
@@ -38,7 +38,7 @@ RUN npm run build
 # ==========================================
 # STAGE 3: Imagem Final (Roda Nginx + Node)
 # ==========================================
-FROM node:20-alpine3.20
+FROM node:22-alpine
 
 # Instala apenas o Nginx
 RUN apk update && apk upgrade --no-cache && apk add --no-cache nginx
