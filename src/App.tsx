@@ -212,8 +212,8 @@ function AppContent() {
     disableInspectKeys: true,
   });
 
-  // O modo de manutenção fica ATIVO por padrão ao abrir o sistema no navegador.
-  const isMaintenanceMode = true;
+  // Modo de manutenção desativado por padrão (ou ativado se VITE_MAINTENANCE_MODE === 'true')
+  const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
 
   if (isMaintenanceMode) {
     return (
