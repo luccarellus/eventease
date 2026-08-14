@@ -5,12 +5,18 @@ FROM node:20-alpine3.20 AS frontend-builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --ignore-scripts
+COPY backend/package*.json ./backend/
+
+# Instala dependências da raiz e do backend para garantir compilação do Prisma/NestJS
+RUN npm install
+RUN npm install --prefix backend
 
 COPY . .
 
-# Não usa mais Supabase, API é servida na mesma origem
+# Gera o client do Prisma antes de executar o build
+RUN npx prisma generate --schema=backend/prisma/schema.prisma
 
+# Compila o backend e o frontend React
 RUN npm run build
 
 
@@ -67,8 +73,6 @@ COPY --from=backend-builder /app/backend/package*.json ./backend/
 COPY --from=backend-builder /app/backend/prisma ./backend/prisma
 COPY --from=backend-builder /app/backend/prisma.config.ts ./backend/
 COPY --from=backend-builder /app/backend/tsconfig.json ./backend/
-
-
 
 # 4. Configura o Supervisor para rodar Nginx + Node simultaneamente
 RUN mkdir -p /etc/supervisor.d && \
