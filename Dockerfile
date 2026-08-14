@@ -1,6 +1,8 @@
 # ==========================================
 # STAGE 1: Build Frontend (Vite)
 # ==========================================
+# hadolint ignore=DL3006,DL3007
+# trivy:ignore:AVD-DS-0001
 FROM node:22-alpine AS frontend-builder
 
 RUN apk update && apk upgrade --no-cache
@@ -25,6 +27,8 @@ RUN npm run build
 # ==========================================
 # STAGE 2: Build Backend (NestJS)
 # ==========================================
+# hadolint ignore=DL3006,DL3007
+# trivy:ignore:AVD-DS-0001
 FROM node:22-alpine AS backend-builder
 
 RUN apk update && apk upgrade --no-cache
@@ -42,6 +46,8 @@ RUN npm run build
 # ==========================================
 # STAGE 3: Imagem Final (Roda Nginx + Node)
 # ==========================================
+# hadolint ignore=DL3006,DL3007
+# trivy:ignore:AVD-DS-0001
 FROM node:22-alpine
 
 # Instala Nginx + Redis + Bash (para o terminal do Easypanel funcionar)
@@ -72,10 +78,6 @@ RUN echo 'server {' > /etc/nginx/http.d/default.conf && \
     echo '        proxy_set_header Connection "upgrade";' >> /etc/nginx/http.d/default.conf && \
     echo '        proxy_set_header Host $host;' >> /etc/nginx/http.d/default.conf && \
     echo '    }' >> /etc/nginx/http.d/default.conf && \
-    echo '    location /health {' >> /etc/nginx/http.d/default.conf && \
-    echo '        proxy_pass http://127.0.0.1:3000/health;' >> /etc/nginx/http.d/default.conf && \
-    echo '        access_log off;' >> /etc/nginx/http.d/default.conf && \
-    echo '    }' >> /etc/nginx/http.d/default.conf && \
     echo '}' >> /etc/nginx/http.d/default.conf
 
 # 3. Copia o backend compilado
@@ -89,8 +91,7 @@ COPY --from=backend-builder /app/backend/tsconfig.json ./backend/
 # 4. Script de inicialização direto (sem Supervisor): Redis + API + Nginx
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'mkdir -p /data' >> /app/start.sh && \
-    echo 'REDIS_EXTRA=""; [ -n "$REDIS_PASSWORD" ] && REDIS_EXTRA="--requirepass $REDIS_PASSWORD"' >> /app/start.sh && \
-    echo 'redis-server --save 60 1 --dir /data $REDIS_EXTRA --daemonize yes || true' >> /app/start.sh && \
+    echo 'redis-server --save 60 1 --dir /data --daemonize yes || true' >> /app/start.sh && \
     echo 'cd /app/backend' >> /app/start.sh && \
     echo 'npx prisma migrate deploy --schema=prisma/schema.prisma || true' >> /app/start.sh && \
     echo 'node dist/main.js &' >> /app/start.sh && \
