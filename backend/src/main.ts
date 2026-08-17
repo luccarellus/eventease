@@ -38,7 +38,16 @@ async function bootstrap() {
   configureApp(app);
 
   // Iniciar Servidor
-  const port = process.env.PORT ?? 3000;
+  // Na imagem única, a porta 80 pertence ao Nginx (frontend). O Easypanel às
+  // vezes injeta PORT=80, o que conflita com o Nginx (EADDRINUSE) e derruba a
+  // API no boot — a API deve escutar na 3000 (o Nginx faz o proxy /api).
+  const rawPort = process.env.PORT;
+  if (rawPort === '80') {
+    console.warn(
+      '[bootstrap] PORT=80 detectado (reservado ao Nginx). Usando porta 3000 para a API.',
+    );
+  }
+  const port = rawPort && rawPort !== '80' ? rawPort : 3000;
   await app.listen(port);
   console.log(`✅ EventEase API rodando em: http://localhost:${port}`);
   console.log(`   Ambiente: ${process.env.NODE_ENV ?? 'development'}`);
