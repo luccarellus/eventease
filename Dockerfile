@@ -93,7 +93,7 @@ RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'mkdir -p /data' >> /app/start.sh && \
     echo 'redis-server --save 60 1 --dir /data --daemonize yes || true' >> /app/start.sh && \
     echo 'cd /app/backend' >> /app/start.sh && \
-    echo 'npx prisma migrate deploy --schema=prisma/schema.prisma || true' >> /app/start.sh && \
+    echo 'timeout 60 npx prisma migrate deploy --schema=prisma/schema.prisma || true' >> /app/start.sh && \
     echo 'node dist/main.js &' >> /app/start.sh && \
     echo 'exec nginx -g "daemon off;"' >> /app/start.sh && \
     chmod +x /app/start.sh
