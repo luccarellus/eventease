@@ -222,22 +222,13 @@ export default function Home() {
     setLoadingEvents(true);
     try {
       const res = await api.get('/events');
-      if (!res.ok) {
-        let msg = 'Erro de resposta do servidor';
-        try {
-          const errData = await res.json();
-          if (errData?.message) {
-            msg = Array.isArray(errData.message) ? errData.message.join(' ') : errData.message;
-          }
-        } catch { }
-        throw new Error(msg);
-      }
+      if (!res.ok) throw new Error('Failed to fetch events');
       const data = (await res.json()) as EventItem[];
 
       setEventos(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching events:', err);
-      toast.error('Erro ao carregar os eventos. Tente recarregar a página.');
+      toast.error('Erro ao carregar os eventos.');
     } finally {
       setLoadingEvents(false);
     }

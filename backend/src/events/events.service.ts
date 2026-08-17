@@ -26,23 +26,21 @@ export class EventsService {
 
     try {
       const cached = safeParse<Evento[]>(await this.redis.get(key));
-      if (cached && Array.isArray(cached)) return cached;
+      if (cached && Array.isArray(cached) && cached.length > 0) return cached;
     } catch {
-      // ignora erro do Redis
+      // Ignora erro de leitura do Redis
     }
 
-    try {
-      const events = await this.prisma.evento.findMany({
-        where: publishedOnly ? { publicado: true } : undefined,
-        orderBy: { data: 'asc' },
-      });
+    const events = await this.prisma.evento.findMany({
+      where: publishedOnly ? { publicado: true } : undefined,
+      orderBy: { data: 'asc' },
+    });
 
+    if (events && events.length > 0) {
       await this.redis.set(key, JSON.stringify(events), ttl).catch(() => {});
-      return events ?? [];
-    } catch (error) {
-      console.error('Erro ao buscar eventos do banco de dados:', error);
-      return [];
     }
+
+    return events;
   }
 
   async findOne(id: string) {
