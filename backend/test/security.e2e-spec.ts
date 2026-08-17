@@ -24,6 +24,8 @@ describe('Security and Validation E2E Test Suite', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    // A API é servida sob o prefixo /api (configuração de produção).
+    app.setGlobalPrefix('api');
     prisma = moduleFixture.get<PrismaService>(PrismaService);
     jwtService = moduleFixture.get<JwtService>(JwtService);
     await app.init();
@@ -67,7 +69,7 @@ describe('Security and Validation E2E Test Suite', () => {
   describe('Input Validation Constraints', () => {
     it('deve rejeitar cadastro de participante com e-mail inválido (400)', async () => {
       await request(app.getHttpServer())
-        .post('/participants')
+        .post('/api/participants')
         .send({
           nome: 'Nome Valido',
           email: 'not-an-email',
@@ -81,7 +83,7 @@ describe('Security and Validation E2E Test Suite', () => {
 
     it('deve rejeitar cadastro de participante com nome muito curto (400)', async () => {
       await request(app.getHttpServer())
-        .post('/participants')
+        .post('/api/participants')
         .send({
           nome: 'Ab',
           email: 'valid@example.com',
@@ -95,7 +97,7 @@ describe('Security and Validation E2E Test Suite', () => {
 
     it('deve rejeitar criação de evento com data malformada (400)', async () => {
       await request(app.getHttpServer())
-        .post('/events')
+        .post('/api/events')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           titulo: 'Forum',
@@ -112,12 +114,12 @@ describe('Security and Validation E2E Test Suite', () => {
   // ==========================================
   describe('Route Protection and Authentication', () => {
     it('deve bloquear listagem de participantes sem autenticação (401)', async () => {
-      await request(app.getHttpServer()).get('/participants').expect(401);
+      await request(app.getHttpServer()).get('/api/participants').expect(401);
     });
 
     it('deve bloquear criação de eventos sem autenticação (401)', async () => {
       await request(app.getHttpServer())
-        .post('/events')
+        .post('/api/events')
         .send({
           titulo: 'Test Event',
           data: new Date().toISOString(),
@@ -133,14 +135,14 @@ describe('Security and Validation E2E Test Suite', () => {
   describe('Role-Based Access Control', () => {
     it('deve bloquear acesso de role "user" a recursos de "admin" (403)', async () => {
       await request(app.getHttpServer())
-        .get('/participants')
+        .get('/api/participants')
         .set('Authorization', `Bearer ${testUserToken}`)
         .expect(403);
     });
 
     it('deve bloquear criação de evento por role "user" (403)', async () => {
       await request(app.getHttpServer())
-        .post('/events')
+        .post('/api/events')
         .set('Authorization', `Bearer ${testUserToken}`)
         .send({
           titulo: 'Test Event',
@@ -157,13 +159,13 @@ describe('Security and Validation E2E Test Suite', () => {
   describe('Admin Search Isolation', () => {
     it('deve bloquear busca por email admin se não autenticado (401)', async () => {
       await request(app.getHttpServer())
-        .get('/participants/admin/email/user@example.com')
+        .get('/api/participants/admin/email/user@example.com')
         .expect(401);
     });
 
     it('deve bloquear busca por código admin para role "user" (403)', async () => {
       await request(app.getHttpServer())
-        .get('/participants/admin/code/EVT-123456')
+        .get('/api/participants/admin/code/EVT-123456')
         .set('Authorization', `Bearer ${testUserToken}`)
         .expect(403);
     });

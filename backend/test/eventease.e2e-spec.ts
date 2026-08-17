@@ -40,6 +40,8 @@ describe('EventEase E2E Test Suite', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    // A API é servida sob o prefixo /api (configuração de produção).
+    app.setGlobalPrefix('api');
     prisma = moduleFixture.get<PrismaService>(PrismaService);
     await app.init();
   });
@@ -78,10 +80,10 @@ describe('EventEase E2E Test Suite', () => {
   // ==========================================
   // 1. Healthcheck
   // ==========================================
-  describe('Healthcheck (/health)', () => {
+  describe('Healthcheck (/api/health)', () => {
     it('deve retornar status OK', async () => {
       const response = await request(app.getHttpServer())
-        .get('/health')
+        .get('/api/health')
         .expect(200);
 
       expect(response.body).toHaveProperty('status', 'ok');
@@ -92,10 +94,10 @@ describe('EventEase E2E Test Suite', () => {
   // ==========================================
   // 2. Autenticação (Auth)
   // ==========================================
-  describe('Autenticação (/auth)', () => {
+  describe('Autenticação (/api/auth)', () => {
     it('deve registrar um novo usuário com privilégio padrão (user)', async () => {
       const response = await request(app.getHttpServer())
-        .post('/auth/register')
+        .post('/api/auth/register')
         .send({
           email: testUserEmail,
           password: testUserPassword,
@@ -111,7 +113,7 @@ describe('EventEase E2E Test Suite', () => {
 
     it('deve rejeitar login com senha incorreta', async () => {
       await request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/api/auth/login')
         .send({
           email: testUserEmail,
           password: 'wrongpassword',
@@ -123,7 +125,7 @@ describe('EventEase E2E Test Suite', () => {
       'deve autenticar o usuário administrador e reter os cookies',
       async () => {
         const response = await request(app.getHttpServer())
-          .post('/auth/login')
+          .post('/api/auth/login')
           .send({
             email: adminCreds.email,
             password: adminCreds.password,
@@ -145,10 +147,10 @@ describe('EventEase E2E Test Suite', () => {
     );
 
     it.skipIf(!hasAdminCreds)(
-      'deve permitir acesso a /auth/me usando cookies de administrador',
+      'deve permitir acesso a /api/auth/me usando cookies de administrador',
       async () => {
         const response = await request(app.getHttpServer())
-          .get('/auth/me')
+          .get('/api/auth/me')
           .set('Cookie', adminCookies)
           .expect(200);
 
@@ -162,11 +164,11 @@ describe('EventEase E2E Test Suite', () => {
   // ==========================================
   // 3. Participantes
   // ==========================================
-  describe('Participantes (/participants)', () => {
+  describe('Participantes (/api/participants)', () => {
     it('deve permitir a criação pública de um participante (inscrição livre)', async () => {
       const generatedCode = `EVT-T${Math.floor(100000 + Math.random() * 900000)}`;
       const response = await request(app.getHttpServer())
-        .post('/participants')
+        .post('/api/participants')
         .send({
           nome: 'Participante E2E Test',
           email: testParticipantEmail,
@@ -191,7 +193,7 @@ describe('EventEase E2E Test Suite', () => {
 
     it('deve rejeitar cadastro sem consentimento dos termos (LGPD)', async () => {
       await request(app.getHttpServer())
-        .post('/participants')
+        .post('/api/participants')
         .send({
           nome: 'Sem Consentimento',
           email: `no_consent_${randomSuffix}@school.com`,
@@ -206,7 +208,7 @@ describe('EventEase E2E Test Suite', () => {
 
     it('deve recuperar dados públicos simplificados por e-mail', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/participants/email/${testParticipantEmail}`)
+        .get(`/api/participants/email/${testParticipantEmail}`)
         .expect(200);
 
       expect(response.body).toHaveProperty('id', testParticipantId);
@@ -219,7 +221,7 @@ describe('EventEase E2E Test Suite', () => {
 
     it('deve recuperar dados públicos simplificados por código', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/participants/code/${testParticipantCode}`)
+        .get(`/api/participants/code/${testParticipantCode}`)
         .expect(200);
 
       expect(response.body).toHaveProperty('id', testParticipantId);
@@ -227,14 +229,14 @@ describe('EventEase E2E Test Suite', () => {
     });
 
     it('deve rejeitar busca de todos os participantes se não for admin', async () => {
-      await request(app.getHttpServer()).get('/participants').expect(401);
+      await request(app.getHttpServer()).get('/api/participants').expect(401);
     });
 
     it.skipIf(!hasAdminCreds)(
       'deve listar todos os participantes quando autenticado como admin',
       async () => {
         const response = await request(app.getHttpServer())
-          .get('/participants')
+          .get('/api/participants')
           .set('Cookie', adminCookies)
           .expect(200);
 
@@ -248,12 +250,12 @@ describe('EventEase E2E Test Suite', () => {
   // ==========================================
   // 4. Eventos e Inscrições
   // ==========================================
-  describe('Eventos e Inscrições (/events e /registrations)', () => {
+  describe('Eventos e Inscrições (/api/events e /api/registrations)', () => {
     it.skipIf(!hasAdminCreds)(
       'deve permitir criar um evento quando autenticado como admin',
       async () => {
         const response = await request(app.getHttpServer())
-          .post('/events')
+          .post('/api/events')
           .set('Cookie', adminCookies)
           .send({
             titulo: 'Fórum de Liderança E2E Test',
@@ -277,7 +279,7 @@ describe('EventEase E2E Test Suite', () => {
       'deve listar eventos publicados na rota pública',
       async () => {
         const response = await request(app.getHttpServer())
-          .get('/events')
+          .get('/api/events')
           .expect(200);
 
         expect(Array.isArray(response.body)).toBe(true);
@@ -288,7 +290,7 @@ describe('EventEase E2E Test Suite', () => {
 
     it('deve permitir registrar o participante no evento', async () => {
       const response = await request(app.getHttpServer())
-        .post('/registrations')
+        .post('/api/registrations')
         .send({
           eventoId: testEventId,
           participanteId: testParticipantId,
@@ -305,7 +307,7 @@ describe('EventEase E2E Test Suite', () => {
 
     it('deve verificar status da inscrição de forma pública', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/registrations/check/${testEventId}/${testParticipantId}`)
+        .get(`/api/registrations/check/${testEventId}/${testParticipantId}`)
         .expect(200);
 
       expect(response.body).toHaveProperty('registered', true);
@@ -315,7 +317,7 @@ describe('EventEase E2E Test Suite', () => {
       'deve permitir realizar check-in (presença) no evento como admin',
       async () => {
         const response = await request(app.getHttpServer())
-          .patch(`/registrations/${testRegistrationId}/checkin`)
+          .patch(`/api/registrations/${testRegistrationId}/checkin`)
           .set('Cookie', adminCookies)
           .expect(200);
 

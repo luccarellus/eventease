@@ -9,6 +9,11 @@ import { AllExceptionsFilter } from './all-exceptions.filter';
 export function configureApp(app: INestApplication) {
   const isProduction = process.env.NODE_ENV === 'production';
 
+  // A API é servida sob o prefixo /api (ex.: /api/events, /api/health).
+  // O frontend chama /api/... e o Nginx de produção encaminha o caminho
+  // completo — sem remoção de prefixo — para esta API.
+  app.setGlobalPrefix('api');
+
   // Confia no primeiro proxy (Nginx) para IP correto em rate-limit e reCAPTCHA
   (app as NestExpressApplication).set('trust proxy', 1);
 

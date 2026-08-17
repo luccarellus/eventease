@@ -60,7 +60,8 @@ services:
           memory: 512M
     healthcheck:
       # node:20-alpine não inclui curl; usa o wget do BusyBox.
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      # A API expõe /api/health (prefixo global /api).
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

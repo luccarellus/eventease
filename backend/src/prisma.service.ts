@@ -99,7 +99,7 @@ export class PrismaService
       );
     } catch (error: unknown) {
       // Não derruba mais a API no boot: registra o erro e segue em modo
-      // degradado. O endpoint /health reporta o status do banco (503).
+      // degradado. O endpoint /api/health reporta o status do banco (503).
       console.error(
         '[PrismaService] ⚠️ Banco de dados indisponível no boot — API em modo degradado.',
       );

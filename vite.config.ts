@@ -13,10 +13,11 @@ export default defineConfig(({mode}) => {
     },
     server: {
       proxy: {
+        // A API do backend já expõe as rotas sob o prefixo /api
+        // (ex.: /api/events). Aqui apenas repassamos o caminho completo.
         '/api': {
-          target: process.env.VITE_API_TARGET || 'http://localhost:3000',
+          target: process.env.VITE_API_TARGET || 'http://localhost:3001',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

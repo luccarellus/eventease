@@ -100,14 +100,19 @@ Em terminais separados:
 
   ```bash
   cd backend
-  npm run start:dev
+  PORT=3001 npm run start:dev
   ```
+
+  > A API é servida sob o prefixo `/api` (ex.: `/api/events`, `/api/health`).
 
 - **Iniciar Frontend React (Vite)** (porta `3000` padrão):
 
   ```bash
   npm run dev
   ```
+
+  > O proxy do Vite encaminha `/api/*` direto para a API na porta `3001` (sem
+  > remover o prefixo `/api`).
 
 Acesse o sistema localmente em: `http://localhost:3000`
 
@@ -183,6 +188,11 @@ npm run test:e2e
 O projeto roda inteiramente na sua VPS via Docker Compose: Nginx (proxy),
 frontend estático, API NestJS e Redis. O PostgreSQL fica fora dos containers
 (no host ou em um container dedicado, ex.: `eventease_postgresql`).
+
+> **Importante:** a API expõe as rotas sob o prefixo `/api` (ex.:
+> `/api/events`). O Nginx encaminha `/api/*` **sem remover o prefixo** —
+> mantenha isso no proxy da VPS se você não usar o `docker-compose` deste
+> repositório.
 
 1. **Clone o repositório na VPS** e copie um `.env` com as variáveis abaixo.
 2. **Crie/importe o banco** (`psql "$DATABASE_URL" < dump.sql`) e aplique as
