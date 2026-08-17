@@ -76,7 +76,7 @@ RUN echo 'server {' > /etc/nginx/http.d/default.conf && \
     echo '        try_files $uri $uri/ /index.html;' >> /etc/nginx/http.d/default.conf && \
     echo '    }' >> /etc/nginx/http.d/default.conf && \
     echo '    location /api/ {' >> /etc/nginx/http.d/default.conf && \
-    echo '        rewrite ^/api/(.*) /$1 break;' >> /etc/nginx/http.d/default.conf && \
+    echo '        # A API expõe as rotas sob /api (ex.: /api/events) — NÃO remover o prefixo' >> /etc/nginx/http.d/default.conf && \
     echo '        proxy_pass http://127.0.0.1:3000;' >> /etc/nginx/http.d/default.conf && \
     echo '        proxy_http_version 1.1;' >> /etc/nginx/http.d/default.conf && \
     echo '        proxy_set_header Upgrade $http_upgrade;' >> /etc/nginx/http.d/default.conf && \
