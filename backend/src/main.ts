@@ -1,7 +1,12 @@
+import dns from 'dns';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { configureApp } from './common/bootstrap.config';
 import { getEnv, requireEnv, requireJwtRefreshSecret } from './common/env.util';
+
+// VPS sem rota IPv6: resolve hostnames (Supabase etc.) como IPv4 primeiro,
+// evitando o crash ENETUNREACH no boot causado pela resolução IPv6 padrão.
+dns.setDefaultResultOrder('ipv4first');
 
 async function bootstrap() {
   try {

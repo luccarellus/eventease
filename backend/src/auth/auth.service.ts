@@ -49,7 +49,16 @@ export class AuthService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    await this.cleanupExpiredRefreshTokens();
+    try {
+      await this.cleanupExpiredRefreshTokens();
+    } catch (error) {
+      // Não derruba a API no boot se o banco estiver momentaneamente
+      // indisponível — a limpeza é reexecutada a cada novo refresh token.
+      console.error(
+        '[AuthService] Falha ao limpar refresh tokens no boot:',
+        error instanceof Error ? error.message : error,
+      );
+    }
   }
 
   private normalizeEmail(email: string) {

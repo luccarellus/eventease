@@ -1,4 +1,8 @@
+import dns from "dns";
 import { defineConfig } from "@prisma/config";
+
+// Garante que o Prisma CLI (migrate deploy) use IPv4 na VPS sem rota IPv6
+dns.setDefaultResultOrder("ipv4first");
 
 export default defineConfig({
   schema: "backend/prisma/schema.prisma",
