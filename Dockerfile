@@ -20,6 +20,9 @@ COPY . .
 # Gera o client do Prisma com as tipagens completas do banco de dados
 RUN npx prisma generate --schema=backend/prisma/schema.prisma
 
+# Remove estado incremental obsoleto (evita build incompleto do NestJS)
+RUN rm -f backend/tsconfig.tsbuildinfo backend/tsconfig.build.tsbuildinfo
+
 # Compila o backend e o frontend React
 RUN npm run build
 
@@ -40,6 +43,8 @@ RUN npm install --ignore-scripts
 COPY backend/ .
 # Gera o client do Prisma antes de compilar
 RUN npx prisma generate
+# Remove estado incremental obsoleto (evita build incompleto do NestJS)
+RUN rm -f tsconfig.tsbuildinfo tsconfig.build.tsbuildinfo
 RUN npm run build
 
 

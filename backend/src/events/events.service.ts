@@ -37,10 +37,16 @@ export class EventsService {
   }
 
   async findOne(id: string) {
+    const key = CACHE_KEYS.eventById(id);
+    const cached = safeParse<Evento>(await this.redis.get(key));
+    if (cached) return cached;
+
     const evento = await this.prisma.evento.findUnique({
       where: { id },
     });
     if (!evento) throw new NotFoundException('Evento não encontrado');
+
+    await this.redis.set(key, JSON.stringify(evento), CACHE_TTL.events);
     return evento;
   }
 
@@ -49,7 +55,7 @@ export class EventsService {
       where: { id },
       data,
     });
-    await this.invalidateListCache();
+    await this.invalidateListCache(id);
     return evento;
   }
 
@@ -57,13 +63,16 @@ export class EventsService {
     const evento = await this.prisma.evento.delete({
       where: { id },
     });
-    await this.invalidateListCache();
+    await this.invalidateListCache(id);
     return evento;
   }
 
-  /** Invalida as listas de eventos sempre que algo muda (create/update/delete). */
-  private async invalidateListCache() {
+  /** Invalida as listas e detalhes de eventos sempre que algo muda. */
+  private async invalidateListCache(id?: string) {
     await this.redis.del(CACHE_KEYS.eventsPublished);
     await this.redis.del(CACHE_KEYS.eventsAll);
+    if (id) {
+      await this.redis.del(CACHE_KEYS.eventById(id));
+    }
   }
 }

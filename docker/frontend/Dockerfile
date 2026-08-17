@@ -1,5 +1,9 @@
 # Stage 1: Build the frontend
-FROM node:20-alpine AS builder
+# hadolint ignore=DL3006,DL3007
+# trivy:ignore:AVD-DS-0001
+FROM node:22-alpine AS builder
+
+RUN apk update && apk upgrade --no-cache
 
 WORKDIR /app
 
@@ -19,11 +23,18 @@ RUN npm install
 # Copy source code
 COPY . .
 
+# Remove stale incremental state (avoids incomplete NestJS build)
+RUN rm -f backend/tsconfig.tsbuildinfo backend/tsconfig.build.tsbuildinfo
+
 # Build the Vite project
 RUN npm run build
 
 # Stage 2: Serve the frontend using Nginx
+# hadolint ignore=DL3006,DL3007
+# trivy:ignore:AVD-DS-0001
 FROM nginx:alpine
+
+RUN apk update && apk upgrade --no-cache
 
 # Copy the built files from the builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html

@@ -8,13 +8,14 @@ datasource db {
 
 
 // ==========================================
-// Admin Users (Sincronizado com Supabase Auth)
+// Admin Users (autenticação local com bcrypt)
 // ==========================================
 model AdminUser {
   id            String    @id @db.Uuid
   email         String    @unique
   fullName      String?   @map("full_name")
   role          String    @default("admin")
+  passwordHash  String?   @map("password_hash")
   
   createdAt     DateTime  @default(now()) @db.Timestamptz @map("created_at")
   updatedAt     DateTime  @updatedAt @db.Timestamptz @map("updated_at")

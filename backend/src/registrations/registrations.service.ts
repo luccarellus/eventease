@@ -73,10 +73,19 @@ export class RegistrationsService {
 
     const inscricao = await this.prisma.inscricaoEvento.create({ data });
     await this.redis.del(CACHE_KEYS.registrationsByEvent(data.eventoId));
+    await this.redis.del(
+      CACHE_KEYS.registrationCheck(data.eventoId, data.participanteId),
+    );
     return inscricao;
   }
 
   async checkRegistration(eventoId: string, participanteId: string) {
+    const key = CACHE_KEYS.registrationCheck(eventoId, participanteId);
+    const cached = safeParse<{ registered: boolean }>(
+      await this.redis.get(key),
+    );
+    if (cached) return cached;
+
     const reg = await this.prisma.inscricaoEvento.findUnique({
       where: {
         unique_evento_participante: {
@@ -85,7 +94,9 @@ export class RegistrationsService {
         },
       },
     });
-    return { registered: !!reg };
+    const result = { registered: !!reg };
+    await this.redis.set(key, JSON.stringify(result), 30);
+    return result;
   }
 
   async findAll() {

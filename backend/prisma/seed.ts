@@ -7,17 +7,12 @@ dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
-import { createClient } from '@supabase/supabase-js';
+import * as bcrypt from 'bcrypt';
 
 const connectionString = process.env.DATABASE_URL;
 const pool = new pg.Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 const ADMIN_EMAIL = process.env.ADMIN_SEED_EMAIL || 'lucassantos.-@outlook.com';
 const ADMIN_PASSWORD = process.env.ADMIN_SEED_PASSWORD;
@@ -42,38 +37,36 @@ async function main() {
   if (!existingUser) {
     const rawPassword = ADMIN_PASSWORD || generateSecurePassword();
     const generated = !ADMIN_PASSWORD;
+    const passwordHash = await bcrypt.hash(rawPassword, 10);
 
-    console.log(`Criando usuário administrador no Supabase Auth (${email})...`);
+    console.log(`Criando usuário administrador local (${email})...`);
 
-    const { data, error } = await supabase.auth.admin.createUser({
-      email,
-      password: rawPassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name: 'Administrador',
-      },
-      app_metadata: {
+    const user = await prisma.adminUser.create({
+      data: {
+        email,
+        fullName: 'Administrador',
         role: 'admin',
+        passwordHash,
       },
     });
 
-    if (error) {
-      console.error('❌ Erro ao criar usuário no Supabase Auth:', error.message);
-      return;
-    }
-
-    console.log(`✅ Usuário administrador criado com sucesso no Supabase Auth: ${data.user?.id}`);
+    console.log(`✅ Usuário administrador criado com sucesso: ${user.id}`);
     if (generated) {
       // Nunca logar a senha. Defina ADMIN_SEED_PASSWORD no ambiente e rode o seed de novo
       // se precisar de uma senha conhecida.
       console.log('ℹ️  A senha foi gerada aleatoriamente e NÃO é exibida por segurança.');
       console.log('ℹ️  Para definir uma senha conhecida, configure ADMIN_SEED_PASSWORD antes de rodar o seed.');
-      console.log('ℹ️  Você pode redefinir a senha via painel do Supabase Auth.');
     }
   } else {
+    // Garante a role admin e, se ADMIN_SEED_PASSWORD foi definida, redefine a senha.
     await prisma.adminUser.update({
       where: { email },
-      data: { role: 'admin' },
+      data: {
+        role: 'admin',
+        ...(ADMIN_PASSWORD
+          ? { passwordHash: await bcrypt.hash(ADMIN_PASSWORD, 10) }
+          : {}),
+      },
     });
     console.log(`ℹ️ O usuário administrador ${email} já existe na tabela admin_users. A role foi atualizada para 'admin'.`);
   }

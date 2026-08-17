@@ -6,6 +6,7 @@
 export const CACHE_KEYS = {
   eventsPublished: 'events:published',
   eventsAll: 'events:all',
+  eventById: (id: string) => `event:${id}`,
   participantByEmail: (email: string) =>
     `participant:email:${email.trim().toLowerCase()}`,
   participantByCode: (code: string) =>
@@ -13,6 +14,8 @@ export const CACHE_KEYS = {
   participantsCount: 'metrics:participants-count',
   registrationsByEvent: (eventoId: string) =>
     `registrations:event:${eventoId}`,
+  registrationCheck: (eventoId: string, participanteId: string) =>
+    `registration:check:${eventoId}:${participanteId}`,
 } as const;
 
 export const CACHE_TTL = {

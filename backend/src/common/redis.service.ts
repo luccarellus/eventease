@@ -153,6 +153,17 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return this.client;
   }
 
+  /** Retorna true se a conexão com o Redis estiver ativa e respondendo PONG */
+  async ping(): Promise<boolean> {
+    if (!this.client || !this.isConnected) return false;
+    try {
+      const res = await this.client.ping();
+      return res === 'PONG';
+    } catch {
+      return false;
+    }
+  }
+
   async get(key: string): Promise<string | null> {
     if (!this.client || !this.isConnected) return null;
     try {

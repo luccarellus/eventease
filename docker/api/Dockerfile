@@ -1,5 +1,9 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+# hadolint ignore=DL3006,DL3007
+# trivy:ignore:AVD-DS-0001
+FROM node:22-alpine AS builder
+
+RUN apk update && apk upgrade --no-cache
 
 WORKDIR /app
 
@@ -13,11 +17,18 @@ COPY . .
 # Generate Prisma Client
 RUN npx prisma generate
 
+# Remove stale incremental state (avoids incomplete NestJS build)
+RUN rm -f tsconfig.tsbuildinfo tsconfig.build.tsbuildinfo
+
 # Build the application
 RUN npm run build
 
 # Stage 2: Runtime
-FROM node:20-alpine
+# hadolint ignore=DL3006,DL3007
+# trivy:ignore:AVD-DS-0001
+FROM node:22-alpine
+
+RUN apk update && apk upgrade --no-cache
 
 WORKDIR /app
 

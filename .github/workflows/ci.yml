@@ -47,7 +47,7 @@ jobs:
     name: E2E (backend)
     runs-on: ubuntu-latest
     # Só executa se as credenciais de teste forem configuradas nos Secrets do repositório.
-    if: ${{ secrets.E2E_DATABASE_URL != '' && secrets.E2E_SUPABASE_URL != '' }}
+    if: ${{ secrets.E2E_DATABASE_URL != '' }}
     defaults:
       run:
         working-directory: backend
@@ -67,9 +67,6 @@ jobs:
           JWT_SECRET: ${{ secrets.E2E_JWT_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.E2E_JWT_REFRESH_SECRET }}
           COOKIE_SECRET: ${{ secrets.E2E_COOKIE_SECRET }}
-          SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
           RECAPTCHA_SECRET_KEY: ${{ secrets.E2E_RECAPTCHA_SECRET_KEY }}
           RECAPTCHA_MIN_SCORE: '0.5'
           FRONTEND_URL: http://localhost:3000

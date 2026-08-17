@@ -8,7 +8,7 @@ export function isNetworkError(error: unknown): boolean {
   }
 
   // NOTA: evite matches amplos como 'not found' — eles mascaram erros legítimos
-  // (ex.: 'User not found' do Supabase) como indisponibilidade de serviço.
+  // (ex.: 'User not found') como indisponibilidade de serviço.
   return (
     error.message.includes('fetch failed') ||
     error.message.includes('getaddrinfo ENOTFOUND') ||

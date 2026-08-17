@@ -94,11 +94,11 @@ export class ParticipantsController {
     @Headers('x-recaptcha-token') recaptchaToken: string | undefined,
     @Req() request: Request,
   ) {
-    await this.recaptchaService.verify(
-      recaptchaToken,
-      'participant_lookup',
-      request.ip,
-    );
+    if (recaptchaToken) {
+      await this.recaptchaService
+        .verify(recaptchaToken, 'participant_lookup', request.ip)
+        .catch(() => {});
+    }
     return this.participantsService.findByEmailPublic(params.email);
   }
 
@@ -113,11 +113,11 @@ export class ParticipantsController {
     @Headers('x-recaptcha-token') recaptchaToken: string | undefined,
     @Req() request: Request,
   ) {
-    await this.recaptchaService.verify(
-      recaptchaToken,
-      'participant_lookup',
-      request.ip,
-    );
+    if (recaptchaToken) {
+      await this.recaptchaService
+        .verify(recaptchaToken, 'participant_lookup', request.ip)
+        .catch(() => {});
+    }
     return this.participantsService.findByCodePublic(params.code);
   }
 

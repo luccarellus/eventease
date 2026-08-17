@@ -7,46 +7,19 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
-import { createClient } from '@supabase/supabase-js';
-import { getEnv, requireEnv, requireJwtRefreshSecret } from '../common/env.util';
+import { requireJwtRefreshSecret } from '../common/env.util';
 import { isNetworkError } from '../common/network.util';
 import { NevaProService } from '../common/nevapro.service';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService implements OnModuleInit {
-  private readonly supabase;
-  private readonly supabaseAdmin;
-
   constructor(
     private jwtService: JwtService,
     private prisma: PrismaService,
     private nevaProService: NevaProService,
-  ) {
-    const supabaseUrl = requireEnv('SUPABASE_URL', 'VITE_SUPABASE_URL');
-    const supabaseAnonKey = requireEnv(
-      'SUPABASE_ANON_KEY',
-      'VITE_SUPABASE_ANON_KEY',
-    );
-    const supabaseServiceRoleKey =
-      getEnv('SUPABASE_SERVICE_ROLE_KEY', 'VITE_SUPABASE_SERVICE_ROLE_KEY') ||
-      supabaseAnonKey;
-
-    this.supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      },
-    });
-    this.supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      },
-    });
-  }
+  ) {}
 
   async onModuleInit() {
     try {
@@ -81,10 +54,6 @@ export class AuthService implements OnModuleInit {
     const updated = await this.prisma.adminUser.update({
       where: { id: userId },
       data: { role },
-    });
-
-    await this.supabaseAdmin.auth.admin.updateUserById(userId, {
-      app_metadata: { role },
     });
 
     await this.revokeAllUserRefreshTokens(userId);
@@ -242,42 +211,24 @@ export class AuthService implements OnModuleInit {
     const normalizedEmail = this.normalizeEmail(email);
 
     try {
-      const { data, error } = await this.supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password: pass,
+      const user = await this.prisma.adminUser.findUnique({
+        where: { email: normalizedEmail },
       });
 
-      if (error || !data.user) {
+      if (!user || !user.passwordHash) {
         return null;
       }
 
-      const dbUser = await this.prisma.adminUser.findUnique({
-        where: { id: data.user.id },
-      });
-
-      if (!dbUser) {
-        throw new UnauthorizedException('Credenciais inválidas.');
+      const passwordMatch = await bcrypt.compare(pass, user.passwordHash);
+      if (!passwordMatch) {
+        return null;
       }
 
-      const { data: authData } =
-        await this.supabaseAdmin.auth.admin.getUserById(data.user.id);
-      const authUser = authData?.user ?? data.user;
-      const fullName =
-        authUser.user_metadata?.full_name ?? dbUser.fullName ?? null;
-
-      const syncedUser = await this.prisma.adminUser.update({
-        where: { id: authUser.id },
-        data: {
-          email: authUser.email ?? normalizedEmail,
-          fullName,
-        },
-      });
-
       return {
-        id: syncedUser.id,
-        email: syncedUser.email,
-        role: syncedUser.role,
-        fullName: syncedUser.fullName ?? null,
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName ?? null,
       };
     } catch (error) {
       if (isNetworkError(error)) {
@@ -294,40 +245,23 @@ export class AuthService implements OnModuleInit {
     const normalizedEmail = this.normalizeEmail(email);
 
     try {
-      const { data, error } = await this.supabaseAdmin.auth.admin.createUser({
-        email: normalizedEmail,
-        password: pass,
-        email_confirm: true,
-        user_metadata: {
-          full_name: fullName,
-        },
-        app_metadata: {
-          role: 'user',
-        },
+      const existing = await this.prisma.adminUser.findUnique({
+        where: { email: normalizedEmail },
       });
 
-      if (error || !data.user) {
-        console.error(
-          '[Auth] Erro ao criar usuário no Supabase:',
-          error?.message ?? 'resposta vazia',
-        );
-        throw new UnauthorizedException(
-          'Falha ao registrar usuário. Tente novamente ou contate o suporte.',
-        );
+      if (existing) {
+        throw new UnauthorizedException('E-mail já cadastrado.');
       }
 
-      const user = await this.prisma.adminUser.upsert({
-        where: { id: data.user.id },
-        update: {
+      const passwordHash = await bcrypt.hash(pass, 10);
+
+      const user = await this.prisma.adminUser.create({
+        data: {
+          id: crypto.randomUUID(),
           email: normalizedEmail,
           fullName: fullName ?? null,
           role: 'user',
-        },
-        create: {
-          id: data.user.id,
-          email: normalizedEmail,
-          fullName: fullName ?? null,
-          role: 'user',
+          passwordHash,
         },
       });
 

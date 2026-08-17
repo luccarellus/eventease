@@ -56,8 +56,8 @@ export class PrismaService
     if (!rawConnectionString) {
       throw new Error(
         'DATABASE_URL não está configurada. ' +
-          'Defina a variável de ambiente DATABASE_URL no dashboard do Vercel ' +
-          'com a URL de conexão do PostgreSQL (Supabase Pooler: porta 6543).',
+          'Defina a variável de ambiente DATABASE_URL no painel da sua VPS ' +
+          '(Easypanel/Docker) com a URL de conexão do seu PostgreSQL.',
       );
     }
 
@@ -112,10 +112,10 @@ export class PrismaService
           maskConnectionString(this.connectionString),
         );
         console.error(
-          '[PrismaService] Formato esperado (Supabase Pooler):',
+          '[PrismaService] Formato esperado:',
         );
         console.error(
-          '[PrismaService]   postgresql://postgres.xxxx:senha@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?pgbouncer=true',
+          '[PrismaService]   postgresql://usuario:senha@host:5432/eventease',
         );
       }
       console.error(

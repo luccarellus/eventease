@@ -9,7 +9,7 @@ import { AllExceptionsFilter } from './all-exceptions.filter';
 export function configureApp(app: INestApplication) {
   const isProduction = process.env.NODE_ENV === 'production';
 
-  // Confia no primeiro proxy (Vercel/Nginx) para IP correto em rate-limit e reCAPTCHA
+  // Confia no primeiro proxy (Nginx) para IP correto em rate-limit e reCAPTCHA
   (app as NestExpressApplication).set('trust proxy', 1);
 
   // Cookie Parser for secure JWT handling - fallback to JWT_SECRET or dev secret if not set
@@ -26,10 +26,8 @@ export function configureApp(app: INestApplication) {
   );
 
   // CORS Configuration
-  const allowedOrigins = [
-    ...(getEnv('FRONTEND_URL', 'VITE_FRONTEND_URL') || '').split(','),
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
-  ]
+  const allowedOrigins = (getEnv('FRONTEND_URL', 'VITE_FRONTEND_URL') || '')
+    .split(',')
     .map((o) => o.trim())
     .filter(Boolean);
 
