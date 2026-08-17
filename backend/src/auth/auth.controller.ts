@@ -174,7 +174,7 @@ export class AuthController {
       );
       // Continua mesmo se falhar — o cookie é limpo no cliente
     }
-    response.clearCookie('access_token');
+    response.clearCookie('access_token', getAccessTokenCookieOptions());
     response.clearCookie('refresh_token', getRefreshTokenClearCookieOptions());
     return { message: 'Logout bem-sucedido' };
   }

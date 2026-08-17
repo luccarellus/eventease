@@ -2,6 +2,7 @@ import { Controller, Get, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { PrismaService } from '../prisma.service';
 import { RedisService } from '../common/redis.service';
+import { getEnv } from '../common/env.util';
 
 @Controller('health')
 export class HealthController {
@@ -19,12 +20,19 @@ export class HealthController {
       dbStatus = 'error';
     }
 
-    let redisStatus: 'ok' | 'error' = 'ok';
-    try {
-      const isRedisOk = await this.redisService.ping();
-      redisStatus = isRedisOk ? 'ok' : 'error';
-    } catch {
-      redisStatus = 'error';
+    // Sem REDIS_HOST configurado (ex.: Vercel) o cache é opcional — não
+    // degrada o serviço. Só conta como erro se o Redis foi configurado e
+    // está fora do ar.
+    let redisStatus: 'ok' | 'error' | 'disabled' = 'ok';
+    if (!getEnv('REDIS_HOST')) {
+      redisStatus = 'disabled';
+    } else {
+      try {
+        const isRedisOk = await this.redisService.ping();
+        redisStatus = isRedisOk ? 'ok' : 'error';
+      } catch {
+        redisStatus = 'error';
+      }
     }
 
     const degraded = dbStatus === 'error' || redisStatus === 'error';

@@ -11,7 +11,9 @@ O projeto utiliza uma arquitetura monorepo simplificada contendo uma aplicação
 - **Frontend**: [React 19](https://react.dev/), [Vite](https://vite.dev/), [React Router v7](https://reactrouter.com/), [TailwindCSS](https://tailwindcss.com/), [Motion](https://motion.dev/) (animações), [Lucide React](https://lucide.dev/) (ícones) e [Sonner](https://sonner.pages.dev/) (toasts).
 - **Backend**: [NestJS 11](https://nestjs.com/), [Passport JWT](http://www.passportjs.org/) (autenticação segura via Cookies), [Helmet](https://helmetjs.github.io/) (headers de segurança), [Throttler](https://github.com/nestjs/throttler) (rate-limiting) e [Jest](https://jestjs.io/) (testes e2e).
 - **Banco de Dados**: [PostgreSQL](https://www.postgresql.org/) com [Prisma ORM](https://www.prisma.io/).
-- **Hospedagem**: Docker na VPS (frontend + API + Redis + Nginx).
+- **Hospedagem**: [Vercel](https://vercel.com) (frontend + API serverless) e
+  [Supabase](https://supabase.com) (PostgreSQL). O deploy legado via Docker na
+  VPS (frontend + API + Redis + Nginx) também está documentado ao final.
 
 ---
 
@@ -118,22 +120,30 @@ Acesse o sistema localmente em: `http://localhost:3000`
 
 ---
 
-## 🔄 Migração: Supabase → PostgreSQL independente
+## 🔄 Migração: PostgreSQL da VPS → Supabase
 
-O sistema não depende mais do Supabase: a autenticação (login, cadastro e
-roles) agora é feita 100% no próprio PostgreSQL, com senhas armazenadas em
-`admin_users.password_hash` (bcrypt). O `dump.sql` do repositório já inclui
-tudo que você precisa — inclusive uma tabela `supabase_auth_users_backup` com
-os hashes das senhas dos admins, para que **ninguém precise trocar a senha**.
+A autenticação é 100% própria do sistema (tabela `admin_users` com
+`password_hash` em bcrypt) — o Supabase é usado **apenas como banco de dados
+PostgreSQL hospedado**. O `dump.sql` do repositório já inclui tudo que você
+precisa, inclusive uma tabela `supabase_auth_users_backup` com os hashes das
+senhas dos admins, para que **ninguém precise trocar a senha**.
 
 ### Passo a passo
 
-1. **Crie o banco PostgreSQL** em qualquer provedor (VPS, Docker, Neon, etc.).
+1. **Crie um projeto no Supabase** (recomendado: região `sa-east-1`) e anote as
+   credenciais em **Project Settings → Database → Connection string**:
+
+   - **Pooler (transaction)**: `postgresql://postgres.<ref>@aws-0-<regiao>.pooler.supabase.com:6543/postgres` — usada como `DATABASE_URL` (runtime).
+   - **Direct**: `postgresql://postgres.<ref>@aws-0-<regiao>.pooler.supabase.com:5432/postgres` — usada como `DIRECT_URL` (migrations).
+
+   > O usuário `postgres` usa a senha do banco do projeto. Se o dump falhar com
+   > `CREATE EXTENSION`, comente as linhas de `uuid-ossp`/`pgcrypto` (o Supabase
+   > já entrega as funções necessárias, como `gen_random_uuid()`).
 
 2. **Importe o dump** (cria tabelas, dados e a tabela de backup de senhas):
 
    ```bash
-   psql "$DATABASE_URL" < dump.sql
+   psql "$DIRECT_URL" < dump.sql
    ```
 
 3. **Marque as migrations antigas como aplicadas** — o dump já criou o schema,
@@ -144,31 +154,29 @@ os hashes das senhas dos admins, para que **ninguém precise trocar a senha**.
    npx prisma migrate resolve --applied 20260804120000_participante_email_unique --schema=backend/prisma/schema.prisma
    ```
 
-4. **Aplique a migration nova** (adiciona `password_hash` em `admin_users` e
-   copia os hashes do backup):
+4. **Aplique a migration restante** (adiciona `password_hash` em `admin_users`
+   e copia os hashes do backup):
 
    ```bash
    npx prisma migrate deploy --schema=backend/prisma/schema.prisma
    ```
 
    Confira: `SELECT email, password_hash IS NOT NULL AS tem_senha FROM admin_users;`
-   deve retornar `tem_senha = true` para os 3 admins.
+   deve retornar `tem_senha = true` para os admins.
 
-5. **Atualize o `.env`**: aponte `DATABASE_URL`/`DIRECT_URL` para o novo
-   PostgreSQL e **remova** as variáveis `SUPABASE_URL`, `SUPABASE_ANON_KEY` e
-   `SUPABASE_SERVICE_ROLE_KEY`.
-
-6. **Substitua a senha de algum admin se necessário**: com
+5. **Substitua a senha de algum admin se necessário**: com
    `ADMIN_SEED_PASSWORD` definida, rode o seed para redefini-la:
 
    ```bash
    npx prisma db seed --schema=backend/prisma/schema.prisma
    ```
 
-7. **Pronto**: os admins entram com as mesmas senhas de antes. Depois de
-   validar em produção, remova as variáveis do Supabase do painel
-   (Easypanel/VPS) e delete o projeto no Supabase. Os arquivos `supabase/` e
-   `supabase_setup.sql` ficaram obsoletos e podem ser excluídos.
+6. **Pronto**. Se o banco da VPS tiver dados mais novos que o `dump.sql`, gere
+   um dump fresco antes de desligar a VPS:
+
+   ```bash
+   pg_dump "$DATABASE_URL_VPS" > dump.sql
+   ```
 
 ---
 
@@ -183,7 +191,51 @@ npm run test:e2e
 
 ---
 
-## 🌐 Como Implantar na VPS (Docker Compose)
+## 🌐 Como Implantar na Vercel + Supabase
+
+O frontend (React/Vite) e a API (NestJS) rodam juntos na Vercel: `/api/*` vira
+uma serverless function (`api/index.ts`, que sobe o NestJS compilado) e o
+restante é o site estático. O banco fica no Supabase (PostgreSQL). O Redis não
+é usado na Vercel — o cache fica desativado e a API opera normalmente (modo
+fallback, já tratado no código).
+
+1. **Banco no Supabase**: siga a seção "Migração: PostgreSQL da VPS →
+   Supabase" acima para importar o `dump.sql` e aplicar as migrations.
+
+2. **Importe o projeto na Vercel** ([vercel.com/new](https://vercel.com/new)):
+   conecte o repositório git. A Vercel detecta o Vite (build `npm run build`,
+   que compila o backend e o frontend) e o `vercel.json` roteia `/api/*` para a
+   function.
+
+3. **Variáveis de ambiente** (Project → Settings → Environment Variables):
+
+   - `DATABASE_URL` — Supabase **pooler** (porta `6543`)
+   - `DIRECT_URL` — Supabase **direct** (porta `5432`) — usada só em
+     migrations/CLI locais
+   - `JWT_SECRET`, `JWT_REFRESH_SECRET`, `COOKIE_SECRET`
+   - `FRONTEND_URL` — domínio final na Vercel (ex.:
+     `https://eventease.olharjovem.org`)
+   - `RECAPTCHA_SECRET_KEY`, `RECAPTCHA_MIN_SCORE`
+   - `VITE_RECAPTCHA_SITE_KEY` (usada no build do frontend)
+   - `NEVAPRO_WEBHOOK_URL`, `NEVAPRO_WEBHOOK_SECRET`
+   - ⚠️ **Não** defina `REDIS_HOST` — sem Redis na Vercel (cache desativado).
+
+4. **Deploy**: cada push na `main` faz build + deploy automáticos. A API sobe
+   como uma única serverless function; o primeiro request após o deploy tem
+   alguns segundos de cold start (comportamento esperado).
+
+5. **DNS**: aponte o domínio para a Vercel (Project → Settings → Domains).
+
+6. **Teste**: `https://SEU-DOMINIO/api/events` deve retornar a lista de
+   eventos em JSON. Em caso de erro no boot, `https://SEU-DOMINIO/api/health`
+   mostra o diagnóstico (sem depender do NestJS).
+
+---
+
+## (Legado) Como Implantar na VPS (Docker Compose)
+
+> O deploy padrão agora é Vercel + Supabase. Este fluxo docker-compose fica
+> documentado como alternativa para quem prefere manter tudo na própria VPS.
 
 O projeto roda inteiramente na sua VPS via Docker Compose: Nginx (proxy),
 frontend estático, API NestJS e Redis. O PostgreSQL fica fora dos containers
