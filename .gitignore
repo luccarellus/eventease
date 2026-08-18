@@ -8,4 +8,5 @@ coverage/
 .env*
 !.env.example
 dump.sql
+.supabase/
 
