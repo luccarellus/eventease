@@ -11,7 +11,6 @@ export default defineConfig({
     seed: "npx ts-node --transpile-only backend/prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
-    directUrl: process.env["DIRECT_URL"],
+    url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
   },
 });
