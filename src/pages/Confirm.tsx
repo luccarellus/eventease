@@ -267,17 +267,17 @@ export default function Confirm() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8 md:py-12 px-4 md:px-6">
-      <div className="text-center mb-8 md:mb-12">
+    <div className="max-w-4xl mx-auto py-6 sm:py-8 md:py-12 px-3 sm:px-4 md:px-6">
+      <div className="text-center mb-6 sm:mb-8 md:mb-12">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-primary text-[9px] md:text-[10px] font-bold uppercase tracking-widest mb-4 md:mb-6"
+          className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-primary text-[9px] md:text-[10px] font-bold uppercase tracking-widest mb-3 md:mb-6"
         >
           Controle de Acesso
         </motion.div>
-        <h1 className="heading-display text-3xl md:text-5xl mb-3 md:mb-4 text-white leading-tight">Validação de <span className="text-primary">Check-in</span></h1>
-        <p className="text-white/40 text-base md:text-xl font-medium max-w-xl mx-auto px-4">Valide as credenciais dos participantes para entrada no evento em tempo real.</p>
+        <h1 className="heading-display text-2xl sm:text-3xl md:text-5xl mb-2 sm:mb-3 md:mb-4 text-white leading-tight">Validação de <span className="text-primary">Check-in</span></h1>
+        <p className="text-white/40 text-xs sm:text-base md:text-xl font-medium max-w-xl mx-auto px-2">Valide as credenciais dos participantes para entrada no evento em tempo real.</p>
       </div>
 
       <AnimatePresence mode="wait">
@@ -287,24 +287,24 @@ export default function Confirm() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-0 md:p-6 backdrop-blur-md"
+            className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-0 md:p-6 backdrop-blur-md pt-safe pb-safe"
           >
             <Card className="w-full h-full md:h-auto md:max-w-md mx-auto glass-card overflow-hidden border-white/20 rounded-none md:rounded-[2.5rem] shadow-3xl bg-black flex flex-col">
-              <div className="p-4 md:p-6 flex items-center justify-between border-b border-white/10 shrink-0 mt-8 md:mt-0">
+              <div className="p-4 md:p-6 flex items-center justify-between border-b border-white/10 shrink-0">
                 <span className="text-white font-bold text-xs uppercase tracking-widest">Leitor de QR Code</span>
-                <Button variant="ghost" size="icon" onClick={() => setScannerActive(false)} className="rounded-full hover:bg-white/10 text-white">
+                <Button variant="ghost" size="icon" onClick={() => setScannerActive(false)} className="rounded-full hover:bg-white/10 text-white touch-press h-10 w-10">
                   <X className="w-6 h-6" />
                 </Button>
               </div>
 
-              <div className="flex-grow relative flex items-center justify-center bg-black">
+              <div className="flex-grow relative flex items-center justify-center bg-black min-h-[300px]">
                 <QRScanner
                   onScan={onScanSuccess}
                   onClose={() => setScannerActive(false)}
                 />
               </div>
 
-              <div className="p-6 text-center shrink-0 pb-12 md:pb-6 border-t border-white/10">
+              <div className="p-4 sm:p-6 text-center shrink-0 border-t border-white/10">
                 <p className="text-white/40 text-xs font-medium">Aponte a câmera para o QR Code da credencial.</p>
               </div>
             </Card>
@@ -316,26 +316,26 @@ export default function Confirm() {
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, scale: 0.95, filter: 'blur(10px)' }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-2xl mx-auto px-2 md:px-0"
+            className="max-w-2xl mx-auto px-1 sm:px-2 md:px-0"
           >
             <Card className="glass-card shadow-3xl overflow-hidden border-white/[0.08] rounded-[2rem] md:rounded-[2.5rem]">
-              <CardHeader className="bg-white/[0.02] border-b border-white/[0.08] p-5 md:p-12 pb-6 md:pb-10">
+              <CardHeader className="bg-white/[0.02] border-b border-white/[0.08] p-5 sm:p-8 md:p-12 pb-4 sm:pb-6 md:pb-10">
                 <div>
-                  <CardTitle className="font-display text-2xl md:text-3xl text-white leading-none mb-2 md:mb-3 tracking-tight">Credencial de Acesso</CardTitle>
-                  <CardDescription className="text-white/30 text-sm md:text-lg font-medium">Escaneie ou digite o código alfanumérico.</CardDescription>
+                  <CardTitle className="font-display text-xl sm:text-2xl md:text-3xl text-white leading-none mb-2 md:mb-3 tracking-tight">Credencial de Acesso</CardTitle>
+                  <CardDescription className="text-white/30 text-xs sm:text-sm md:text-lg font-medium">Escaneie ou digite o código alfanumérico.</CardDescription>
                 </div>
               </CardHeader>
-              <CardContent className="p-5 md:p-12 pb-5 md:pb-8">
-                <form onSubmit={handleManualCheckin} className="space-y-6 md:space-y-8">
-                  <div className="space-y-2">
+              <CardContent className="p-5 sm:p-8 md:p-12 pb-5 md:pb-8">
+                <form onSubmit={handleManualCheckin} className="space-y-4 sm:space-y-6 md:space-y-8">
+                  <div className="space-y-1.5 sm:space-y-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Selecione o Evento</label>
                     {eventos.length === 0 ? (
-                      <div className="text-sm text-red-400 pl-1 font-medium">Nenhum evento criado. Crie um evento no Dashboard antes de realizar check-in.</div>
+                      <div className="text-xs sm:text-sm text-red-400 pl-1 font-medium">Nenhum evento criado. Crie um evento no Dashboard antes de realizar check-in.</div>
                     ) : (
                       <select
                         value={selectedEventoId}
                         onChange={(e) => setSelectedEventoId(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-base focus:outline-none focus:border-primary transition-all duration-300"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 px-4 text-white text-base md:text-sm focus:outline-none focus:border-primary transition-all duration-300"
                         title="Selecione o Evento"
                         aria-label="Selecione o Evento para validação de ingresso"
                       >
@@ -348,7 +348,7 @@ export default function Confirm() {
                     )}
                   </div>
                   <div className="relative group">
-                    <Search className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 w-6 h-6 md:w-8 md:h-8 text-white/10 transition-colors group-focus-within:text-primary" />
+                    <Search className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-5 h-5 md:w-8 md:h-8 text-white/10 transition-colors group-focus-within:text-primary pointer-events-none" />
                     <Input
                       value={codigo}
                       onChange={(e) => {
@@ -360,28 +360,28 @@ export default function Confirm() {
                         setCodigo(val);
                       }}
                       placeholder="EVT-000000"
-                      className="liquid-input pl-12 md:pl-16 h-14 md:h-24 text-xl md:text-4xl font-display font-black tracking-[0.08em] md:tracking-[0.15em] uppercase placeholder:text-white/5 border-white/[0.05]"
+                      className="liquid-input pl-11 md:pl-16 h-13 sm:h-16 md:h-24 text-lg sm:text-2xl md:text-4xl font-display font-black tracking-[0.08em] md:tracking-[0.15em] uppercase placeholder:text-white/5 border-white/[0.05]"
                       autoFocus
                     />
                   </div>
                   <Button
                     type="submit"
                     disabled={loading || !codigo.trim() || codigo.trim() === 'EVT-' || !selectedEventoId}
-                    className="modern-button w-full h-14 md:h-20 text-base md:text-2xl tracking-widest font-black uppercase shadow-[0_10px_35px_rgba(0,255,163,0.3)] mt-2"
+                    className="modern-button w-full h-12 sm:h-16 md:h-20 text-xs sm:text-base md:text-2xl tracking-widest font-black uppercase shadow-[0_10px_35px_rgba(0,255,163,0.3)] mt-2 touch-press"
                   >
                     {loading && <LoadingSpinner size="sm" variant="black" className="mr-2 md:w-7 md:h-7" />}
                     {loading ? 'Validando...' : 'Confirmar Presença'}
-                    {!loading && <UserCheck className="w-5 h-5 md:w-7 md:h-7 ml-2" />}
+                    {!loading && <UserCheck className="w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 ml-2" />}
                   </Button>
                 </form>
               </CardContent>
-              <CardFooter className="bg-white/[0.01] p-5 md:p-10 flex flex-col sm:flex-row items-center justify-center gap-4 md:gap-6 border-t border-white/[0.08]">
+              <CardFooter className="bg-white/[0.01] p-4 sm:p-6 md:p-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 border-t border-white/[0.08]">
                 <span className="text-[9px] md:text-[10px] text-white/20 uppercase tracking-[0.3em] font-black">Módulo de Escaneamento</span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setScannerActive(true)}
-                  className="rounded-full gap-2 border-primary/20 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all h-10 md:h-12 px-6 md:px-8 font-bold text-[10px] md:text-xs uppercase tracking-widest cursor-pointer"
+                  className="rounded-full gap-2 border-primary/20 bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all h-10 md:h-12 px-5 sm:px-6 md:px-8 font-bold text-[10px] md:text-xs uppercase tracking-widest cursor-pointer touch-press"
                 >
                   <QrCode className="w-4 h-4 md:w-5 md:h-5 mr-1" /> Ativar Scanner
                 </Button>
@@ -394,7 +394,7 @@ export default function Confirm() {
             initial={{ opacity: 0, y: 30, scale: 0.95, filter: 'blur(10px)' }}
             animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-6 md:space-y-8 max-w-2xl mx-auto px-2 md:px-0"
+            className="space-y-4 sm:space-y-6 md:space-y-8 max-w-2xl mx-auto px-1 sm:px-2 md:px-0"
           >
             <Card className={cn(
               "glass-card overflow-hidden shadow-3xl border-2 transition-all duration-700 rounded-[2rem] md:rounded-[2.5rem]",
@@ -409,56 +409,56 @@ export default function Confirm() {
                     "bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.5)]"
               )} />
 
-              <CardContent className="p-6 md:p-14 flex flex-col items-center">
+              <CardContent className="p-5 sm:p-8 md:p-14 flex flex-col items-center">
                 {result.status === 'success' && (
                   <>
                     <motion.div
                       initial={{ scale: 0 }} animate={{ scale: 1 }}
-                      className="w-20 h-20 md:w-28 md:h-28 bg-emerald-500/10 rounded-[2rem] md:rounded-[3rem] flex items-center justify-center text-emerald-400 mb-6 md:mb-10 border border-emerald-500/20 shadow-2xl"
+                      className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 bg-emerald-500/10 rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] flex items-center justify-center text-emerald-400 mb-4 sm:mb-6 md:mb-10 border border-emerald-500/20 shadow-2xl"
                     >
-                      <CheckCircle2 className="w-10 h-10 md:w-14 md:h-14" />
+                      <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14" />
                     </motion.div>
-                    <CardTitle className="text-3xl md:text-5xl font-display text-center mb-2 md:mb-4 text-white leading-tight tracking-tight">Autorizado!</CardTitle>
-                    <CardDescription className="text-center text-base md:text-xl mb-8 md:mb-12 font-medium text-white/40 italic">Check-in processado e sincronizado.</CardDescription>
+                    <CardTitle className="text-2xl sm:text-3xl md:text-5xl font-display text-center mb-1.5 sm:mb-2 md:mb-4 text-white leading-tight tracking-tight">Autorizado!</CardTitle>
+                    <CardDescription className="text-center text-xs sm:text-base md:text-xl mb-6 sm:mb-8 md:mb-12 font-medium text-white/40 italic">Check-in processado e sincronizado.</CardDescription>
                   </>
                 )}
 
 
                 {result.status === 'already' && (
                   <>
-                    <div className="w-20 h-20 md:w-28 md:h-28 bg-orange-500/10 rounded-[2rem] md:rounded-[3rem] flex items-center justify-center text-orange-400 mb-6 md:mb-10 border border-orange-500/20 shadow-2xl">
-                      <AlertCircle className="w-10 h-10 md:w-14 md:h-14" />
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 bg-orange-500/10 rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] flex items-center justify-center text-orange-400 mb-4 sm:mb-6 md:mb-10 border border-orange-500/20 shadow-2xl">
+                      <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14" />
                     </div>
-                    <CardTitle className="text-3xl md:text-5xl font-display text-center mb-4 text-white leading-tight tracking-tight">Já Confirmado</CardTitle>
-                    <CardDescription className="text-center text-xl mb-12 font-medium text-white/40 italic">Esta credencial já foi validada anteriormente.</CardDescription>
+                    <CardTitle className="text-2xl sm:text-3xl md:text-5xl font-display text-center mb-2 sm:mb-4 text-white leading-tight tracking-tight">Já Confirmado</CardTitle>
+                    <CardDescription className="text-center text-xs sm:text-base md:text-xl mb-6 sm:mb-8 md:mb-12 font-medium text-white/40 italic">Esta credencial já foi validada anteriormente.</CardDescription>
                   </>
                 )}
 
                 {result.status === 'notfound' && (
                   <>
-                    <div className="w-20 h-20 md:w-28 md:h-28 bg-red-500/10 rounded-[2rem] md:rounded-[3rem] flex items-center justify-center text-red-400 mb-6 md:mb-10 border border-red-500/20 shadow-2xl">
-                      <AlertCircle className="w-10 h-10 md:w-14 md:h-14" />
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 bg-red-500/10 rounded-2xl sm:rounded-[2rem] md:rounded-[3rem] flex items-center justify-center text-red-400 mb-4 sm:mb-6 md:mb-10 border border-red-500/20 shadow-2xl">
+                      <AlertCircle className="w-8 h-8 sm:w-10 sm:h-10 md:w-14 md:h-14" />
                     </div>
-                    <CardTitle className="text-3xl md:text-5xl font-display text-center mb-4 text-white leading-tight tracking-tight">Falha na Busca</CardTitle>
-                    <CardDescription className="text-center text-base md:text-xl mb-8 md:mb-12 font-medium text-white/40 italic">
-                      Código <span className="font-mono bg-red-500/20 px-3 py-1 rounded-xl text-white font-black tracking-tight">{codigo}</span> inexistente.
+                    <CardTitle className="text-2xl sm:text-3xl md:text-5xl font-display text-center mb-2 sm:mb-4 text-white leading-tight tracking-tight">Falha na Busca</CardTitle>
+                    <CardDescription className="text-center text-xs sm:text-base md:text-xl mb-6 sm:mb-8 md:mb-12 font-medium text-white/40 italic">
+                      Código <span className="font-mono bg-red-500/20 px-2 sm:px-3 py-0.5 sm:py-1 rounded-xl text-white font-black tracking-tight">{codigo}</span> inexistente.
                     </CardDescription>
                   </>
                 )}
 
                 {result.data && (
-                  <div className="w-full grid grid-cols-1 gap-4 mt-8 border-t border-white/5 pt-12">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="w-full grid grid-cols-1 gap-3 sm:gap-4 mt-4 sm:mt-8 border-t border-white/5 pt-6 sm:pt-10 md:pt-12">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4">
                       {result.eventTitle && (
                         <div className="sm:col-span-2">
-                          <InfoRow icon={<Sparkles className="w-5 h-5 text-primary" />} label="Evento" value={result.eventTitle} />
+                          <InfoRow icon={<Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />} label="Evento" value={result.eventTitle} />
                         </div>
                       )}
-                      <InfoRow icon={<User className="w-5 h-5 text-primary" />} label="Participante" value={result.data.nome} />
-                      <InfoRow icon={<Building className="w-5 h-5 text-primary" />} label="Instituição" value={result.data.escola} />
-                      <InfoRow icon={<MapPin className="w-5 h-5 text-primary" />} label="Cidade Base" value={result.data.cidade} />
+                      <InfoRow icon={<User className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />} label="Participante" value={result.data.nome} />
+                      <InfoRow icon={<Building className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />} label="Instituição" value={result.data.escola} />
+                      <InfoRow icon={<MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />} label="Cidade Base" value={result.data.cidade} />
                       <InfoRow
-                        icon={<Clock className="w-5 h-5 text-primary" />}
+                        icon={<Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />}
                         label="Data/Hora Check-in"
                         value={formatEventDate(result.data.confirmado_em, 'time')}
                       />
@@ -466,7 +466,7 @@ export default function Confirm() {
                   </div>
                 )}
 
-                <Button onClick={reset} className="modern-button w-full max-w-sm mt-8 md:mt-16 h-14 md:h-16 shadow-2xl text-base md:text-lg">
+                <Button onClick={reset} className="modern-button w-full max-w-sm mt-6 sm:mt-10 md:mt-16 h-12 sm:h-14 md:h-16 shadow-2xl text-xs sm:text-base md:text-lg touch-press">
                   Próximo Participante
                 </Button>
               </CardContent>
@@ -480,11 +480,11 @@ export default function Confirm() {
 
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-4 p-5 bg-white/[0.03] rounded-3xl border border-white/[0.06] shadow-inner backdrop-blur-xl">
-      <div className="mt-0.5 bg-white/5 p-2.5 rounded-2xl border border-white/5">{icon}</div>
+    <div className="flex items-start gap-3 sm:gap-4 p-3.5 sm:p-5 bg-white/[0.03] rounded-2xl sm:rounded-3xl border border-white/[0.06] shadow-inner backdrop-blur-xl">
+      <div className="mt-0.5 bg-white/5 p-2 sm:p-2.5 rounded-xl sm:rounded-2xl border border-white/5 shrink-0">{icon}</div>
       <div className="min-w-0 flex-1">
-        <p className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/20 leading-none mb-2">{label}</p>
-        <p className="text-base font-bold text-white truncate leading-tight tracking-tight">{value}</p>
+        <p className="text-[8px] sm:text-[9px] uppercase font-bold tracking-[0.2em] text-white/20 leading-none mb-1 sm:mb-2">{label}</p>
+        <p className="text-xs sm:text-base font-bold text-white truncate leading-tight tracking-tight">{value}</p>
       </div>
     </div>
   );

@@ -114,13 +114,13 @@ export default function Login() {
         className="w-full max-w-md"
       >
         <Card className="glass-card shadow-3xl overflow-hidden border-white/[0.04]">
-          <CardHeader className="text-left px-6 sm:px-12 pt-8 sm:pt-12 pb-2">
+          <CardHeader className="text-left px-5 sm:px-12 pt-6 sm:pt-12 pb-2">
             <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em]">Faça login para continuar</span>
-            <CardTitle className="font-display text-3xl font-extrabold tracking-tight text-white mt-1">Acesso da equipe</CardTitle>
+            <CardTitle className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-1">Acesso da equipe</CardTitle>
           </CardHeader>
-          <CardContent className="px-6 sm:px-12 pt-6 sm:pt-8 pb-8 sm:pb-12">
-            <form id="login-form" onSubmit={handleLogin} className="space-y-6">
-              <div className="space-y-2">
+          <CardContent className="px-5 sm:px-12 pt-5 sm:pt-8 pb-6 sm:pb-12">
+            <form id="login-form" onSubmit={handleLogin} className="space-y-5 sm:space-y-6">
+              <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="email" className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">E-mail</Label>
                 <div className="relative group">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within:text-primary transition-colors" />
@@ -130,12 +130,12 @@ export default function Login() {
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="liquid-input pl-12 h-14 border-white/[0.05] focus:ring-primary rounded-2xl"
+                    className="liquid-input pl-12 h-12 sm:h-14 text-base md:text-sm border-white/[0.05] focus:ring-primary rounded-2xl"
                     required
                   />
                 </div>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <Label htmlFor="password" className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">Senha</Label>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within:text-primary transition-colors" />
@@ -145,7 +145,7 @@ export default function Login() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="liquid-input pl-12 h-14 border-white/[0.05] focus:ring-primary rounded-2xl"
+                    className="liquid-input pl-12 h-12 sm:h-14 text-base md:text-sm border-white/[0.05] focus:ring-primary rounded-2xl"
                     required
                   />
                 </div>
@@ -167,7 +167,7 @@ export default function Login() {
 
               <Button
                 type="submit"
-                className="modern-button w-full h-14 text-base font-bold uppercase tracking-wider mt-4"
+                className="modern-button w-full h-12 sm:h-14 text-sm sm:text-base font-bold uppercase tracking-wider mt-4 touch-press"
                 disabled={loading || (lockoutUntil !== null && Date.now() < lockoutUntil)}
               >
                 {loading && <LoadingSpinner size="sm" variant="white" className="mr-2" />}
@@ -175,7 +175,7 @@ export default function Login() {
                 {!loading && (!lockoutUntil || Date.now() >= lockoutUntil) && <ArrowRight className="w-5 h-5 ml-1" />}
               </Button>
 
-              <div className="text-center text-sm text-white/40 mt-4">
+              <div className="text-center text-xs sm:text-sm text-white/40 mt-4">
                 Não tem conta?{' '}
                 <Link to="/cadastro" className="text-primary hover:text-primary-dark transition-colors font-bold">
                   Criar conta

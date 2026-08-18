@@ -630,7 +630,7 @@ export default function Admin() {
       {!selectedEvento ? (
         <>
           {/* Stats Globais */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-6">
             <StatCard
               title="Total de Alunos"
               value={statsGlobal.totalAlunos}
@@ -652,11 +652,11 @@ export default function Admin() {
           </div>
 
           {/* Seletor de Abas */}
-          <div className="flex border-b border-white/10 pb-1 gap-2">
+          <div className="flex border-b border-white/10 pb-1 gap-1 sm:gap-2 overflow-x-auto scrollbar-hide">
             <button
               onClick={() => { setActiveTab('eventos'); setSearchTerm(''); }}
               className={cn(
-                "px-6 py-3 font-bold text-xs uppercase tracking-widest border-b-2 transition-all",
+                "px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-[11px] sm:text-xs uppercase tracking-widest border-b-2 transition-all whitespace-nowrap touch-press",
                 activeTab === 'eventos'
                   ? "border-primary text-white"
                   : "border-transparent text-white/40 hover:text-white/60"
@@ -667,7 +667,7 @@ export default function Admin() {
             <button
               onClick={() => { setActiveTab('alunos'); setSearchTerm(''); }}
               className={cn(
-                "px-6 py-3 font-bold text-xs uppercase tracking-widest border-b-2 transition-all",
+                "px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-[11px] sm:text-xs uppercase tracking-widest border-b-2 transition-all whitespace-nowrap touch-press",
                 activeTab === 'alunos'
                   ? "border-primary text-white"
                   : "border-transparent text-white/40 hover:text-white/60"
@@ -687,10 +687,10 @@ export default function Admin() {
                 exit={{ opacity: 0, y: -15 }}
                 className="space-y-6"
               >
-                <div className="flex justify-between items-center px-2 md:px-0">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 px-1 sm:px-0">
                   <div>
-                    <h2 className="text-xl font-bold text-white">Eventos Cadastrados</h2>
-                    <p className="text-white/40 text-xs mt-1">Planeje e acompanhe as datas dos eventos.</p>
+                    <h2 className="text-lg sm:text-xl font-bold text-white">Eventos Cadastrados</h2>
+                    <p className="text-white/40 text-xs mt-0.5">Planeje e acompanhe as datas dos eventos.</p>
                   </div>
                   <Button
                     onClick={() => {
@@ -707,7 +707,7 @@ export default function Admin() {
                       });
                       setShowCreateEventModal(true);
                     }}
-                    className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-6 shadow-lg shadow-primary/20"
+                    className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-5 sm:px-6 shadow-lg shadow-primary/20 text-xs sm:text-sm touch-press w-full sm:w-auto"
                   >
                     <Plus className="w-4 h-4" />
                     Novo Evento
@@ -715,13 +715,13 @@ export default function Admin() {
                 </div>
 
                 {eventos.length === 0 ? (
-                  <Card className="glass-card text-center p-12 border-white/[0.08] rounded-[2rem]">
+                  <Card className="glass-card text-center p-8 sm:p-12 border-white/[0.08] rounded-[2rem]">
                     <Calendar className="w-12 h-12 text-white/10 mx-auto mb-4" />
                     <h3 className="text-lg font-bold text-white mb-1">Nenhum evento registrado</h3>
                     <p className="text-white/40 text-sm">Crie seu primeiro evento clicando no botão acima.</p>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {eventos.map((evt: Evento) => (
                       <Card
                         key={evt.id}
@@ -730,7 +730,7 @@ export default function Admin() {
                           !evt.publicado && "opacity-75 border-dashed border-white/20"
                         )}
                       >
-                        <CardHeader className="p-6">
+                        <CardHeader className="p-5 sm:p-6">
                           <div className="flex justify-between items-start mb-3">
                             <span className={cn(
                               "px-2.5 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest border flex items-center gap-1.5",
@@ -745,24 +745,24 @@ export default function Admin() {
                               {format(new Date(evt.data), "dd/MM/yyyy", { locale: ptBR })}
                             </span>
                           </div>
-                          <CardTitle className="text-xl font-display font-bold text-white truncate">{evt.titulo}</CardTitle>
+                          <CardTitle className="text-lg sm:text-xl font-display font-bold text-white truncate">{evt.titulo}</CardTitle>
                           <CardDescription className="text-white/40 text-xs truncate mt-1">
                             {evt.local}
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="p-6 pt-0">
+                        <CardContent className="p-5 sm:p-6 pt-0">
                           <p className="text-xs text-white/50 line-clamp-3 mb-4 h-12 leading-relaxed">
                             {evt.descricao || 'Sem descrição.'}
                           </p>
                           <div className="flex gap-2">
                             <Button
                               onClick={() => setSelectedEvento(evt)}
-                              className="flex-1 rounded-xl bg-primary text-white hover:bg-primary-dark transition-all h-10 text-xs font-bold uppercase tracking-wider"
+                              className="flex-1 rounded-xl bg-primary text-white hover:bg-primary-dark transition-all h-10 text-xs font-bold uppercase tracking-wider touch-press"
                             >
                               Inscritos & Estatísticas
                             </Button>
                             <DropdownMenu>
-                              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white/5 text-white/50 hover:text-white" />}>
+                              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white/5 text-white/50 hover:text-white touch-press" />}>
                                 <MoreVertical className="w-4 h-4" />
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="rounded-2xl bg-black/90 border-white/10 p-2 min-w-[170px]">
@@ -831,30 +831,30 @@ export default function Admin() {
               >
                 {/* Tabela de Alunos Geral */}
                 <Card className="glass-card overflow-hidden border-white/[0.08] shadow-3xl rounded-[2rem] md:rounded-[2.5rem]">
-                  <CardHeader className="p-6 md:p-8 lg:p-10 border-b border-white/[0.08] bg-white/[0.02]">
-                    <div className="space-y-6">
+                  <CardHeader className="p-5 sm:p-7 md:p-8 lg:p-10 border-b border-white/[0.08] bg-white/[0.02]">
+                    <div className="space-y-5 sm:space-y-6">
                       {/* Linha 1: Título e Botões de Ação */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="space-y-1">
-                          <CardTitle className="font-display font-bold text-2xl md:text-3xl text-white tracking-tight leading-tight sm:whitespace-nowrap">
+                          <CardTitle className="font-display font-bold text-xl sm:text-2xl md:text-3xl text-white tracking-tight leading-tight sm:whitespace-nowrap">
                             Base Geral de Alunos
                           </CardTitle>
                           <CardDescription className="text-white/40 text-xs md:text-sm font-medium">
                             Lista de todos os alunos registrados no sistema.
                           </CardDescription>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
                           <Button
                             onClick={exportAllStudentsCSV}
                             variant="outline"
-                            className="rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-11 px-4 text-xs font-bold uppercase tracking-wider"
+                            className="flex-1 sm:flex-none rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-10 sm:h-11 px-3 sm:px-4 text-[11px] sm:text-xs font-bold uppercase tracking-wider touch-press"
                           >
                             <Download className="w-4 h-4 text-primary" />
                             <span>Planilha Geral</span>
                           </Button>
                           <Button
                             onClick={() => setShowAddStudentModal(true)}
-                            className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-5 shadow-lg shadow-primary/20 text-xs uppercase tracking-wider"
+                            className="flex-1 sm:flex-none rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 sm:h-11 px-4 sm:px-5 shadow-lg shadow-primary/20 text-[11px] sm:text-xs uppercase tracking-wider touch-press"
                           >
                             <Plus className="w-4 h-4" />
                             <span>Cadastrar</span>
@@ -863,12 +863,12 @@ export default function Admin() {
                       </div>
 
                       {/* Linha 2: Busca e Filtros */}
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 border-t border-white/5">
-                        <div className="relative w-full sm:w-80">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-white/5">
+                        <div className="relative w-full sm:w-72 md:w-80">
                           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                           <Input
                             placeholder="Buscar aluno..."
-                            className="liquid-input h-11 w-full text-sm pl-11"
+                            className="liquid-input h-10 sm:h-11 w-full text-base md:text-sm pl-11"
                             value={searchTerm}
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               setSearchTerm(e.target.value);
@@ -882,53 +882,53 @@ export default function Admin() {
                       </div>
                     </div>
                   </CardHeader>
-                  <div className="overflow-x-auto scrollbar-hide">
-                    <Table className="min-w-[700px]">
+                  <div className="overflow-x-auto custom-scrollbar overscroll-x-contain">
+                    <Table className="min-w-[620px] sm:min-w-[700px]">
                       <TableHeader className="bg-white/[0.02] border-b border-white/[0.08] sticky top-0 z-10 font-bold uppercase text-[10px] tracking-[0.2em]">
                         <TableRow className="hover:bg-transparent border-none">
-                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Nome</TableHead>
-                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Escola</TableHead>
-                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Cidade</TableHead>
-                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Grêmio</TableHead>
-                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-center text-white/30">Código</TableHead>
-                          <TableHead className="w-[60px] md:w-[80px]"></TableHead>
+                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Nome</TableHead>
+                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Escola</TableHead>
+                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Cidade</TableHead>
+                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Grêmio</TableHead>
+                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-center text-white/30">Código</TableHead>
+                          <TableHead className="w-[50px] md:w-[70px]"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredAlunos.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="h-48 text-center text-white/20 font-medium">
+                            <TableCell colSpan={6} className="h-40 sm:h-48 text-center text-white/20 font-medium text-sm">
                               Nenhum participante encontrado.
                             </TableCell>
                           </TableRow>
                         ) : (
                           filteredAlunos.map((p: Participante) => (
                             <TableRow key={p.id} className="hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] group text-sm">
-                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 font-bold text-white text-sm md:text-base">
+                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 font-bold text-white text-xs sm:text-sm md:text-base">
                                 {p.nome}
                               </TableCell>
-                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 text-white/60 text-xs md:text-sm">
+                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 text-white/60 text-xs sm:text-sm">
                                 {p.escola}
                               </TableCell>
-                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 text-white/60 text-xs md:text-sm">
+                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 text-white/60 text-xs sm:text-sm">
                                 {p.cidade}
                               </TableCell>
-                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 text-white/60 text-xs md:text-sm">
+                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 text-white/60 text-xs sm:text-sm">
                                 {p.gremio || '-'}
                               </TableCell>
-                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 text-center">
+                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 text-center">
                                 <code className="text-[9px] md:text-[11px] font-black bg-white/5 text-white/80 border border-white/10 rounded-xl px-2 md:px-2.5 py-1 md:py-1.5 shadow-sm uppercase tracking-wider">
                                   {p.codigo}
                                 </code>
                               </TableCell>
-                              <TableCell className="px-3 md:px-10">
+                              <TableCell className="px-2 sm:px-4 md:px-6">
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleDeleteStudent(p.id, p.nome)}
-                                  className="h-9 w-9 text-white/30 hover:text-red-400 rounded-xl hover:bg-red-500/10"
+                                  className="h-8 w-8 sm:h-9 sm:w-9 text-white/30 hover:text-red-400 rounded-xl hover:bg-red-500/10 touch-press"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </Button>
                               </TableCell>
                             </TableRow>
@@ -937,32 +937,32 @@ export default function Admin() {
                       </TableBody>
                     </Table>
                   </div>
-                  <div className="p-6 md:p-8 border-t border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row justify-between items-center gap-4 px-8 md:px-10">
+                  <div className="p-4 sm:p-6 md:p-8 border-t border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 px-5 sm:px-8 md:px-10">
                     <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-[0.2em] text-white/20">
                       Total: {totalStudents} cadastrados
                     </span>
 
                     {/* Controles de Paginação */}
                     {totalStudents > itemsPerPage && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 sm:gap-2">
                         <Button
                           variant="outline"
                           size="sm"
                           disabled={currentPage === 1 || loading}
                           onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                          className="rounded-xl border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-35 text-[10px] font-bold uppercase tracking-widest px-3 h-9"
+                          className="rounded-xl border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-35 text-[10px] font-bold uppercase tracking-widest px-2.5 sm:px-3 h-8 sm:h-9 touch-press"
                         >
                           Anterior
                         </Button>
-                        <span className="text-white/45 text-xs font-bold px-2">
-                          Pág. {currentPage} de {Math.ceil(totalStudents / itemsPerPage)}
+                        <span className="text-white/45 text-xs font-bold px-1 sm:px-2">
+                          {currentPage} / {Math.ceil(totalStudents / itemsPerPage)}
                         </span>
                         <Button
                           variant="outline"
                           size="sm"
                           disabled={currentPage >= Math.ceil(totalStudents / itemsPerPage) || loading}
                           onClick={() => setCurrentPage(prev => prev + 1)}
-                          className="rounded-xl border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-35 text-[10px] font-bold uppercase tracking-widest px-3 h-9"
+                          className="rounded-xl border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-35 text-[10px] font-bold uppercase tracking-widest px-2.5 sm:px-3 h-8 sm:h-9 touch-press"
                         >
                           Próximo
                         </Button>
@@ -984,14 +984,14 @@ export default function Admin() {
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          className="space-y-6 sm:space-y-8"
         >
           {/* Botão Voltar */}
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <Button
               onClick={() => { setSelectedEvento(null); setFilter('all'); setSearchTerm(''); }}
               variant="ghost"
-              className="rounded-xl text-white/60 hover:text-white hover:bg-white/5 gap-2 px-3 h-10"
+              className="rounded-xl text-white/60 hover:text-white hover:bg-white/5 gap-2 px-3 h-10 touch-press"
             >
               <ChevronLeft className="w-4 h-4" />
               Voltar aos Eventos
@@ -1002,7 +1002,7 @@ export default function Admin() {
               variant="outline"
               size="sm"
               className={cn(
-                "rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all cursor-pointer",
+                "rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all cursor-pointer touch-press",
                 selectedEvento.publicado
                   ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-amber-500/20 hover:text-amber-400"
                   : "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-emerald-500/20 hover:text-emerald-400"
@@ -1023,30 +1023,30 @@ export default function Admin() {
           </div>
 
           {/* Dados do Evento e Stats */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
 
             {/* Info Evento */}
             <div className="lg:col-span-8 space-y-6">
-              <Card className="glass-card border-white/[0.08] bg-white/[0.01] p-8 rounded-[2rem] space-y-6 relative overflow-hidden">
+              <Card className="glass-card border-white/[0.08] bg-white/[0.01] p-5 sm:p-7 md:p-8 rounded-[2rem] space-y-5 sm:space-y-6 relative overflow-hidden">
                 <div>
-                  <h2 className="text-3xl font-display font-bold text-white tracking-tight leading-tight">{selectedEvento.titulo}</h2>
-                  <p className="text-white/40 text-sm mt-2 font-medium leading-relaxed">
+                  <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight leading-tight">{selectedEvento.titulo}</h2>
+                  <p className="text-white/40 text-xs sm:text-sm mt-2 font-medium leading-relaxed">
                     {selectedEvento.descricao || 'Sem descrição.'}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-white/5 text-xs text-white/50 font-bold uppercase tracking-wider">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-primary" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-white/5 text-xs text-white/50 font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-2.5">
+                    <Calendar className="w-4 h-4 text-primary shrink-0" />
                     <span>{format(new Date(selectedEvento.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-primary" />
+                  <div className="flex items-center gap-2.5">
+                    <Clock className="w-4 h-4 text-primary shrink-0" />
                     <span>{format(new Date(selectedEvento.data), "HH:mm'h'", { locale: ptBR })}</span>
                   </div>
-                  <div className="flex items-center gap-3 sm:col-span-2">
-                    <MapPin className="w-5 h-5 text-primary animate-pulse" />
-                    <span>{selectedEvento.local}</span>
+                  <div className="flex items-center gap-2.5 sm:col-span-2">
+                    <MapPin className="w-4 h-4 text-primary shrink-0 animate-pulse" />
+                    <span className="truncate">{selectedEvento.local}</span>
                   </div>
                 </div>
 
@@ -1056,17 +1056,17 @@ export default function Admin() {
 
               {/* Tabela de Inscritos neste Evento */}
               <Card className="glass-card overflow-hidden border-white/[0.08] shadow-3xl rounded-[2rem] md:rounded-[2.5rem]">
-                <CardHeader className="p-6 md:p-8 border-b border-white/[0.08] bg-white/[0.02]">
-                  <div className="space-y-6">
+                <CardHeader className="p-5 sm:p-7 md:p-8 border-b border-white/[0.08] bg-white/[0.02]">
+                  <div className="space-y-5 sm:space-y-6">
                     {/* Linha 1: Título e Botão de Ação */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                       <div className="space-y-1">
-                        <CardTitle className="font-display font-bold text-2xl text-white tracking-tight leading-tight sm:whitespace-nowrap">Lista de Inscritos</CardTitle>
+                        <CardTitle className="font-display font-bold text-xl sm:text-2xl text-white tracking-tight leading-tight sm:whitespace-nowrap">Lista de Inscritos</CardTitle>
                         <CardDescription className="text-white/40 text-xs md:text-sm font-medium">Controle de inscrições e presenças para este evento.</CardDescription>
                       </div>
                       <Button
                         onClick={() => setShowAddStudentToEventModal(true)}
-                        className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 px-5 shadow-lg shadow-primary/20 text-xs uppercase tracking-wider"
+                        className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 px-4 sm:px-5 shadow-lg shadow-primary/20 text-[11px] sm:text-xs uppercase tracking-wider touch-press w-full sm:w-auto"
                       >
                         <Plus className="w-4 h-4" />
                         <span>Adicionar Aluno</span>
@@ -1074,20 +1074,20 @@ export default function Admin() {
                     </div>
 
                     {/* Linha 2: Busca e Filtro */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-4 border-t border-white/5">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-3 sm:pt-4 border-t border-white/5">
                       <div className="relative w-full sm:w-64">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                         <Input
-                          placeholder="Buscar..."
-                          className="liquid-input h-10 w-full text-xs pl-11"
+                          placeholder="Buscar inscrito..."
+                          className="liquid-input h-10 w-full text-base md:text-xs pl-11"
                           value={searchTerm}
                           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                         />
                       </div>
 
-                      <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                      <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto justify-end">
                         <DropdownMenu>
-                          <DropdownMenuTrigger render={<Button variant="outline" className="flex-1 sm:flex-none h-10 rounded-xl bg-white/5 border-white/10 gap-2 px-4 shadow-sm hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-wider text-white/60" />}>
+                          <DropdownMenuTrigger render={<Button variant="outline" className="flex-1 sm:flex-none h-10 rounded-xl bg-white/5 border-white/10 gap-2 px-4 shadow-sm hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-wider text-white/60 touch-press" />}>
                             <Filter className="w-3.5 h-3.5" />
                             <span>Filtro</span>
                           </DropdownMenuTrigger>
@@ -1101,20 +1101,20 @@ export default function Admin() {
                     </div>
                   </div>
                 </CardHeader>
-                <div className="overflow-x-auto scrollbar-hide">
-                  <Table className="min-w-[700px]">
+                <div className="overflow-x-auto custom-scrollbar overscroll-x-contain">
+                  <Table className="min-w-[560px] sm:min-w-[700px]">
                     <TableHeader className="bg-white/[0.02] border-b border-white/[0.08] sticky top-0 z-10 font-bold uppercase text-[10px] tracking-[0.2em]">
                       <TableRow className="hover:bg-transparent border-none">
-                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Participante</TableHead>
-                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-center text-white/30">Código</TableHead>
-                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-10 text-white/30">Status</TableHead>
-                        <TableHead className="w-[60px] md:w-[80px]"></TableHead>
+                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Participante</TableHead>
+                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-center text-white/30">Código</TableHead>
+                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Status</TableHead>
+                        <TableHead className="w-[50px] md:w-[70px]"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {loadingInscritos ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="h-48 text-center text-white/20 font-medium">
+                          <TableCell colSpan={4} className="h-40 sm:h-48 text-center text-white/20 font-medium text-sm">
                             <div className="flex flex-col items-center justify-center gap-3">
                               <LoadingSpinner size="md" />
                               <span>Carregando inscrições...</span>
@@ -1123,7 +1123,7 @@ export default function Admin() {
                         </TableRow>
                       ) : filteredInscritos.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="h-48 text-center text-white/20 font-medium">
+                          <TableCell colSpan={4} className="h-40 sm:h-48 text-center text-white/20 font-medium text-sm">
                             Nenhum aluno inscrito neste evento.
                           </TableCell>
                         </TableRow>
@@ -1133,20 +1133,20 @@ export default function Admin() {
                           if (!p) return null;
                           return (
                             <TableRow key={i.id} className="hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] group text-sm">
-                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10">
-                                <div className="flex flex-col">
-                                  <span className="font-bold text-white text-sm md:text-base mb-0.5">{p.nome}</span>
-                                  <span className="text-[9px] md:text-xs text-white/30 font-medium">{p.cidade} • {p.escola}</span>
+                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8">
+                                <div className="flex flex-col min-w-0">
+                                  <span className="font-bold text-white text-xs sm:text-sm md:text-base mb-0.5 truncate">{p.nome}</span>
+                                  <span className="text-[9px] sm:text-xs text-white/30 font-medium truncate">{p.cidade} • {p.escola}</span>
                                 </div>
                               </TableCell>
-                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10 text-center">
-                                <code className="text-[9px] md:text-[11px] font-black bg-white/5 text-white/80 border border-white/10 rounded-xl px-2.5 py-1.5 shadow-sm uppercase tracking-wider">
+                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 text-center">
+                                <code className="text-[9px] md:text-[11px] font-black bg-white/5 text-white/80 border border-white/10 rounded-xl px-2 sm:px-2.5 py-1 sm:py-1.5 shadow-sm uppercase tracking-wider">
                                   {p.codigo}
                                 </code>
                               </TableCell>
-                              <TableCell className="py-2.5 md:py-4 px-3 md:px-6 lg:px-10">
+                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8">
                                 <div className={cn(
-                                  "inline-flex items-center gap-2 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] shadow-sm border",
+                                  "inline-flex items-center gap-1.5 sm:gap-2 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] shadow-sm border",
                                   i.presente
                                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                     : "bg-white/5 text-white/50 border-white/10"
@@ -1155,9 +1155,9 @@ export default function Admin() {
                                   {i.presente ? 'Confirmado' : 'Inscrito'}
                                 </div>
                               </TableCell>
-                              <TableCell className="px-3 md:px-10">
+                              <TableCell className="px-2 sm:px-4 md:px-6">
                                 <DropdownMenu>
-                                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-9 w-9 opacity-40 group-hover:opacity-100 transition-all rounded-xl hover:bg-white/10" />}>
+                                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 opacity-50 hover:opacity-100 transition-all rounded-xl hover:bg-white/10 touch-press" />}>
                                     <MoreVertical className="w-4 h-4 text-white" />
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="rounded-2xl bg-black/95 border-white/10 p-2 min-w-[150px]">
@@ -1183,7 +1183,7 @@ export default function Admin() {
                     </TableBody>
                   </Table>
                 </div>
-                <div className="p-6 md:p-8 border-t border-white/[0.08] bg-white/[0.02] text-[9px] md:text-[10px] uppercase font-bold tracking-[0.2em] text-white/20 flex flex-col sm:flex-row justify-between items-center gap-4 px-8 md:px-10">
+                <div className="p-4 sm:p-6 md:p-8 border-t border-white/[0.08] bg-white/[0.02] text-[9px] md:text-[10px] uppercase font-bold tracking-[0.2em] text-white/20 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 px-5 sm:px-8 md:px-10">
                   <span>{filteredInscritos.length} de {inscritosEvento.length} inscritos exibidos</span>
                   <span className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -1194,43 +1194,43 @@ export default function Admin() {
             </div>
 
             {/* Sidebar Evento: Stats & Export */}
-            <div className="lg:col-span-4 space-y-6 h-full">
+            <div className="lg:col-span-4 space-y-5 sm:space-y-6 h-full">
 
               {/* Mini Stats Card */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-5 rounded-2xl">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-4 sm:p-5 rounded-2xl">
                   <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Inscritos</span>
-                  <div className="text-3xl font-display font-bold text-white mt-1">{statsEvento.total}</div>
+                  <div className="text-2xl sm:text-3xl font-display font-bold text-white mt-1">{statsEvento.total}</div>
                 </div>
-                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-5 rounded-2xl">
+                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-4 sm:p-5 rounded-2xl">
                   <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Confirmados</span>
-                  <div className="text-3xl font-display font-bold text-emerald-400 mt-1">{statsEvento.presentes}</div>
+                  <div className="text-2xl sm:text-3xl font-display font-bold text-emerald-400 mt-1">{statsEvento.presentes}</div>
                 </div>
-                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-5 rounded-2xl">
+                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-4 sm:p-5 rounded-2xl">
                   <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Apenas Inscritos</span>
-                  <div className="text-3xl font-display font-bold text-white mt-1">{statsEvento.ausentes}</div>
+                  <div className="text-2xl sm:text-3xl font-display font-bold text-white mt-1">{statsEvento.ausentes}</div>
                 </div>
-                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-5 rounded-2xl">
+                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-4 sm:p-5 rounded-2xl">
                   <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Frequência</span>
-                  <div className="text-3xl font-display font-bold text-primary mt-1">{statsEvento.porcentagem.toFixed(0)}%</div>
+                  <div className="text-2xl sm:text-3xl font-display font-bold text-primary mt-1">{statsEvento.porcentagem.toFixed(0)}%</div>
                 </div>
               </div>
 
               {/* Chart Pie */}
               {statsEvento.total > 0 && (
                 <Card className="glass-card border-white/[0.08] shadow-3xl overflow-hidden bg-white/[0.01] rounded-[2rem] md:rounded-[2.5rem]">
-                  <CardHeader className="pb-2 p-6 border-b border-white/[0.08] bg-white/[0.02]">
+                  <CardHeader className="pb-2 p-4 sm:p-6 border-b border-white/[0.08] bg-white/[0.02]">
                     <CardTitle className="font-display text-sm text-white">Engajamento Presencial</CardTitle>
                   </CardHeader>
-                  <CardContent className="h-[200px] pt-6 p-6">
+                  <CardContent className="h-[180px] sm:h-[200px] pt-4 sm:pt-6 p-4 sm:p-6">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={chartData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={70}
+                          innerRadius={45}
+                          outerRadius={65}
                           paddingAngle={8}
                           dataKey="value"
                           stroke="none"
@@ -1245,12 +1245,12 @@ export default function Admin() {
                         />
                       </PieChart>
                     </ResponsiveContainer>
-                    <div className="flex justify-center gap-4 text-[9px] uppercase tracking-widest font-bold mt-2">
+                    <div className="flex justify-center gap-3 sm:gap-4 text-[9px] uppercase tracking-widest font-bold mt-2">
                       <button
                         type="button"
                         onClick={() => setFilter('present')}
                         className={cn(
-                          'transition-colors hover:text-primary focus:outline-none',
+                          'transition-colors hover:text-primary focus:outline-none touch-press',
                           filter === 'present' ? 'text-primary' : 'text-primary/70'
                         )}
                       >
@@ -1260,7 +1260,7 @@ export default function Admin() {
                         type="button"
                         onClick={() => setFilter('absent')}
                         className={cn(
-                          'transition-colors hover:text-white focus:outline-none',
+                          'transition-colors hover:text-white focus:outline-none touch-press',
                           filter === 'absent' ? 'text-white' : 'text-white/25'
                         )}
                       >
@@ -1273,25 +1273,25 @@ export default function Admin() {
 
               {/* Export Event CSV */}
               <Card className="glass-card bg-primary/20 text-white border-primary/20 shadow-3xl overflow-hidden relative group rounded-[2rem]">
-                <div className="absolute top-0 right-0 p-8 opacity-5 -mr-10 -mt-10">
+                <div className="absolute top-0 right-0 p-8 opacity-5 -mr-10 -mt-10 pointer-events-none">
                   <FileSpreadsheet className="w-48 h-48" />
                 </div>
-                <CardHeader className="p-6 relative z-10">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3 border border-white/20">
-                    <Download className="w-5 h-5 text-white" />
+                <CardHeader className="p-5 sm:p-6 relative z-10">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3 border border-white/20">
+                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <CardTitle className="font-display text-lg tracking-tight mb-1">Relatórios CSV</CardTitle>
-                  <CardDescription className="text-white/70 font-medium text-xs mb-4">Exportar planilhas deste evento.</CardDescription>
+                  <CardTitle className="font-display text-base sm:text-lg tracking-tight mb-1">Relatórios CSV</CardTitle>
+                  <CardDescription className="text-white/70 font-medium text-xs mb-3 sm:mb-4">Exportar planilhas deste evento.</CardDescription>
                   <div className="flex flex-col gap-2">
                     <Button
                       onClick={() => exportEventCSV('all')}
-                      className="w-full bg-white text-primary hover:bg-neutral-100 font-bold rounded-xl h-10 shadow-md text-[10px] uppercase tracking-widest"
+                      className="w-full bg-white text-primary hover:bg-neutral-100 font-bold rounded-xl h-10 shadow-md text-[10px] uppercase tracking-widest touch-press"
                     >
                       1. Todos os Inscritos
                     </Button>
                     <Button
                       onClick={() => exportEventCSV('present')}
-                      className="w-full bg-primary text-white hover:bg-primary-dark font-bold rounded-xl h-10 shadow-md border border-white/20 text-[10px] uppercase tracking-widest"
+                      className="w-full bg-primary text-white hover:bg-primary-dark font-bold rounded-xl h-10 shadow-md border border-white/20 text-[10px] uppercase tracking-widest touch-press"
                     >
                       2. Apenas Confirmados
                     </Button>
@@ -1308,50 +1308,50 @@ export default function Admin() {
       {/* Modal 1: Cadastro Manual de Aluno (Global) */}
       <AnimatePresence>
         {showAddStudentModal && (
-          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-10 md:p-6 bg-black/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 50 }}
+              initial={{ opacity: 0, scale: 0.96, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 50 }}
-              className="w-full max-w-2xl bg-card border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[95dvh] overflow-y-auto"
+              exit={{ opacity: 0, scale: 0.96, y: 40 }}
+              className="w-full max-w-2xl bg-card border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[92dvh] overflow-y-auto custom-scrollbar overscroll-contain"
             >
-              <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+              <div className="p-5 sm:p-7 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
-                  <h3 className="text-2xl font-display font-bold text-white">Cadastrar Aluno</h3>
-                  <p className="text-white/40 text-sm mt-1">Criação de participante na base permanente do sistema.</p>
+                  <h3 className="text-xl sm:text-2xl font-display font-bold text-white">Cadastrar Aluno</h3>
+                  <p className="text-white/40 text-xs sm:text-sm mt-0.5 sm:mt-1">Criação de participante na base permanente do sistema.</p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowAddStudentModal(false)}
-                  className="rounded-full hover:bg-white/10 text-white/40 hover:text-white"
+                  className="rounded-full hover:bg-white/10 text-white/40 hover:text-white touch-press"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </Button>
               </div>
 
-              <form onSubmit={handleAddStudentSubmit} className="p-6 md:p-10 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
+              <form onSubmit={handleAddStudentSubmit} className="p-5 sm:p-7 md:p-10 space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Nome Completo</label>
                     <Input
                       required
-                      className="liquid-input h-12"
+                      className="liquid-input h-12 text-base md:text-sm"
                       value={newStudent.nome}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, nome: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">E-mail</label>
                     <Input
                       type="email"
                       required
-                      className="liquid-input h-12"
+                      className="liquid-input h-12 text-base md:text-sm"
                       value={newStudent.email}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, email: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Telefone</label>
                     <Input
                       required
@@ -1362,51 +1362,51 @@ export default function Admin() {
                       pattern="\(\d{2}\) \d{4,5}-\d{4}"
                       title="Formato esperado: (99) 99999-9999"
                       placeholder="(99) 99999-9999"
-                      className="liquid-input h-12"
+                      className="liquid-input h-12 text-base md:text-sm"
                       value={newStudent.telefone}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, telefone: formatPhone(e.target.value) })}
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Cidade</label>
                     <Input
                       required
-                      className="liquid-input h-12"
+                      className="liquid-input h-12 text-base md:text-sm"
                       value={newStudent.cidade}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, cidade: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Escola</label>
                     <Input
                       required
-                      className="liquid-input h-12"
+                      className="liquid-input h-12 text-base md:text-sm"
                       value={newStudent.escola}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, escola: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Grêmio Estudantil (Opcional)</label>
                     <Input
-                      className="liquid-input h-12"
+                      className="liquid-input h-12 text-base md:text-sm"
                       value={newStudent.gremio}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, gremio: e.target.value })}
                     />
                   </div>
                 </div>
 
-                <div className="flex gap-4 pt-4 border-t border-white/5">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-white/5">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowAddStudentModal(false)}
-                    className="flex-1 h-12 rounded-2xl border-white/10 text-white font-bold"
+                    className="flex-1 h-12 rounded-2xl border-white/10 text-white font-bold touch-press"
                   >
                     Cancelar
                   </Button>
                   <Button
                     type="submit"
-                    className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold"
+                    className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold touch-press"
                   >
                     Confirmar Cadastro
                   </Button>
@@ -1420,75 +1420,75 @@ export default function Admin() {
       {/* Modal 2: Criar Evento */}
       <AnimatePresence>
         {showCreateEventModal && (
-          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-10 md:p-6 bg-black/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 50 }}
+              initial={{ opacity: 0, scale: 0.96, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 50 }}
-              className="w-full max-w-xl bg-card border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[95dvh] overflow-y-auto"
+              exit={{ opacity: 0, scale: 0.96, y: 40 }}
+              className="w-full max-w-xl bg-card border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[92dvh] overflow-y-auto custom-scrollbar overscroll-contain"
             >
-              <div className="p-6 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+              <div className="p-5 sm:p-7 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
-                  <h3 className="text-2xl font-display font-bold text-white">{editingEventId ? 'Editar Evento' : 'Criar Evento'}</h3>
-                  <p className="text-white/40 text-sm mt-1">{editingEventId ? 'Modifique os dados do evento.' : 'Insira os dados do próximo encontro/fórum.'}</p>
+                  <h3 className="text-xl sm:text-2xl font-display font-bold text-white">{editingEventId ? 'Editar Evento' : 'Criar Evento'}</h3>
+                  <p className="text-white/40 text-xs sm:text-sm mt-0.5 sm:mt-1">{editingEventId ? 'Modifique os dados do evento.' : 'Insira os dados do próximo encontro/fórum.'}</p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowCreateEventModal(false)}
-                  className="rounded-full hover:bg-white/10 text-white/40 hover:text-white"
+                  className="rounded-full hover:bg-white/10 text-white/40 hover:text-white touch-press"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
                 </Button>
               </div>
 
-              <form onSubmit={handleCreateEventSubmit} className="p-6 md:p-10 space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
+              <form onSubmit={handleCreateEventSubmit} className="p-5 sm:p-7 md:p-10 space-y-4 sm:space-y-6">
+                <div className="space-y-3.5 sm:space-y-4">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Título do Evento</label>
                     <Input
                       required
-                      className="liquid-input h-12"
+                      className="liquid-input h-12 text-base md:text-sm"
                       placeholder="Ex: I Fórum de Liderança Olhar Jovem"
                       value={newEvent.titulo}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, titulo: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Descrição</label>
                     <textarea
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-primary transition-all duration-300 min-h-[100px] placeholder:text-white/10"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-base md:text-sm focus:outline-none focus:border-primary transition-all duration-300 min-h-[90px] sm:min-h-[100px] placeholder:text-white/10"
                       placeholder="Informações adicionais sobre o cronograma, palestrantes, etc..."
                       value={newEvent.descricao}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewEvent({ ...newEvent, descricao: e.target.value })}
                     />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                    <div className="space-y-1.5">
                       <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Data & Hora</label>
                       <Input
                         type="datetime-local"
                         required
-                        className="liquid-input h-12 text-white/60"
+                        className="liquid-input h-12 text-white/70 text-base md:text-sm"
                         value={newEvent.data}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, data: e.target.value })}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Localização</label>
                       <Input
                         required
-                        className="liquid-input h-12"
+                        className="liquid-input h-12 text-base md:text-sm"
                         placeholder="Ex: Auditório Municipal"
                         value={newEvent.local}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, local: e.target.value })}
                       />
                     </div>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Cidade do Evento (Restrição de Inscrição)</label>
                     <select
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 px-4 text-white text-sm focus:outline-none focus:border-primary transition-all duration-300"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 px-4 text-white text-base md:text-sm focus:outline-none focus:border-primary transition-all duration-300"
                       value={newEvent.cidade}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewEvent({ ...newEvent, cidade: e.target.value })}
                     >
@@ -1498,72 +1498,72 @@ export default function Admin() {
                       ))}
                     </select>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-white/5 pt-3">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 border-t border-white/5 pt-3">
+                    <div className="space-y-1.5">
                       <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Início das Inscrições (Opcional)</label>
                       <Input
                         type="datetime-local"
-                        className="liquid-input h-12 text-white/60"
+                        className="liquid-input h-12 text-white/70 text-base md:text-sm"
                         value={newEvent.dataInicioInscricao}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, dataInicioInscricao: e.target.value })}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Término das Inscrições (Opcional)</label>
                       <Input
                         type="datetime-local"
-                        className="liquid-input h-12 text-white/60"
+                        className="liquid-input h-12 text-white/70 text-base md:text-sm"
                         value={newEvent.dataFimInscricao}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, dataFimInscricao: e.target.value })}
                       />
                     </div>
                   </div>
-                  <div className="space-y-2 pt-2">
+                  <div className="space-y-1.5 pt-1 sm:pt-2">
                     <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Status de Inscrições do Evento</label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                       <button
                         type="button"
                         onClick={() => setNewEvent({ ...newEvent, publicado: true })}
                         className={cn(
-                          "flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer",
+                          "flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer touch-press",
                           newEvent.publicado
                             ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-lg shadow-emerald-500/10"
                             : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
                         )}
                       >
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                         <span>Ativo (Recebendo Inscrições)</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setNewEvent({ ...newEvent, publicado: false })}
                         className={cn(
-                          "flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer",
+                          "flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer touch-press",
                           !newEvent.publicado
                             ? "bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-lg shadow-amber-500/10"
                             : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
                         )}
                       >
-                        <XCircle className="w-4 h-4 text-amber-400" />
+                        <XCircle className="w-4 h-4 text-amber-400 shrink-0" />
                         <span>Inativo (Inscrições Encerradas)</span>
                       </button>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-4 pt-4 border-t border-white/5">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-white/5">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setShowCreateEventModal(false)}
-                    className="flex-1 h-12 rounded-2xl border-white/10 text-white font-bold"
+                    className="flex-1 h-12 rounded-2xl border-white/10 text-white font-bold touch-press"
                   >
                     Cancelar
                   </Button>
                   <Button
                     type="submit"
                     disabled={submittingEvent}
-                    className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold disabled:opacity-50"
+                    className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold disabled:opacity-50 touch-press"
                   >
                     {submittingEvent && <LoadingSpinner size="xs" variant="white" className="mr-2" />}
                     {submittingEvent
@@ -1580,35 +1580,35 @@ export default function Admin() {
       {/* Modal 3: Inscrever Aluno no Evento Específico */}
       <AnimatePresence>
         {showAddStudentToEventModal && selectedEvento && (
-          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-10 md:p-6 bg-black/85 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 50 }}
+              initial={{ opacity: 0, scale: 0.96, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 50 }}
-              className="w-full max-w-xl bg-card border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl flex flex-col max-h-[95dvh]"
+              exit={{ opacity: 0, scale: 0.96, y: 40 }}
+              className="w-full max-w-xl bg-card border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl flex flex-col max-h-[92dvh] custom-scrollbar overscroll-contain"
             >
-              <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+              <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div>
-                  <h3 className="text-xl font-display font-bold text-white">Inscrever Aluno no Evento</h3>
-                  <p className="text-white/40 text-xs mt-1">Inscreva participantes já cadastrados no evento selecionado.</p>
+                  <h3 className="text-lg sm:text-xl font-display font-bold text-white">Inscrever Aluno no Evento</h3>
+                  <p className="text-white/40 text-xs mt-0.5 sm:mt-1">Inscreva participantes já cadastrados no evento selecionado.</p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => { setShowAddStudentToEventModal(false); setSearchStudentForEvent(''); }}
-                  className="rounded-full hover:bg-white/10 text-white/40 hover:text-white"
+                  className="rounded-full hover:bg-white/10 text-white/40 hover:text-white touch-press"
                 >
                   <X className="w-5 h-5" />
                 </Button>
               </div>
 
               {/* Filtro de Busca */}
-              <div className="p-5 border-b border-white/5">
+              <div className="p-4 sm:p-5 border-b border-white/5">
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
                   <Input
                     placeholder="Buscar participante por nome ou código..."
-                    className="liquid-input h-11 w-full text-sm pl-11"
+                    className="liquid-input h-11 w-full text-base md:text-sm pl-11"
                     value={searchStudentForEvent}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchStudentForEvent(e.target.value)}
                     autoFocus
@@ -1617,24 +1617,24 @@ export default function Admin() {
               </div>
 
               {/* Lista de Alunos Elegíveis */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-3 min-h-[200px]">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5 sm:space-y-3 min-h-[180px] custom-scrollbar">
                 {studentsNotSubscribed.length === 0 ? (
-                  <div className="text-center py-10 text-white/30 text-sm font-medium">
+                  <div className="text-center py-8 sm:py-10 text-white/30 text-xs sm:text-sm font-medium">
                     {searchStudentForEvent ? 'Nenhum aluno correspondente encontrado.' : 'Todos os alunos cadastrados já estão inscritos.'}
                   </div>
                 ) : (
                   studentsNotSubscribed.map((student: Participante) => (
                     <div
                       key={student.id}
-                      className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-all"
+                      className="flex items-center justify-between p-3 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-all"
                     >
-                      <div className="min-w-0 pr-4">
-                        <p className="font-bold text-white truncate text-sm">{student.nome}</p>
+                      <div className="min-w-0 pr-3 sm:pr-4">
+                        <p className="font-bold text-white truncate text-xs sm:text-sm">{student.nome}</p>
                         <p className="text-[10px] text-white/40 mt-0.5 truncate">{student.codigo} • {student.escola} • {student.cidade}</p>
                       </div>
                       <Button
                         onClick={() => handleAddStudentToEvent(student.id)}
-                        className="rounded-xl bg-primary hover:bg-primary/95 text-white font-bold h-9 px-4 text-xs shrink-0"
+                        className="rounded-xl bg-primary hover:bg-primary/95 text-white font-bold h-8 sm:h-9 px-3 sm:px-4 text-[11px] sm:text-xs shrink-0 touch-press"
                       >
                         Inscrever
                       </Button>
@@ -1643,11 +1643,11 @@ export default function Admin() {
                 )}
               </div>
 
-              <div className="p-5 border-t border-white/5 bg-white/[0.01] flex justify-end">
+              <div className="p-4 sm:p-5 border-t border-white/5 bg-white/[0.01] flex justify-end">
                 <Button
                   onClick={() => { setShowAddStudentToEventModal(false); setSearchStudentForEvent(''); }}
                   variant="outline"
-                  className="rounded-xl border-white/10 text-white/60 hover:text-white text-xs h-10 px-6 font-bold"
+                  className="rounded-xl border-white/10 text-white/60 hover:text-white text-xs h-10 px-5 sm:px-6 font-bold touch-press"
                 >
                   Fechar
                 </Button>

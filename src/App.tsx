@@ -78,9 +78,9 @@ function Navbar() {
   const navItems = userIsAdmin ? ADMIN_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/50 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
+    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#020610]/85 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3 group">
+        <Link to="/" className="flex items-center gap-3 group shrink-0">
           <img
             src="/logo_oficial.png"
             alt="Olhar Jovem"
@@ -89,6 +89,7 @@ function Navbar() {
           />
         </Link>
 
+        {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
           {navItems.map((item) => (
             <NavLink
@@ -126,6 +127,35 @@ function Navbar() {
             </>
           )}
         </div>
+
+        {/* Mobile Top Actions for Admin */}
+        {userIsAdmin && (
+          <div className="flex md:hidden items-center gap-1.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('sync-data'));
+                toast.success('Dados sincronizados!');
+              }}
+              title="Sincronizar dados"
+              aria-label="Sincronizar dados"
+              className="h-9 w-9 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:text-white active:scale-90"
+            >
+              <RefreshCcw className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              title="Sair do painel"
+              aria-label="Sair"
+              className="h-9 w-9 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-500/20 active:scale-90"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </nav>
   );
@@ -137,12 +167,12 @@ function BottomNav() {
   const navItems = userIsAdmin ? ADMIN_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
   return (
-    <div className="md:hidden fixed bottom-4 inset-x-4 max-w-sm mx-auto z-50 pointer-events-none mb-[env(safe-area-inset-bottom)]">
+    <div className="md:hidden fixed bottom-3 inset-x-3 max-w-[340px] mx-auto z-50 pointer-events-none mb-[env(safe-area-inset-bottom)]">
       <motion.div
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="bg-[#0a111e]/90 backdrop-blur-2xl border border-white/15 rounded-full p-1.5 flex items-center justify-around shadow-[0_15px_40px_rgba(0,0,0,0.8)] pointer-events-auto"
+        className="bg-[#0a111e]/95 backdrop-blur-2xl border border-white/15 rounded-full p-1.5 flex items-center justify-around shadow-[0_15px_40px_rgba(0,0,0,0.85)] pointer-events-auto"
       >
         {navItems.map((item) => (
           <MobileNavLink
@@ -163,14 +193,14 @@ function MobileNavLink({ to, icon, label, active }: { to: string; icon: React.Re
     <Link
       to={to}
       className={cn(
-        'relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300',
+        'relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-300 min-h-[42px] touch-press flex-1 text-center',
         active
-          ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105'
-          : 'text-white/40 hover:text-white hover:bg-white/5'
+          ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]'
+          : 'text-white/50 hover:text-white hover:bg-white/5'
       )}
     >
-      {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' }) : icon}
-      <span>{label}</span>
+      {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4 shrink-0' }) : icon}
+      <span className="truncate">{label}</span>
     </Link>
   );
 }

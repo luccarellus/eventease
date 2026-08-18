@@ -207,7 +207,7 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const qrSize = windowWidth < 640 ? 160 : 220;
+  const qrSize = windowWidth < 380 ? 140 : windowWidth < 640 ? 170 : 220;
 
   // Escutar parâmetro de busca de credencial na URL (?buscar-credencial=true)
   useEffect(() => {
@@ -648,6 +648,7 @@ export default function Home() {
                 hidden: { opacity: 0, y: 30, filter: 'blur(5px)' },
                 visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
               }}
+              whileHover={{ y: -6 }}
               className="h-full"
             >
               <Card
@@ -660,9 +661,9 @@ export default function Home() {
                     openEventModal(evento, 'detalhes');
                   }
                 }}
-                className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group cursor-pointer will-change-transform !shadow-[0_22px_70px_rgba(0,0,0,0.58)] hover:!shadow-[0_32px_90px_rgba(0,0,0,0.78)] hover:-translate-y-2 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group cursor-pointer will-change-transform !shadow-[0_22px_70px_rgba(0,0,0,0.58)] hover:!shadow-[0_32px_90px_rgba(0,0,0,0.78)] hover:-translate-y-1.5 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               >
-                <CardHeader className="p-5 sm:p-8 pb-4">
+                <CardHeader className="p-5 sm:p-7 md:p-8 pb-3 sm:pb-4">
                   <div className="flex items-center justify-between gap-2 mb-3">
                     {(() => {
                       const status = getEventStatus(evento);
@@ -678,42 +679,42 @@ export default function Home() {
                         return (
                           <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                            Inscrições Encerradas
+                            Encerrado
                           </span>
                         );
                       }
                       return (
                         <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          Inscrições Abertas
+                          Aberto
                         </span>
                       );
                     })()}
-                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-wider">
+                    <span className="text-[10px] sm:text-xs text-white/40 font-bold uppercase tracking-wider">
                       {formatEventDate(evento.data)}
                     </span>
                   </div>
-                  <CardTitle className="font-display font-bold text-2xl text-white tracking-tight leading-tight group-hover:text-primary transition-colors">
+                  <CardTitle className="font-display font-bold text-xl sm:text-2xl text-white tracking-tight leading-snug group-hover:text-primary transition-colors line-clamp-2">
                     {evento.titulo}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-5 sm:p-8 pt-0 pb-6 sm:pb-8 flex-grow">
-                  <p className="text-sm text-white/50 leading-relaxed font-medium mb-6 line-clamp-4">
+                <CardContent className="p-5 sm:p-7 md:p-8 pt-0 pb-5 sm:pb-6 flex-grow">
+                  <p className="text-xs sm:text-sm text-white/50 leading-relaxed font-medium mb-5 line-clamp-3">
                     {evento.descricao || 'Sem descrição fornecida.'}
                   </p>
 
-                  <div className="space-y-3 border-t border-white/5 pt-6 text-xs text-white/40 font-bold uppercase tracking-wider">
-                    <div className="flex items-center gap-3">
-                      <Clock className="w-4 h-4 text-primary" />
+                  <div className="space-y-2.5 border-t border-white/5 pt-4 text-xs text-white/40 font-bold uppercase tracking-wider">
+                    <div className="flex items-center gap-2.5">
+                      <Clock className="w-4 h-4 text-primary shrink-0" />
                       <span>{formatEventDate(evento.data, "HH:mm'h'")}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <MapPin className="w-4 h-4 text-primary animate-pulse" />
-                      <span className="truncate max-w-[220px]">{evento.local}</span>
+                    <div className="flex items-center gap-2.5">
+                      <MapPin className="w-4 h-4 text-primary shrink-0 animate-pulse" />
+                      <span className="truncate max-w-[200px] sm:max-w-[260px]">{evento.local}</span>
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="p-5 sm:p-8 pt-0 border-none bg-transparent">
+                <CardFooter className="p-5 sm:p-7 md:p-8 pt-0 border-none bg-transparent">
                   {(() => {
                     const status = getEventStatus(evento);
                     if (status === 'em_breve') {
@@ -724,7 +725,7 @@ export default function Home() {
                             openEventModal(evento, 'detalhes');
                           }}
                           variant="outline"
-                          className="w-full h-12 text-xs uppercase tracking-wider font-bold border-sky-500/30 text-sky-400 hover:bg-sky-500/10 bg-sky-500/5 rounded-2xl cursor-pointer"
+                          className="w-full h-11 sm:h-12 text-xs uppercase tracking-wider font-bold border-sky-500/30 text-sky-400 hover:bg-sky-500/10 bg-sky-500/5 rounded-2xl cursor-pointer touch-press"
                         >
                           Inscrições Em Breve
                         </Button>
@@ -738,7 +739,7 @@ export default function Home() {
                             openEventModal(evento, 'detalhes');
                           }}
                           variant="outline"
-                          className="w-full h-12 text-xs uppercase tracking-wider font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 bg-amber-500/5 rounded-2xl cursor-pointer"
+                          className="w-full h-11 sm:h-12 text-xs uppercase tracking-wider font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 bg-amber-500/5 rounded-2xl cursor-pointer touch-press"
                         >
                           Inscrições Encerradas
                         </Button>
@@ -750,7 +751,7 @@ export default function Home() {
                           event.stopPropagation();
                           openEventModal(evento, 'cadastro');
                         }}
-                        className="modern-button w-full h-12 text-sm uppercase tracking-wider font-bold"
+                        className="modern-button w-full h-11 sm:h-12 text-xs sm:text-sm uppercase tracking-wider font-bold touch-press"
                       >
                         Participar
                         <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
@@ -774,29 +775,29 @@ export default function Home() {
             className={cn(
               "fixed inset-0 z-[100] flex justify-center bg-black/85 backdrop-blur-md",
               activeModalTab === 'detalhes' && !successData
-                ? "items-center p-4 md:p-6"
-                : "items-end md:items-center p-0 pt-10 md:p-6"
+                ? "items-end sm:items-center p-0 sm:p-4 md:p-6"
+                : "items-end md:items-center p-0 pt-6 sm:p-4 md:p-6"
             )}
             onClick={closeRegistration}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 50 }}
+              initial={{ opacity: 0, scale: 0.96, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 50 }}
+              exit={{ opacity: 0, scale: 0.96, y: 40 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               className={cn(
                 "w-full bg-card border border-white/10 overflow-hidden relative flex flex-col",
                 activeModalTab === 'detalhes' && !successData
-                  ? "max-w-xl rounded-[2rem] max-h-[88dvh] shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
-                  : "max-w-2xl rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] mt-auto md:mt-0 max-h-[95dvh] md:max-h-[90dvh] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+                  ? "max-w-xl rounded-t-[2rem] sm:rounded-[2rem] max-h-[92dvh] sm:max-h-[88dvh] shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
+                  : "max-w-2xl rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 max-h-[93dvh] md:max-h-[90dvh] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
               )}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="h-2 bg-gradient-to-r from-primary via-primary to-primary-dark" />
+              <div className="h-1.5 sm:h-2 bg-gradient-to-r from-primary via-primary to-primary-dark" />
 
               <button
                 onClick={closeRegistration}
-                className="absolute top-6 right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10"
+                className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10 touch-press"
                 title="Fechar modal de inscrição"
                 aria-label="Fechar"
               >
@@ -804,23 +805,23 @@ export default function Home() {
               </button>
 
               {/* Header do Modal */}
-              <div className="p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
+              <div className="p-5 sm:p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
                 <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">
                   {activeModalTab === 'detalhes' && !successData ? 'Detalhes do Evento' : 'Inscrição no Evento'}
                 </span>
-                <h3 className="text-xl md:text-2xl font-display font-bold text-white mt-1 truncate pr-8">{selectedEvent.titulo}</h3>
+                <h3 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-white mt-1 truncate pr-10">{selectedEvent.titulo}</h3>
                 <p className="text-white/40 text-xs mt-1 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-primary" /> {selectedEvent.local}{selectedEvent.cidade ? ` • ${selectedEvent.cidade}` : ''}
+                  <MapPin className="w-3.5 h-3.5 text-primary shrink-0" /> {selectedEvent.local}{selectedEvent.cidade ? ` • ${selectedEvent.cidade}` : ''}
                 </p>
               </div>
 
               {/* Tabs Seletoras (Novo Cadastro vs Já Cadastrado) - Ocultas em caso de sucesso */}
               {!successData && (
-                <div className="flex border-b border-white/5 px-4 md:px-8 bg-black/40 overflow-x-auto scrollbar-hide">
+                <div className="flex border-b border-white/5 px-2 sm:px-6 md:px-8 bg-black/40 gap-1 overflow-x-auto scrollbar-hide">
                   <button
                     onClick={() => { setActiveModalTab('detalhes'); setExistingError(''); }}
                     className={cn(
-                      "py-4 px-3 sm:px-4 font-bold text-[10px] sm:text-xs uppercase tracking-wider border-b-2 transition-all mr-2 sm:mr-4 whitespace-nowrap",
+                      "py-3 sm:py-4 px-3 sm:px-4 font-bold text-[11px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap flex-1 sm:flex-none text-center touch-press",
                       activeModalTab === 'detalhes' ? "border-primary text-white" : "border-transparent text-white/40 hover:text-white/60"
                     )}
                   >
@@ -829,7 +830,7 @@ export default function Home() {
                   <button
                     onClick={() => { setActiveModalTab('cadastro'); setExistingError(''); }}
                     className={cn(
-                      "py-4 px-3 sm:px-4 font-bold text-[10px] sm:text-xs uppercase tracking-wider border-b-2 transition-all mr-2 sm:mr-4 whitespace-nowrap",
+                      "py-3 sm:py-4 px-3 sm:px-4 font-bold text-[11px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap flex-1 sm:flex-none text-center touch-press",
                       activeModalTab === 'cadastro' ? "border-primary text-white" : "border-transparent text-white/40 hover:text-white/60"
                     )}
                   >
@@ -838,7 +839,7 @@ export default function Home() {
                   <button
                     onClick={() => { setActiveModalTab('busca'); setExistingError(''); }}
                     className={cn(
-                      "py-4 px-3 sm:px-4 font-bold text-[10px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap",
+                      "py-3 sm:py-4 px-3 sm:px-4 font-bold text-[11px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap flex-1 sm:flex-none text-center touch-press",
                       activeModalTab === 'busca' ? "border-primary text-white" : "border-transparent text-white/40 hover:text-white/60"
                     )}
                   >
@@ -848,7 +849,7 @@ export default function Home() {
               )}
 
               {/* Corpo do Modal com Scroll Interno para telas menores */}
-              <div className="overflow-y-auto p-4 md:p-8 flex-grow">
+              <div className="overflow-y-auto p-4 sm:p-6 md:p-8 flex-grow custom-scrollbar overscroll-contain">
                 <AnimatePresence mode="wait">
                   {successData ? (
                     // TELA DE SUCESSO
@@ -857,58 +858,58 @@ export default function Home() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
-                      className="text-center space-y-6 md:space-y-8 py-4"
+                      className="text-center space-y-5 sm:space-y-6 md:space-y-8 py-2 sm:py-4"
                     >
-                      <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mx-auto border border-emerald-500/20 shadow-xl">
-                        <CheckCircle2 className="w-8 h-8" />
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mx-auto border border-emerald-500/20 shadow-xl">
+                        <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
                       </div>
 
                       <div>
-                        <h4 className="text-2xl md:text-3xl font-display font-bold text-white mb-2">Inscrição Confirmada!</h4>
-                        <p className="text-sm text-white/60 max-w-md mx-auto leading-relaxed">
+                        <h4 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-white mb-1.5">Inscrição Confirmada!</h4>
+                        <p className="text-xs sm:text-sm text-white/60 max-w-md mx-auto leading-relaxed">
                           Olá, <strong className="text-white">{successData.nome}</strong>! Sua vaga está garantida. Apresente seu QR Code ou informe seu código no credenciamento.
                         </p>
                       </div>
 
                       {/* 🎁 CARD DE NOTIFICAÇÃO VISUAL DA SURPRESA NO E-MAIL */}
-                      <div className="relative overflow-hidden p-6 rounded-[2rem] bg-gradient-to-br from-amber-500/15 via-primary/20 to-purple-600/15 border border-amber-500/30 text-left max-w-md mx-auto shadow-[0_15px_40px_rgba(245,158,11,0.15)]">
+                      <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] bg-gradient-to-br from-amber-500/15 via-primary/20 to-purple-600/15 border border-amber-500/30 text-left max-w-md mx-auto shadow-[0_15px_40px_rgba(245,158,11,0.15)]">
                         <div className="absolute top-0 right-0 -mt-6 -mr-6 w-24 h-24 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
-                        <div className="flex items-start gap-4 relative z-10">
-                          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 shadow-lg">
-                            <Gift className="w-6 h-6 animate-bounce" />
+                        <div className="flex items-start gap-3 sm:gap-4 relative z-10">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 shadow-lg">
+                            <Gift className="w-5 h-5 sm:w-6 sm:h-6 animate-bounce" />
                           </div>
-                          <div className="space-y-1.5 flex-1">
+                          <div className="space-y-1 sm:space-y-1.5 flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                              <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-500/20 px-2 sm:px-2.5 py-0.5 rounded-full border border-amber-500/30">
                                 🎁 Surpresa Especial
                               </span>
-                              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-300 shrink-0" />
                             </div>
-                            <h5 className="text-base font-bold text-white">Verifique o seu e-mail de cadastro!</h5>
+                            <h5 className="text-sm sm:text-base font-bold text-white leading-tight">Verifique o seu e-mail de cadastro!</h5>
                             <p className="text-xs text-white/80 leading-relaxed font-medium">
                               Preparamos uma <strong className="text-amber-300">surpresa exclusiva</strong> para você! Enviamos a confirmação e o seu presente para{' '}
-                              <strong className="text-white underline underline-offset-2">
+                              <strong className="text-white underline underline-offset-2 break-all">
                                 {successData.email || 'o seu e-mail cadastrado'}
                               </strong>.
                             </p>
-                            <p className="text-[11px] text-white/50 pt-1 flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                              <span>Importante: Verifique sua caixa de entrada e a pasta de <strong>Spam/Lixo Eletrônico</strong>.</span>
+                            <p className="text-[10px] sm:text-[11px] text-white/50 pt-1 flex items-center gap-1.5">
+                              <Mail className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-300 shrink-0" />
+                              <span>Verifique também sua pasta de <strong>Spam/Lixo</strong>.</span>
                             </p>
                           </div>
                         </div>
                       </div>
 
                       {/* RESUMO DAS INFORMAÇÕES DO CADASTRO */}
-                      <div className="p-6 bg-white/[0.02] rounded-[2rem] border border-white/[0.08] max-w-md mx-auto text-left space-y-4 shadow-inner">
-                        <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                          <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/40">Informações da Inscrição</span>
+                      <div className="p-4 sm:p-6 bg-white/[0.02] rounded-2xl sm:rounded-[2rem] border border-white/[0.08] max-w-md mx-auto text-left space-y-3 sm:space-y-4 shadow-inner">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+                          <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/40">Informações</span>
                           <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Ativo
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
                           <div>
                             <p className="text-white/40 font-bold uppercase tracking-wider text-[9px]">Participante</p>
                             <p className="text-white font-semibold mt-0.5 truncate">{successData.nome}</p>
@@ -928,9 +929,9 @@ export default function Home() {
                         </div>
 
                         <div className="pt-3 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
-                          <div>
+                          <div className="text-center sm:text-left">
                             <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/30">Código da Credencial</p>
-                            <span className="font-display text-2xl font-black tracking-tight text-white select-all">
+                            <span className="font-display text-xl sm:text-2xl font-black tracking-tight text-white select-all">
                               {successData.codigo}
                             </span>
                           </div>
@@ -938,7 +939,7 @@ export default function Home() {
                             variant="ghost"
                             size="sm"
                             onClick={() => copyText(successData.codigo)}
-                            className="text-white/70 hover:text-white hover:bg-white/10 rounded-xl gap-2 text-xs font-bold transition-all px-4 h-9 border border-white/10 w-full sm:w-auto"
+                            className="text-white/70 hover:text-white hover:bg-white/10 rounded-xl gap-2 text-xs font-bold transition-all px-4 h-9 border border-white/10 w-full sm:w-auto touch-press"
                           >
                             <Copy className="w-3.5 h-3.5" /> Copiar Código
                           </Button>
@@ -947,7 +948,7 @@ export default function Home() {
 
                       {/* QR CODE DE CREDENCIAMENTO */}
                       <div className="flex flex-col items-center space-y-3">
-                        <div id="registration-qr-code" className="p-4 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-white/10 flex items-center justify-center">
+                        <div id="registration-qr-code" className="p-3 sm:p-4 bg-white rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-white/10 flex items-center justify-center">
                           <QRCodeSVG
                             value={successData.codigo}
                             size={qrSize}
@@ -961,7 +962,7 @@ export default function Home() {
                       <div className="pt-2 max-w-sm mx-auto">
                         <Button
                           onClick={closeRegistration}
-                          className="modern-button w-full h-12 text-sm"
+                          className="modern-button w-full h-12 text-sm touch-press"
                         >
                           Concluir e Fechar
                         </Button>
@@ -973,7 +974,7 @@ export default function Home() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
-                      className="space-y-6"
+                      className="space-y-5 sm:space-y-6"
                     >
                       <div className="space-y-4">
                         <div className="flex flex-wrap items-center gap-3 text-xs text-white/40 font-bold uppercase tracking-wider">
@@ -986,14 +987,14 @@ export default function Home() {
                             {formatEventDate(selectedEvent.data, "HH:mm'h'")}
                           </span>
                         </div>
-                        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
-                          <p className="whitespace-pre-line text-sm md:text-base text-white/65 leading-relaxed font-medium">
+                        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 sm:p-5">
+                          <p className="whitespace-pre-line text-sm sm:text-base text-white/65 leading-relaxed font-medium">
                             {selectedEvent.descricao || 'Sem descrição fornecida.'}
                           </p>
                         </div>
                       </div>
 
-                      <div className="pt-4 flex flex-col sm:flex-row gap-4 border-t border-white/5">
+                      <div className="pt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 border-t border-white/5">
                         {(() => {
                           const status = getEventStatus(selectedEvent);
                           if (status === 'em_breve') {
@@ -1024,7 +1025,7 @@ export default function Home() {
                               <Button
                                 type="button"
                                 onClick={() => setActiveModalTab('cadastro')}
-                                className="modern-button h-12 flex-1 text-sm font-bold uppercase"
+                                className="modern-button h-12 flex-1 text-sm font-bold uppercase touch-press"
                               >
                                 Participar
                                 <ArrowRight className="w-4 h-4" />
@@ -1033,7 +1034,7 @@ export default function Home() {
                                 type="button"
                                 variant="outline"
                                 onClick={closeRegistration}
-                                className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6"
+                                className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6 touch-press"
                               >
                                 Fechar
                               </Button>
@@ -1050,16 +1051,16 @@ export default function Home() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 10 }}
                       onSubmit={handleSubmit(onSubmitRegistration)}
-                      className="space-y-5 md:space-y-6"
+                      className="space-y-4 sm:space-y-5 md:space-y-6"
                     >
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 md:gap-5">
                         <div className="space-y-1.5">
                           <Label htmlFor="nome" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">Nome Completo</Label>
                           <Input
                             id="nome"
                             placeholder="Informe seu nome"
                             {...register('nome')}
-                            className={cn("liquid-input h-12 text-sm", errors.nome && "border-red-500/50 focus:border-red-500/50")}
+                            className={cn("liquid-input h-12 text-base md:text-sm", errors.nome && "border-red-500/50 focus:border-red-500/50")}
                           />
                           {errors.nome && <p className="text-[10px] text-red-400 font-bold uppercase pl-1">{errors.nome.message}</p>}
                         </div>
@@ -1071,7 +1072,7 @@ export default function Home() {
                             type="email"
                             placeholder="seu@email.com"
                             {...register('email')}
-                            className={cn("liquid-input h-12 text-sm", errors.email && "border-red-500/50 focus:border-red-500/50")}
+                            className={cn("liquid-input h-12 text-base md:text-sm", errors.email && "border-red-500/50 focus:border-red-500/50")}
                           />
                           {errors.email && <p className="text-[10px] text-red-400 font-bold uppercase pl-1">{errors.email.message}</p>}
                         </div>
@@ -1087,7 +1088,7 @@ export default function Home() {
                                 setValue('escola', '');
                               }}
                               className={cn(
-                                "liquid-input h-12 w-full appearance-none pr-10 cursor-pointer text-sm",
+                                "liquid-input h-12 w-full appearance-none pr-10 cursor-pointer text-base md:text-sm",
                                 errors.cidade && "border-red-500/50 focus:border-red-500/50"
                               )}
                             >
@@ -1113,7 +1114,7 @@ export default function Home() {
                               disabled={!selectedCity}
                               {...register('escola')}
                               className={cn(
-                                "liquid-input h-12 w-full appearance-none pr-10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-sm",
+                                "liquid-input h-12 w-full appearance-none pr-10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-base md:text-sm",
                                 errors.escola && "border-red-500/50 focus:border-red-500/50"
                               )}
                             >
@@ -1139,7 +1140,7 @@ export default function Home() {
                             id="gremio"
                             placeholder="Nome do seu grêmio"
                             {...register('gremio')}
-                            className="liquid-input h-12 text-sm"
+                            className="liquid-input h-12 text-base md:text-sm"
                           />
                         </div>
 
@@ -1154,7 +1155,7 @@ export default function Home() {
                             maxLength={15}
                             {...register('telefone')}
                             onChange={(e) => setValue('telefone', formatPhone(e.target.value))}
-                            className={cn("liquid-input h-12 text-sm", errors.telefone && "border-red-500/50 focus:border-red-500/50")}
+                            className={cn("liquid-input h-12 text-base md:text-sm", errors.telefone && "border-red-500/50 focus:border-red-500/50")}
                           />
                           {errors.telefone && <p className="text-[10px] text-red-400 font-bold uppercase pl-1">{errors.telefone.message}</p>}
                         </div>
@@ -1162,7 +1163,7 @@ export default function Home() {
 
                       <div className="pt-2">
                         <label className="flex items-start gap-3 cursor-pointer group">
-                          <div className="relative flex items-center justify-center mt-0.5">
+                          <div className="relative flex items-center justify-center mt-0.5 shrink-0">
                             <input
                               type="checkbox"
                               {...register('aceiteTermos')}
@@ -1170,18 +1171,18 @@ export default function Home() {
                             />
                             <CheckCircle2 className="absolute w-3.5 h-3.5 text-black opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
                           </div>
-                          <span className="text-sm text-white/60 leading-tight">
+                          <span className="text-xs sm:text-sm text-white/60 leading-tight">
                             Declaro que li e concordo com os <Link to="/termos" target="_blank" className="text-primary hover:underline underline-offset-4">Termos de Uso</Link> e a <Link to="/politica-de-privacidade" target="_blank" className="text-primary hover:underline underline-offset-4">Política de Privacidade</Link>, e autorizo o tratamento dos meus dados conforme a LGPD.
                           </span>
                         </label>
                         {errors.aceiteTermos && <p className="text-[10px] text-red-400 font-bold uppercase pl-1 mt-2">{errors.aceiteTermos.message}</p>}
                       </div>
 
-                      <div className="pt-4 flex flex-col sm:flex-row gap-4 border-t border-white/5 mt-6">
+                      <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 border-t border-white/5 mt-5 sm:mt-6">
                         <Button
                           type="submit"
                           disabled={submittingRegistration || isEventInactive(selectedEvent)}
-                          className="modern-button h-12 flex-1 text-sm font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="modern-button h-12 flex-1 text-xs sm:text-sm font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed touch-press"
                         >
                           {submittingRegistration && <LoadingSpinner size="xs" variant="white" className="mr-2" />}
                           {getEventStatus(selectedEvent) === 'em_breve'
@@ -1197,7 +1198,7 @@ export default function Home() {
                           type="button"
                           variant="outline"
                           onClick={closeRegistration}
-                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6"
+                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6 touch-press"
                         >
                           Cancelar
                         </Button>
@@ -1211,7 +1212,7 @@ export default function Home() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
                       onSubmit={handleSubscribeExisting}
-                      className="space-y-6 py-4"
+                      className="space-y-5 sm:space-y-6 py-2 sm:py-4"
                     >
                       <div className="space-y-2">
                         <Label htmlFor="existing-search" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">
@@ -1222,7 +1223,7 @@ export default function Home() {
                           placeholder="seu@email.com ou EVT-XXXXXX"
                           value={existingCredentialSearch}
                           onChange={(e) => setExistingCredentialSearch(e.target.value)}
-                          className="liquid-input h-12 text-sm tracking-wide"
+                          className="liquid-input h-12 text-base md:text-sm tracking-wide"
                           required
                           disabled={searchingExisting}
                         />
@@ -1257,11 +1258,11 @@ export default function Home() {
                         </motion.div>
                       )}
 
-                      <div className="pt-4 flex flex-col sm:flex-row gap-4 border-t border-white/5">
+                      <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 border-t border-white/5">
                         <Button
                           type="submit"
                           disabled={searchingExisting || !existingCredentialSearch.trim() || isEventInactive(selectedEvent)}
-                          className="modern-button h-12 flex-1 text-sm font-bold uppercase"
+                          className="modern-button h-12 flex-1 text-xs sm:text-sm font-bold uppercase touch-press"
                         >
                           {searchingExisting ? 'Localizando...' : 'Confirmar Inscrição'}
                           {!searchingExisting && <ArrowRight className="w-4 h-4" />}
@@ -1270,7 +1271,7 @@ export default function Home() {
                           type="button"
                           variant="outline"
                           onClick={closeRegistration}
-                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6"
+                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6 touch-press"
                         >
                           Cancelar
                         </Button>
@@ -1287,20 +1288,20 @@ export default function Home() {
       {/* Modal Geral de Consulta de Credencial (Minha Credencial) */}
       <AnimatePresence>
         {showCredentialModal && (
-          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-black/85 backdrop-blur-md" onClick={() => setShowCredentialModal(false)}>
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-md" onClick={() => setShowCredentialModal(false)}>
             <motion.div
-              initial={{ scale: 0.95, y: 20, opacity: 0 }}
+              initial={{ scale: 0.96, y: 30, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.95, y: 20, opacity: 0 }}
+              exit={{ scale: 0.96, y: 30, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="w-full max-w-lg bg-card border border-white/10 rounded-t-[2rem] rounded-b-none md:rounded-[2.5rem] overflow-y-auto max-h-[92dvh] shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative p-5 md:p-10 space-y-6"
+              className="w-full max-w-lg bg-card border border-white/10 rounded-t-[2rem] sm:rounded-[2.5rem] overflow-y-auto max-h-[92dvh] custom-scrollbar shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative p-5 sm:p-8 md:p-10 space-y-5 sm:space-y-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="h-2 bg-gradient-to-r from-primary via-primary to-primary-dark absolute top-0 left-0 right-0" />
+              <div className="h-1.5 sm:h-2 bg-gradient-to-r from-primary via-primary to-primary-dark absolute top-0 left-0 right-0" />
 
               <button
                 onClick={() => setShowCredentialModal(false)}
-                className="absolute top-6 right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10"
+                className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10 touch-press"
                 title="Fechar modal de consulta"
                 aria-label="Fechar"
               >
@@ -1315,21 +1316,21 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-6"
+                    className="space-y-5 sm:space-y-6"
                   >
                     <div>
                       <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary pl-1">
                         Consulta de Acesso
                       </span>
-                      <h3 className="font-display font-bold text-2xl md:text-3xl text-white mt-1 tracking-tight">
+                      <h3 className="font-display font-bold text-xl sm:text-2xl md:text-3xl text-white mt-1 tracking-tight">
                         Buscar Minha Credencial
                       </h3>
-                      <p className="text-white/40 text-sm mt-2 font-medium">
+                      <p className="text-white/40 text-xs sm:text-sm mt-1.5 sm:mt-2 font-medium">
                         Informe o e-mail cadastrado para obter seu código de acesso e QR Code.
                       </p>
                     </div>
 
-                    <form onSubmit={handleSearchCredential} className="space-y-5">
+                    <form onSubmit={handleSearchCredential} className="space-y-4 sm:space-y-5">
                       <div className="space-y-2">
                         <Label htmlFor="cred-email" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">
                           E-mail Cadastrado
@@ -1340,7 +1341,7 @@ export default function Home() {
                           placeholder="seu@email.com"
                           value={credentialEmail}
                           onChange={(e) => setCredentialEmail(e.target.value)}
-                          className="liquid-input h-12 text-sm tracking-wide"
+                          className="liquid-input h-12 text-base md:text-sm tracking-wide"
                           required
                           disabled={searchingCredential}
                         />
@@ -1359,11 +1360,11 @@ export default function Home() {
                         </motion.div>
                       )}
 
-                      <div className="flex gap-4 pt-2">
+                      <div className="flex gap-3 sm:gap-4 pt-2">
                         <Button
                           type="submit"
                           disabled={searchingCredential || !credentialEmail.trim()}
-                          className="modern-button h-12 flex-1 text-sm"
+                          className="modern-button h-12 flex-1 text-xs sm:text-sm touch-press"
                         >
                           {searchingCredential ? 'Buscando...' : 'Verificar Credencial'}
                           {!searchingCredential && <ArrowRight className="w-4 h-4" />}
@@ -1372,7 +1373,7 @@ export default function Home() {
                           type="button"
                           variant="outline"
                           onClick={() => setShowCredentialModal(false)}
-                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6"
+                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-xs sm:text-sm px-5 sm:px-6 touch-press"
                         >
                           Fechar
                         </Button>
@@ -1386,64 +1387,62 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
                     transition={{ duration: 0.3 }}
-                    className="text-center space-y-6"
+                    className="text-center space-y-5 sm:space-y-6"
                   >
                     <div>
                       <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-emerald-400">
                         Credencial Encontrada
                       </span>
-                      <h3 className="font-display font-bold text-2xl text-white mt-1 truncate">
+                      <h3 className="font-display font-bold text-xl sm:text-2xl text-white mt-1 truncate">
                         Olá, {credentialData.nome}!
                       </h3>
-                      <p className="text-white/40 text-xs mt-1.5 font-medium">
+                      <p className="text-white/40 text-xs mt-1 font-medium">
                         Aqui está o seu passe de acesso aos eventos.
                       </p>
                     </div>
 
-                    <div className="p-6 bg-white/[0.02] rounded-2xl border border-white/5 flex flex-col items-center space-y-3">
+                    <div className="p-4 sm:p-6 bg-white/[0.02] rounded-2xl border border-white/5 flex flex-col items-center space-y-2.5 sm:space-y-3">
                       <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/30">
                         Código da Credencial
                       </p>
-                      <span className="font-display text-3xl font-black tracking-tight text-white">
+                      <span className="font-display text-2xl sm:text-3xl font-black tracking-tight text-white select-all">
                         {credentialData.codigo}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => copyText(credentialData.codigo)}
-                        className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl gap-2 text-[10px] font-bold tracking-wider uppercase px-4 h-8 border border-white/5 mt-1"
+                        className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl gap-2 text-[10px] font-bold tracking-wider uppercase px-4 h-8 border border-white/5 mt-1 touch-press"
                       >
                         <Copy className="w-3.5 h-3.5" /> Copiar Código
                       </Button>
                     </div>
 
-                    <div id="credential-search-qr-code" className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl w-48 h-48 mx-auto shadow-xl border border-white/10">
+                    <div id="credential-search-qr-code" className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-2xl sm:rounded-3xl w-40 h-40 sm:w-48 sm:h-48 mx-auto shadow-xl border border-white/10">
                       <QRCodeSVG
                         value={credentialData.codigo}
-                        size={144}
+                        size={qrSize}
                         level="H"
                         fgColor="#000000"
                         bgColor="#ffffff"
                       />
                     </div>
 
-
-
                     <p className="text-xs text-white/40 max-w-xs mx-auto leading-relaxed">
                       Mostre este QR Code ou informe o código acima no credenciamento físico dos eventos.
                     </p>
 
-                    <div className="flex gap-4 pt-2">
+                    <div className="flex gap-3 sm:gap-4 pt-2">
                       <Button
                         variant="outline"
                         onClick={() => setCredentialData(null)}
-                        className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-xs flex-1"
+                        className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-xs flex-1 touch-press"
                       >
                         Consultar Outro
                       </Button>
                       <Button
                         onClick={() => setShowCredentialModal(false)}
-                        className="modern-button h-12 flex-1 text-xs"
+                        className="modern-button h-12 flex-1 text-xs touch-press"
                       >
                         Concluído
                       </Button>
