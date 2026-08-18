@@ -1,6 +1,27 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17-alpine
+    container_name: eventease-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-eventease}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-eventease}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Redis Cache & Storage
   redis:
     image: redis:7-alpine
@@ -27,8 +48,8 @@ services:
     image: eventease-api:latest
     restart: always
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - DIRECT_URL=${DIRECT_URL}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-eventease}
+      - DIRECT_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-eventease}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
       - COOKIE_SECRET=${COOKIE_SECRET}
@@ -42,11 +63,10 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - NODE_ENV=production
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
-    # Permite que o container acesse o PostgreSQL que roda no host da VPS
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     command: >-
       sh -c "npx prisma migrate deploy && node dist/main"
     networks:
@@ -109,4 +129,5 @@ networks:
     driver: bridge
 
 volumes:
+  postgres_data:
   redis_data:

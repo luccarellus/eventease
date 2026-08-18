@@ -11,9 +11,8 @@ O projeto utiliza uma arquitetura monorepo simplificada contendo uma aplicação
 - **Frontend**: [React 19](https://react.dev/), [Vite](https://vite.dev/), [React Router v7](https://reactrouter.com/), [TailwindCSS](https://tailwindcss.com/), [Motion](https://motion.dev/) (animações), [Lucide React](https://lucide.dev/) (ícones) e [Sonner](https://sonner.pages.dev/) (toasts).
 - **Backend**: [NestJS 11](https://nestjs.com/), [Passport JWT](http://www.passportjs.org/) (autenticação segura via Cookies), [Helmet](https://helmetjs.github.io/) (headers de segurança), [Throttler](https://github.com/nestjs/throttler) (rate-limiting) e [Jest](https://jestjs.io/) (testes e2e).
 - **Banco de Dados**: [PostgreSQL](https://www.postgresql.org/) com [Prisma ORM](https://www.prisma.io/).
-- **Hospedagem**: [Vercel](https://vercel.com) (frontend + API serverless) e
-  [Supabase](https://supabase.com) (PostgreSQL). O deploy legado via Docker na
-  VPS (frontend + API + Redis + Nginx) também está documentado ao final.
+- **Hospedagem**: Docker Compose (PostgreSQL + Redis + API + Frontend + Nginx) ou
+  deploy manual na VPS.
 
 ---
 
@@ -33,14 +32,18 @@ O projeto utiliza uma arquitetura monorepo simplificada contendo uma aplicação
 
 ## ⚙️ Configuração do Ambiente (.env)
 
-Crie arquivos `.env` na raiz do projeto e dentro do diretório `/backend`. Utilize as chaves conforme o modelo abaixo:
+Crie um arquivo `.env` na raiz do projeto (o docker-compose usa essas variáveis). Consulte `.env.example` para o modelo completo.
 
 ```env
-# URL do PostgreSQL usada pela API em runtime (pode incluir pooling, ex.: PgBouncer)
-DATABASE_URL="postgresql://usuario:senha@host:5432/eventease"
+# PostgreSQL (Docker Compose)
+POSTGRES_USER="postgres"
+POSTGRES_PASSWORD="sua-senha-forte-aqui"
+POSTGRES_DB="eventease"
 
-# URL de conexão direta - Usada para migrations e pushes do Prisma
-DIRECT_URL="postgresql://usuario:senha@host:5432/eventease"
+# As variáveis DATABASE_URL e DIRECT_URL são geradas automaticamente pelo docker-compose
+# Se usar PostgreSQL externo, defina manualmente:
+# DATABASE_URL="postgresql://usuario:senha@host:5432/eventease"
+# DIRECT_URL="postgresql://usuario:senha@host:5432/eventease"
 
 # Segurança
 JWT_SECRET="gere-um-segredo-hexadecimal-forte-para-jwt"
@@ -81,15 +84,18 @@ cd ..
 
 ### Passo 2: Inicializar o Banco de Dados
 
-Certifique-se de configurar as strings do PostgreSQL no `.env` e aplique as tabelas no banco:
+O docker-compose já inclui um container PostgreSQL. Suba o banco e aplique as migrations:
 
 ```bash
-# Sincroniza o schema.prisma com o banco
-npm run prisma:db-push
+# Inicia apenas o PostgreSQL e Redis
+docker compose up -d postgres redis
+
+# Aguarde o PostgreSQL estar pronto (healthcheck)
+docker compose exec postgres pg_isready
 
 # Popula o banco com o usuário administrador inicial
 # Para definir uma senha conhecida, configure ADMIN_SEED_PASSWORD (e opcionalmente ADMIN_SEED_EMAIL):
-npx prisma db seed --schema=backend/prisma/schema.prisma
+ADMIN_SEED_PASSWORD="sua-senha-admin" npx prisma db seed --schema=backend/prisma/schema.prisma
 ```
 
 > **Segurança:** o seed nunca imprime a senha no console. Se `ADMIN_SEED_PASSWORD` não for definida, uma senha aleatória é gerada. Para redefinir a senha de um admin existente, configure `ADMIN_SEED_PASSWORD` e rode o seed novamente. Nunca use credenciais padrão fixas em produção.
@@ -120,65 +126,7 @@ Acesse o sistema localmente em: `http://localhost:3000`
 
 ---
 
-## 🔄 Migração: PostgreSQL da VPS → Supabase
 
-A autenticação é 100% própria do sistema (tabela `admin_users` com
-`password_hash` em bcrypt) — o Supabase é usado **apenas como banco de dados
-PostgreSQL hospedado**. O `dump.sql` do repositório já inclui tudo que você
-precisa, inclusive uma tabela `supabase_auth_users_backup` com os hashes das
-senhas dos admins, para que **ninguém precise trocar a senha**.
-
-### Passo a passo
-
-1. **Crie um projeto no Supabase** (recomendado: região `sa-east-1`) e anote as
-   credenciais em **Project Settings → Database → Connection string**:
-
-   - **Pooler (transaction)**: `postgresql://postgres.<ref>@aws-0-<regiao>.pooler.supabase.com:6543/postgres` — usada como `DATABASE_URL` (runtime).
-   - **Direct**: `postgresql://postgres.<ref>@aws-0-<regiao>.pooler.supabase.com:5432/postgres` — usada como `DIRECT_URL` (migrations).
-
-   > O usuário `postgres` usa a senha do banco do projeto. Se o dump falhar com
-   > `CREATE EXTENSION`, comente as linhas de `uuid-ossp`/`pgcrypto` (o Supabase
-   > já entrega as funções necessárias, como `gen_random_uuid()`).
-
-2. **Importe o dump** (cria tabelas, dados e a tabela de backup de senhas):
-
-   ```bash
-   psql "$DIRECT_URL" < dump.sql
-   ```
-
-3. **Marque as migrations antigas como aplicadas** — o dump já criou o schema,
-   então o Prisma não deve tentar recriá-lo:
-
-   ```bash
-   npx prisma migrate resolve --applied 0_init --schema=backend/prisma/schema.prisma
-   npx prisma migrate resolve --applied 20260804120000_participante_email_unique --schema=backend/prisma/schema.prisma
-   ```
-
-4. **Aplique a migration restante** (adiciona `password_hash` em `admin_users`
-   e copia os hashes do backup):
-
-   ```bash
-   npx prisma migrate deploy --schema=backend/prisma/schema.prisma
-   ```
-
-   Confira: `SELECT email, password_hash IS NOT NULL AS tem_senha FROM admin_users;`
-   deve retornar `tem_senha = true` para os admins.
-
-5. **Substitua a senha de algum admin se necessário**: com
-   `ADMIN_SEED_PASSWORD` definida, rode o seed para redefini-la:
-
-   ```bash
-   npx prisma db seed --schema=backend/prisma/schema.prisma
-   ```
-
-6. **Pronto**. Se o banco da VPS tiver dados mais novos que o `dump.sql`, gere
-   um dump fresco antes de desligar a VPS:
-
-   ```bash
-   pg_dump "$DATABASE_URL_VPS" > dump.sql
-   ```
-
----
 
 ## 🧪 Testes Automatizados (Backend)
 
@@ -191,82 +139,53 @@ npm run test:e2e
 
 ---
 
-## 🌐 Como Implantar na Vercel + Supabase
+## 🌐 Como Implantar via Docker Compose (Produção)
 
-O frontend (React/Vite) e a API (NestJS) rodam juntos na Vercel: `/api/*` vira
-uma serverless function (`api/index.ts`, que sobe o NestJS compilado) e o
-restante é o site estático. O banco fica no Supabase (PostgreSQL). O Redis não
-é usado na Vercel — o cache fica desativado e a API opera normalmente (modo
-fallback, já tratado no código).
-
-1. **Banco no Supabase**: siga a seção "Migração: PostgreSQL da VPS →
-   Supabase" acima para importar o `dump.sql` e aplicar as migrations.
-
-2. **Importe o projeto na Vercel** ([vercel.com/new](https://vercel.com/new)):
-   conecte o repositório git. A Vercel detecta o Vite (build `npm run build`,
-   que compila o backend e o frontend) e o `vercel.json` roteia `/api/*` para a
-   function.
-
-3. **Variáveis de ambiente** (Project → Settings → Environment Variables):
-
-   - `DATABASE_URL` — Supabase **pooler** (porta `6543`)
-   - `DIRECT_URL` — Supabase **direct** (porta `5432`) — usada só em
-     migrations/CLI locais
-   - `JWT_SECRET`, `JWT_REFRESH_SECRET`, `COOKIE_SECRET`
-   - `FRONTEND_URL` — domínio final na Vercel (ex.:
-     `https://eventease.olharjovem.org`)
-   - `RECAPTCHA_SECRET_KEY`, `RECAPTCHA_MIN_SCORE`
-   - `VITE_RECAPTCHA_SITE_KEY` (usada no build do frontend)
-   - `NEVAPRO_WEBHOOK_URL`, `NEVAPRO_WEBHOOK_SECRET`
-   - ⚠️ **Não** defina `REDIS_HOST` — sem Redis na Vercel (cache desativado).
-
-4. **Deploy**: cada push na `main` faz build + deploy automáticos. A API sobe
-   como uma única serverless function; o primeiro request após o deploy tem
-   alguns segundos de cold start (comportamento esperado).
-
-5. **DNS**: aponte o domínio para a Vercel (Project → Settings → Domains).
-
-6. **Teste**: `https://SEU-DOMINIO/api/events` deve retornar a lista de
-   eventos em JSON. Em caso de erro no boot, `https://SEU-DOMINIO/api/health`
-   mostra o diagnóstico (sem depender do NestJS).
-
----
-
-## (Legado) Como Implantar na VPS (Docker Compose)
-
-> O deploy padrão agora é Vercel + Supabase. Este fluxo docker-compose fica
-> documentado como alternativa para quem prefere manter tudo na própria VPS.
-
-O projeto roda inteiramente na sua VPS via Docker Compose: Nginx (proxy),
-frontend estático, API NestJS e Redis. O PostgreSQL fica fora dos containers
-(no host ou em um container dedicado, ex.: `eventease_postgresql`).
+O projeto roda inteiramente via Docker Compose: PostgreSQL, Redis, API NestJS,
+frontend estático e Nginx (proxy). Tudo está containerizado.
 
 > **Importante:** a API expõe as rotas sob o prefixo `/api` (ex.:
-> `/api/events`). O Nginx encaminha `/api/*` **sem remover o prefixo** —
-> mantenha isso no proxy da VPS se você não usar o `docker-compose` deste
-> repositório.
+> `/api/events`). O Nginx encaminha `/api/*` **sem remover o prefixo**.
 
-1. **Clone o repositório na VPS** e copie um `.env` com as variáveis abaixo.
-2. **Crie/importe o banco** (`psql "$DATABASE_URL" < dump.sql`) e aplique as
-   migrations (`npx prisma migrate deploy`).
-3. **Suba os containers**:
+1. **Clone o repositório** e copie `.env.example` para `.env`:
+
+   ```bash
+   cp .env.example .env
+   # Edite o .env com suas senhas e configurações
+   ```
+
+2. **Suba todos os containers**:
 
    ```bash
    docker compose up -d --build
    ```
 
-4. **Variáveis de Ambiente** (no `.env` da VPS ou no painel do Easypanel):
-   - `DATABASE_URL` / `DIRECT_URL` — URL do PostgreSQL. Dentro da rede Docker
-     use `postgres://postgres:senha@eventease_postgresql:5432/eventease`;
-     de fora, use o IP/host e a porta publicada (ex.: porta `5433`).
-   - `JWT_SECRET`, `JWT_REFRESH_SECRET`, `COOKIE_SECRET`
-   - `VITE_RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`, `RECAPTCHA_MIN_SCORE`
-   - `FRONTEND_URL` (domínio final)
-   - `NEVAPRO_WEBHOOK_URL`, `NEVAPRO_WEBHOOK_SECRET`
-   - `VITE_MAINTENANCE_MODE` (opcional; `false` para o site ficar online)
+   O PostgreSQL será criado automaticamente com as credenciais do `.env`.
+
+3. **Aplique as migrations do banco** (após o primeiro boot):
+
+   ```bash
+   docker compose exec api npx prisma migrate deploy
+   ```
+
+4. **Popule o banco com o admin inicial**:
+
+   ```bash
+   ADMIN_SEED_PASSWORD="sua-senha" docker compose exec api npx prisma db seed
+   ```
+
 5. **DNS**: aponte o domínio (ex.: `eventease.olharjovem.org`) para o IP da VPS.
    Para HTTPS, descomente o bloco SSL em `docker/nginx/conf.d/default.conf` e
    gere o certificado com o Certbot.
 
-> **Nota**: este projeto não usa mais a Vercel — os arquivos `vercel.json` e
-> `api/` foram removidos.
+### Variáveis de Ambiente (produção)
+
+- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` — credenciais do PostgreSQL
+- `JWT_SECRET`, `JWT_REFRESH_SECRET`, `COOKIE_SECRET` — chaves de segurança
+- `FRONTEND_URL` — domínio final (ex.: `https://eventease.olharjovem.org`)
+- `VITE_RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`, `RECAPTCHA_MIN_SCORE`
+- `NEVAPRO_WEBHOOK_URL`, `NEVAPRO_WEBHOOK_SECRET`
+- `VITE_MAINTENANCE_MODE` (opcional; `false` para o site ficar online)
+
+> **Nota**: `DATABASE_URL` e `DIRECT_URL` são geradas automaticamente pelo
+> docker-compose a partir das variáveis `POSTGRES_*`.

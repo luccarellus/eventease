@@ -1,3 +1,4 @@
+import "dotenv/config";
 import dns from "dns";
 import { defineConfig } from "@prisma/config";
 

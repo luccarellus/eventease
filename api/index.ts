@@ -36,15 +36,6 @@ function assertRequiredEnvVars() {
   const dbUrl = process.env.DATABASE_URL || '';
   console.log('[bootstrap] DATABASE_URL:', maskConnectionString(dbUrl));
 
-  if (!dbUrl.includes('supabase.com') && !dbUrl.includes('localhost')) {
-    console.warn(
-      '[bootstrap] ATENÇÃO: DATABASE_URL não parece ser do Supabase.',
-    );
-    console.warn(
-      '[bootstrap] Formato esperado: postgresql://postgres.xxxx@aws-0-sa-east-1.pooler.supabase.com:6543/postgres',
-    );
-  }
-
   console.log('[bootstrap] JWT_SECRET definida:', !!process.env.JWT_SECRET);
   console.log('[bootstrap] NODE_ENV:', process.env.NODE_ENV || 'não definido');
 }

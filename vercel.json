@@ -1,9 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
+  "regions": ["gru1"],
   "functions": {
     "api/index.ts": {
-      "includeFiles": "backend/**"
+      "includeFiles": "backend/**",
+      "memory": 1024,
+      "maxDuration": 15
     }
   },
   "rewrites": [

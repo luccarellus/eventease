@@ -251,9 +251,8 @@ export class AuthService implements OnModuleInit {
 
       const passwordHash = await bcrypt.hash(pass, 10);
 
-      // Se o usuário já existe mas não tem password_hash (criado via
-      // Supabase Auth antigo), permite "reivindicar" a conta definindo
-      // a senha localmente.
+      // Se o usuário já existe mas não tem password_hash,
+      // permite "reivindicar" a conta definindo a senha localmente.
       if (existing && !existing.passwordHash) {
         const updated = await this.prisma.adminUser.update({
           where: { id: existing.id },

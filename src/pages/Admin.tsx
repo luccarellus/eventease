@@ -244,7 +244,6 @@ export default function Admin() {
   useEffect(() => {
     fetchData();
 
-    // Removed supabase realtime channel
     const handleSync = () => {
       fetchData();
       if (activeTab === 'alunos') {
