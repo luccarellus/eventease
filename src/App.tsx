@@ -22,6 +22,7 @@ const Home = lazy(() => import('@/pages/Home'));
 const Confirm = lazy(() => import('@/pages/Confirm'));
 const Admin = lazy(() => import('@/pages/Admin'));
 const Login = lazy(() => import('@/pages/Login'));
+const Register = lazy(() => import('@/pages/Register'));
 const PrivacyPolicy = lazy(() => import('@/pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('@/pages/TermsOfService'));
 const Maintenance = lazy(() => import('@/pages/Maintenance'));
@@ -267,6 +268,7 @@ function AppContent() {
               }
             />
             <Route path="/login" element={<Login />} />
+            <Route path="/cadastro" element={<Register />} />
             <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
             <Route path="/termos" element={<TermsOfService />} />
           </Routes>

@@ -249,18 +249,43 @@ export class AuthService implements OnModuleInit {
         where: { email: normalizedEmail },
       });
 
+      const passwordHash = await bcrypt.hash(pass, 10);
+
+      // Se o usuário já existe mas não tem password_hash (criado via
+      // Supabase Auth antigo), permite "reivindicar" a conta definindo
+      // a senha localmente.
+      if (existing && !existing.passwordHash) {
+        const updated = await this.prisma.adminUser.update({
+          where: { id: existing.id },
+          data: {
+            passwordHash,
+            fullName: fullName ?? existing.fullName,
+          },
+        });
+
+        return {
+          id: updated.id,
+          email: updated.email,
+          role: updated.role,
+          claimed: true,
+        };
+      }
+
       if (existing) {
         throw new UnauthorizedException('E-mail já cadastrado.');
       }
 
-      const passwordHash = await bcrypt.hash(pass, 10);
+      // Se não existe nenhum admin, o primeiro usuário registrado vira admin
+      const adminCount = await this.prisma.adminUser.count({
+        where: { role: 'admin' },
+      });
 
       const user = await this.prisma.adminUser.create({
         data: {
           id: crypto.randomUUID(),
           email: normalizedEmail,
           fullName: fullName ?? null,
-          role: 'user',
+          role: adminCount === 0 ? 'admin' : 'user',
           passwordHash,
         },
       });

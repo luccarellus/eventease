@@ -175,6 +175,13 @@ export default function Login() {
                 {!loading && (!lockoutUntil || Date.now() >= lockoutUntil) && <ArrowRight className="w-5 h-5 ml-1" />}
               </Button>
 
+              <div className="text-center text-sm text-white/40 mt-4">
+                Não tem conta?{' '}
+                <Link to="/cadastro" className="text-primary hover:text-primary-dark transition-colors font-bold">
+                  Criar conta
+                </Link>
+              </div>
+
             </form>
           </CardContent>
         </Card>
