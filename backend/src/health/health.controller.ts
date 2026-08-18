@@ -20,9 +20,8 @@ export class HealthController {
       dbStatus = 'error';
     }
 
-    // Sem REDIS_HOST configurado (ex.: Vercel) o cache é opcional — não
-    // degrada o serviço. Só conta como erro se o Redis foi configurado e
-    // está fora do ar.
+    // Sem REDIS_HOST configurado, o cache é opcional — não degrada o serviço.
+    // Só conta como erro se o Redis foi configurado e está fora do ar.
     let redisStatus: 'ok' | 'error' | 'disabled' = 'ok';
     if (!getEnv('REDIS_HOST')) {
       redisStatus = 'disabled';
