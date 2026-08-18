@@ -79,18 +79,18 @@ export default function Register() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-9rem)] px-4 md:px-6 py-8 md:py-12">
+    <div className="flex flex-col items-center justify-center min-h-[calc(100dvh-7rem)] px-3 sm:px-4 md:px-6 py-4 sm:py-8 md:py-12">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md flex flex-col items-center mb-8 space-y-4"
+        className="w-full max-w-md flex flex-col items-center mb-4 sm:mb-8 space-y-2 sm:space-y-4"
       >
         <div className="w-full flex items-center justify-center">
           <img
             src="/logo_oficial.png"
             alt="Instituto Olhar Jovem"
-            className="h-16 sm:h-24 w-auto max-w-[88vw] object-contain -translate-x-4 sm:-translate-x-6"
+            className="h-12 sm:h-24 w-auto max-w-[85vw] object-contain -translate-x-3 sm:-translate-x-6"
           />
         </div>
       </motion.div>
@@ -101,75 +101,75 @@ export default function Register() {
         transition={{ duration: 0.5, delay: 0.1 }}
         className="w-full max-w-md"
       >
-        <Card className="glass-card shadow-3xl overflow-hidden border-white/[0.04]">
-          <CardHeader className="text-left px-5 sm:px-12 pt-6 sm:pt-12 pb-2">
-            <span className="text-primary font-bold text-[10px] uppercase tracking-[0.2em]">Criar conta de equipe</span>
-            <CardTitle className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-1">Cadastro</CardTitle>
+        <Card className="glass-card shadow-3xl overflow-hidden border-white/[0.04] rounded-2xl sm:rounded-3xl">
+          <CardHeader className="text-left px-4 sm:px-12 pt-4 sm:pt-12 pb-1 sm:pb-2">
+            <span className="text-primary font-bold text-[9px] sm:text-[10px] uppercase tracking-[0.2em]">Criar conta de equipe</span>
+            <CardTitle className="font-display text-xl sm:text-3xl font-extrabold tracking-tight text-white mt-0.5 sm:mt-1">Cadastro</CardTitle>
           </CardHeader>
-          <CardContent className="px-5 sm:px-12 pt-5 sm:pt-8 pb-6 sm:pb-12">
-            <form id="register-form" onSubmit={handleRegister} className="space-y-5 sm:space-y-6">
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="fullName" className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">Nome completo</Label>
+          <CardContent className="px-4 sm:px-12 pt-4 sm:pt-8 pb-5 sm:pb-12">
+            <form id="register-form" onSubmit={handleRegister} className="space-y-3.5 sm:space-y-6">
+              <div className="space-y-1 sm:space-y-2">
+                <Label htmlFor="fullName" className="text-white/40 font-bold text-[9px] sm:text-[10px] uppercase tracking-[0.2em]">Nome completo</Label>
                 <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within:text-primary transition-colors" />
+                  <User className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/10 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="fullName"
                     type="text"
                     placeholder="Seu nome"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="liquid-input pl-12 h-12 sm:h-14 text-base md:text-sm border-white/[0.05] focus:ring-primary rounded-2xl"
+                    className="liquid-input pl-10 sm:pl-12 h-11 sm:h-14 text-sm border-white/[0.05] focus:ring-primary rounded-xl sm:rounded-2xl"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="email" className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">E-mail</Label>
+              <div className="space-y-1 sm:space-y-2">
+                <Label htmlFor="email" className="text-white/40 font-bold text-[9px] sm:text-[10px] uppercase tracking-[0.2em]">E-mail</Label>
                 <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within:text-primary transition-colors" />
+                  <Mail className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/10 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="email"
                     type="email"
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="liquid-input pl-12 h-12 sm:h-14 text-base md:text-sm border-white/[0.05] focus:ring-primary rounded-2xl"
+                    className="liquid-input pl-10 sm:pl-12 h-11 sm:h-14 text-sm border-white/[0.05] focus:ring-primary rounded-xl sm:rounded-2xl"
                     required
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5 sm:space-y-2">
-                <Label htmlFor="password" className="text-white/40 font-bold text-[10px] uppercase tracking-[0.2em]">Senha</Label>
+              <div className="space-y-1 sm:space-y-2">
+                <Label htmlFor="password" className="text-white/40 font-bold text-[9px] sm:text-[10px] uppercase tracking-[0.2em]">Senha</Label>
                 <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within:text-primary transition-colors" />
+                  <Lock className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/10 group-focus-within:text-primary transition-colors" />
                   <Input
                     id="password"
                     type="password"
                     placeholder="Mínimo 10 caracteres"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="liquid-input pl-12 h-12 sm:h-14 text-base md:text-sm border-white/[0.05] focus:ring-primary rounded-2xl"
+                    className="liquid-input pl-10 sm:pl-12 h-11 sm:h-14 text-sm border-white/[0.05] focus:ring-primary rounded-xl sm:rounded-2xl"
                     minLength={10}
                     required
                   />
                 </div>
-                <p className="text-[10px] text-white/30 mt-1">
+                <p className="text-[9px] sm:text-[10px] text-white/30 mt-0.5 sm:mt-1">
                   Mínimo 10 caracteres, com maiúscula, minúscula, número e caractere especial.
                 </p>
               </div>
 
               <Button
                 type="submit"
-                className="modern-button w-full h-12 sm:h-14 text-sm sm:text-base font-bold uppercase tracking-wider mt-4 touch-press"
+                className="modern-button w-full h-11 sm:h-14 text-xs sm:text-base font-bold uppercase tracking-wider mt-2 sm:mt-4 touch-press rounded-xl sm:rounded-2xl"
                 disabled={loading}
               >
                 {loading && <LoadingSpinner size="sm" variant="white" className="mr-2" />}
                 {loading ? 'Criando conta...' : 'Criar conta'}
-                {!loading && <ArrowRight className="w-5 h-5 ml-1" />}
+                {!loading && <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1" />}
               </Button>
 
-              <div className="text-center text-xs sm:text-sm text-white/40">
+              <div className="text-center text-xs sm:text-sm text-white/40 mt-3 sm:mt-4">
                 Já tem conta?{' '}
                 <Link to="/login" className="text-primary hover:text-primary-dark transition-colors font-bold">
                   Fazer login
@@ -183,7 +183,7 @@ export default function Register() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-8 flex flex-col items-center gap-3 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-white/20"
+          className="mt-4 sm:mt-8 flex flex-col items-center gap-2 sm:gap-3 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-white/20"
         >
           <div className="flex gap-4">
             <Link to="/politica-de-privacidade" className="hover:text-white/40 transition-colors">Privacidade</Link>

@@ -207,7 +207,7 @@ export default function Home() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const qrSize = windowWidth < 380 ? 140 : windowWidth < 640 ? 170 : 220;
+  const qrSize = windowWidth < 380 ? 120 : windowWidth < 640 ? 150 : 220;
 
   // Escutar parâmetro de busca de credencial na URL (?buscar-credencial=true)
   useEffect(() => {
@@ -560,30 +560,30 @@ export default function Home() {
   }, [eventos, searchTerm]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 md:space-y-12 pb-8 md:pb-12">
+    <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6 md:space-y-12 pb-4 sm:pb-8 md:pb-12">
       {/* Hero / Banner Principal */}
-      <div className="text-center mb-10 md:mb-16 px-4">
+      <div className="text-center mb-5 sm:mb-8 md:mb-16 px-3 sm:px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.03] text-primary text-xs font-bold uppercase tracking-wider mb-6 border border-white/10 backdrop-blur-md shadow-lg shadow-black/40"
+          className="inline-flex items-center gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-white/[0.03] text-primary text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-3 sm:mb-6 border border-white/10 backdrop-blur-md shadow-lg shadow-black/40"
         >
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
           </span>
-          Eventos disponiveis
+          Eventos disponíveis
         </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="heading-display text-3xl sm:text-4xl md:text-7xl mb-6 md:mb-8 tracking-tight font-extrabold leading-[1.1] md:leading-[1.05]"
+          className="heading-display text-2xl sm:text-4xl md:text-7xl mb-2.5 sm:mb-6 md:mb-8 tracking-tight font-extrabold leading-[1.15] md:leading-[1.05]"
         >
           <span className="text-white drop-shadow-sm">EventEase</span>
-          <span className="mx-2 sm:mx-4 text-white/15 font-light text-2xl sm:text-3xl md:text-5xl align-middle">/</span>
+          <span className="mx-1.5 sm:mx-4 text-white/15 font-light text-xl sm:text-3xl md:text-5xl align-middle">/</span>
           <span className="bg-gradient-to-r from-primary via-primary to-primary-dark bg-clip-text text-transparent font-black tracking-tighter">
             Instituto Olhar Jovem
           </span>
@@ -593,7 +593,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="text-white/50 text-base md:text-lg max-w-2xl mx-auto font-medium leading-relaxed px-4 mb-8"
+          className="text-white/50 text-xs sm:text-base md:text-lg max-w-2xl mx-auto font-medium leading-relaxed px-2 sm:px-4 mb-4 sm:mb-8 line-clamp-3 sm:line-clamp-none"
         >
           Escolha um evento na lista abaixo e garanta sua vaga. O cadastro é feito de forma simples e direta, liberando seu <span className="text-white font-semibold">QR Code de presença</span> imediatamente.
         </motion.p>
@@ -601,13 +601,13 @@ export default function Home() {
       </div>
 
       {/* Caixa de Busca de Eventos */}
-      <div className="max-w-md mx-auto relative group px-2 md:px-0 mb-10">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 transition-colors group-focus-within:text-primary" />
+      <div className="max-w-md mx-auto relative group px-2 md:px-0 mb-5 sm:mb-10">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-white/20 transition-colors group-focus-within:text-primary" />
         <Input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Buscar eventos por título ou local..."
-          className="liquid-input pl-12 h-12 text-sm placeholder:text-white/20 border-white/[0.05]"
+          className="liquid-input pl-11 sm:pl-12 h-10 sm:h-12 text-xs sm:text-sm placeholder:text-white/20 border-white/[0.05]"
         />
       </div>
 
@@ -623,11 +623,11 @@ export default function Home() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center p-8 md:p-12 bg-white/[0.02] border border-white/[0.06] rounded-[2rem] max-w-xl mx-auto"
+          className="text-center p-6 sm:p-12 bg-white/[0.02] border border-white/[0.06] rounded-[1.5rem] sm:rounded-[2rem] max-w-xl mx-auto"
         >
-          <AlertCircle className="w-12 h-12 text-white/20 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white mb-2">Nenhum evento localizado</h3>
-          <p className="text-white/40 text-sm leading-relaxed">
+          <AlertCircle className="w-10 h-10 sm:w-12 sm:h-12 text-white/20 mx-auto mb-3 sm:mb-4" />
+          <h3 className="text-lg sm:text-xl font-bold text-white mb-2">Nenhum evento localizado</h3>
+          <p className="text-white/40 text-xs sm:text-sm leading-relaxed">
             {searchTerm ? 'Nenhum resultado corresponde à sua pesquisa. Tente buscar por outros termos.' : 'No momento não há eventos com inscrições abertas.'}
           </p>
         </motion.div>
@@ -639,16 +639,16 @@ export default function Home() {
             hidden: { opacity: 0 },
             visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
           }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 px-2 md:px-0"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6 md:gap-8 px-1 sm:px-2 md:px-0"
         >
           {filteredEvents.map((evento) => (
             <motion.div
               key={evento.id}
               variants={{
-                hidden: { opacity: 0, y: 30, filter: 'blur(5px)' },
-                visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
+                hidden: { opacity: 0, y: 20, filter: 'blur(5px)' },
+                visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }
               }}
-              whileHover={{ y: -6 }}
+              whileHover={{ y: -4 }}
               className="h-full"
             >
               <Card
@@ -661,15 +661,15 @@ export default function Home() {
                     openEventModal(evento, 'detalhes');
                   }
                 }}
-                className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group cursor-pointer will-change-transform !shadow-[0_22px_70px_rgba(0,0,0,0.58)] hover:!shadow-[0_32px_90px_rgba(0,0,0,0.78)] hover:-translate-y-1.5 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group cursor-pointer will-change-transform !shadow-[0_16px_50px_rgba(0,0,0,0.5)] hover:!shadow-[0_24px_70px_rgba(0,0,0,0.7)] hover:-translate-y-1 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-2xl sm:rounded-3xl"
               >
-                <CardHeader className="p-5 sm:p-7 md:p-8 pb-3 sm:pb-4">
-                  <div className="flex items-center justify-between gap-2 mb-3">
+                <CardHeader className="p-4 sm:p-7 md:p-8 pb-2 sm:pb-4">
+                  <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                     {(() => {
                       const status = getEventStatus(evento);
                       if (status === 'em_breve') {
                         return (
-                          <span className="px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                          <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
                             Em Breve
                           </span>
@@ -677,14 +677,14 @@ export default function Home() {
                       }
                       if (status === 'encerrado') {
                         return (
-                          <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                          <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                             Encerrado
                           </span>
                         );
                       }
                       return (
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                        <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           Aberto
                         </span>
@@ -694,27 +694,27 @@ export default function Home() {
                       {formatEventDate(evento.data)}
                     </span>
                   </div>
-                  <CardTitle className="font-display font-bold text-xl sm:text-2xl text-white tracking-tight leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                  <CardTitle className="font-display font-bold text-lg sm:text-2xl text-white tracking-tight leading-snug group-hover:text-primary transition-colors line-clamp-2">
                     {evento.titulo}
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-5 sm:p-7 md:p-8 pt-0 pb-5 sm:pb-6 flex-grow">
-                  <p className="text-xs sm:text-sm text-white/50 leading-relaxed font-medium mb-5 line-clamp-3">
+                <CardContent className="p-4 sm:p-7 md:p-8 pt-0 pb-3 sm:pb-6 flex-grow">
+                  <p className="text-xs sm:text-sm text-white/50 leading-relaxed font-medium mb-3 sm:mb-5 line-clamp-2 sm:line-clamp-3">
                     {evento.descricao || 'Sem descrição fornecida.'}
                   </p>
 
-                  <div className="space-y-2.5 border-t border-white/5 pt-4 text-xs text-white/40 font-bold uppercase tracking-wider">
-                    <div className="flex items-center gap-2.5">
-                      <Clock className="w-4 h-4 text-primary shrink-0" />
-                      <span>{formatEventDate(evento.data, "HH:mm'h'")}</span>
+                  <div className="space-y-1.5 sm:space-y-2.5 border-t border-white/5 pt-3 sm:pt-4 text-xs text-white/40 font-bold uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
+                      <span className="text-[11px] sm:text-xs">{formatEventDate(evento.data, "HH:mm'h'")}</span>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                      <MapPin className="w-4 h-4 text-primary shrink-0 animate-pulse" />
-                      <span className="truncate max-w-[200px] sm:max-w-[260px]">{evento.local}</span>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0 animate-pulse" />
+                      <span className="truncate max-w-[220px] sm:max-w-[260px] text-[11px] sm:text-xs">{evento.local}</span>
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="p-5 sm:p-7 md:p-8 pt-0 border-none bg-transparent">
+                <CardFooter className="p-4 sm:p-7 md:p-8 pt-0 border-none bg-transparent">
                   {(() => {
                     const status = getEventStatus(evento);
                     if (status === 'em_breve') {
@@ -725,7 +725,7 @@ export default function Home() {
                             openEventModal(evento, 'detalhes');
                           }}
                           variant="outline"
-                          className="w-full h-11 sm:h-12 text-xs uppercase tracking-wider font-bold border-sky-500/30 text-sky-400 hover:bg-sky-500/10 bg-sky-500/5 rounded-2xl cursor-pointer touch-press"
+                          className="w-full h-10 sm:h-12 text-xs uppercase tracking-wider font-bold border-sky-500/30 text-sky-400 hover:bg-sky-500/10 bg-sky-500/5 rounded-xl sm:rounded-2xl cursor-pointer touch-press"
                         >
                           Inscrições Em Breve
                         </Button>
@@ -739,7 +739,7 @@ export default function Home() {
                             openEventModal(evento, 'detalhes');
                           }}
                           variant="outline"
-                          className="w-full h-11 sm:h-12 text-xs uppercase tracking-wider font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 bg-amber-500/5 rounded-2xl cursor-pointer touch-press"
+                          className="w-full h-10 sm:h-12 text-xs uppercase tracking-wider font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 bg-amber-500/5 rounded-xl sm:rounded-2xl cursor-pointer touch-press"
                         >
                           Inscrições Encerradas
                         </Button>
@@ -751,7 +751,7 @@ export default function Home() {
                           event.stopPropagation();
                           openEventModal(evento, 'cadastro');
                         }}
-                        className="modern-button w-full h-11 sm:h-12 text-xs sm:text-sm uppercase tracking-wider font-bold touch-press"
+                        className="modern-button w-full h-10 sm:h-12 text-xs sm:text-sm uppercase tracking-wider font-bold touch-press rounded-xl sm:rounded-2xl"
                       >
                         Participar
                         <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
@@ -776,20 +776,20 @@ export default function Home() {
               "fixed inset-0 z-[100] flex justify-center bg-black/85 backdrop-blur-md",
               activeModalTab === 'detalhes' && !successData
                 ? "items-end sm:items-center p-0 sm:p-4 md:p-6"
-                : "items-end md:items-center p-0 pt-6 sm:p-4 md:p-6"
+                : "items-end md:items-center p-0 sm:p-4 md:p-6"
             )}
             onClick={closeRegistration}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 40 }}
+              initial={{ opacity: 0, scale: 0.96, y: 30 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 40 }}
+              exit={{ opacity: 0, scale: 0.96, y: 30 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
               className={cn(
                 "w-full bg-card border border-white/10 overflow-hidden relative flex flex-col",
                 activeModalTab === 'detalhes' && !successData
-                  ? "max-w-xl rounded-t-[2rem] sm:rounded-[2rem] max-h-[92dvh] sm:max-h-[88dvh] shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
-                  : "max-w-2xl rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 max-h-[93dvh] md:max-h-[90dvh] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+                  ? "max-w-xl rounded-t-[1.75rem] sm:rounded-[2rem] max-h-[90dvh] sm:max-h-[88dvh] shadow-[0_24px_80px_rgba(0,0,0,0.85)]"
+                  : "max-w-2xl rounded-t-[1.75rem] md:rounded-[2.5rem] mt-auto md:mt-0 max-h-[92dvh] md:max-h-[90dvh] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
               )}
               onClick={(e) => e.stopPropagation()}
             >
@@ -797,21 +797,21 @@ export default function Home() {
 
               <button
                 onClick={closeRegistration}
-                className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10 touch-press"
+                className="absolute top-3 right-3 sm:top-6 sm:right-6 p-1.5 sm:p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10 touch-press"
                 title="Fechar modal de inscrição"
                 aria-label="Fechar"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
 
               {/* Header do Modal */}
-              <div className="p-5 sm:p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
-                <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">
+              <div className="p-3.5 sm:p-6 md:p-8 border-b border-white/5 bg-white/[0.01]">
+                <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary">
                   {activeModalTab === 'detalhes' && !successData ? 'Detalhes do Evento' : 'Inscrição no Evento'}
                 </span>
-                <h3 className="text-lg sm:text-xl md:text-2xl font-display font-bold text-white mt-1 truncate pr-10">{selectedEvent.titulo}</h3>
-                <p className="text-white/40 text-xs mt-1 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-primary shrink-0" /> {selectedEvent.local}{selectedEvent.cidade ? ` • ${selectedEvent.cidade}` : ''}
+                <h3 className="text-base sm:text-xl md:text-2xl font-display font-bold text-white mt-0.5 truncate pr-8 sm:pr-10">{selectedEvent.titulo}</h3>
+                <p className="text-white/40 text-[11px] sm:text-xs mt-0.5 flex items-center gap-1.5 truncate">
+                  <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-primary shrink-0" /> {selectedEvent.local}{selectedEvent.cidade ? ` • ${selectedEvent.cidade}` : ''}
                 </p>
               </div>
 
@@ -821,7 +821,7 @@ export default function Home() {
                   <button
                     onClick={() => { setActiveModalTab('detalhes'); setExistingError(''); }}
                     className={cn(
-                      "py-3 sm:py-4 px-3 sm:px-4 font-bold text-[11px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap flex-1 sm:flex-none text-center touch-press",
+                      "py-2 sm:py-3.5 px-2.5 sm:px-4 font-bold text-[10px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap flex-1 sm:flex-none text-center touch-press",
                       activeModalTab === 'detalhes' ? "border-primary text-white" : "border-transparent text-white/40 hover:text-white/60"
                     )}
                   >
@@ -830,7 +830,7 @@ export default function Home() {
                   <button
                     onClick={() => { setActiveModalTab('cadastro'); setExistingError(''); }}
                     className={cn(
-                      "py-3 sm:py-4 px-3 sm:px-4 font-bold text-[11px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap flex-1 sm:flex-none text-center touch-press",
+                      "py-2 sm:py-3.5 px-2.5 sm:px-4 font-bold text-[10px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap flex-1 sm:flex-none text-center touch-press",
                       activeModalTab === 'cadastro' ? "border-primary text-white" : "border-transparent text-white/40 hover:text-white/60"
                     )}
                   >
@@ -839,7 +839,7 @@ export default function Home() {
                   <button
                     onClick={() => { setActiveModalTab('busca'); setExistingError(''); }}
                     className={cn(
-                      "py-3 sm:py-4 px-3 sm:px-4 font-bold text-[11px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap flex-1 sm:flex-none text-center touch-press",
+                      "py-2 sm:py-3.5 px-2.5 sm:px-4 font-bold text-[10px] sm:text-xs uppercase tracking-wider border-b-2 transition-all whitespace-nowrap flex-1 sm:flex-none text-center touch-press",
                       activeModalTab === 'busca' ? "border-primary text-white" : "border-transparent text-white/40 hover:text-white/60"
                     )}
                   >
@@ -849,7 +849,7 @@ export default function Home() {
               )}
 
               {/* Corpo do Modal com Scroll Interno para telas menores */}
-              <div className="overflow-y-auto p-4 sm:p-6 md:p-8 flex-grow custom-scrollbar overscroll-contain">
+              <div className="overflow-y-auto p-3.5 sm:p-6 md:p-8 flex-grow custom-scrollbar overscroll-contain">
                 <AnimatePresence mode="wait">
                   {successData ? (
                     // TELA DE SUCESSO
@@ -858,42 +858,42 @@ export default function Home() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0 }}
-                      className="text-center space-y-5 sm:space-y-6 md:space-y-8 py-2 sm:py-4"
+                      className="text-center space-y-3.5 sm:space-y-6 md:space-y-8 py-1 sm:py-4"
                     >
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mx-auto border border-emerald-500/20 shadow-xl">
-                        <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8" />
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400 mx-auto border border-emerald-500/20 shadow-xl">
+                        <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8" />
                       </div>
 
                       <div>
-                        <h4 className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-white mb-1.5">Inscrição Confirmada!</h4>
+                        <h4 className="text-lg sm:text-2xl md:text-3xl font-display font-bold text-white mb-1">Inscrição Confirmada!</h4>
                         <p className="text-xs sm:text-sm text-white/60 max-w-md mx-auto leading-relaxed">
                           Olá, <strong className="text-white">{successData.nome}</strong>! Sua vaga está garantida. Apresente seu QR Code ou informe seu código no credenciamento.
                         </p>
                       </div>
 
                       {/* 🎁 CARD DE NOTIFICAÇÃO VISUAL DA SURPRESA NO E-MAIL */}
-                      <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] bg-gradient-to-br from-amber-500/15 via-primary/20 to-purple-600/15 border border-amber-500/30 text-left max-w-md mx-auto shadow-[0_15px_40px_rgba(245,158,11,0.15)]">
+                      <div className="relative overflow-hidden p-3 sm:p-6 rounded-xl sm:rounded-[2rem] bg-gradient-to-br from-amber-500/15 via-primary/20 to-purple-600/15 border border-amber-500/30 text-left max-w-md mx-auto shadow-[0_15px_40px_rgba(245,158,11,0.15)]">
                         <div className="absolute top-0 right-0 -mt-6 -mr-6 w-24 h-24 bg-amber-500/20 rounded-full blur-2xl pointer-events-none" />
-                        <div className="flex items-start gap-3 sm:gap-4 relative z-10">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 shadow-lg">
-                            <Gift className="w-5 h-5 sm:w-6 sm:h-6 animate-bounce" />
+                        <div className="flex items-start gap-2.5 sm:gap-4 relative z-10">
+                          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 shrink-0 shadow-lg">
+                            <Gift className="w-4 h-4 sm:w-6 sm:h-6 animate-bounce" />
                           </div>
-                          <div className="space-y-1 sm:space-y-1.5 flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-500/20 px-2 sm:px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                          <div className="space-y-0.5 sm:space-y-1.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[8px] sm:text-[10px] font-extrabold uppercase tracking-wider text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/30">
                                 🎁 Surpresa Especial
                               </span>
-                              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-300 shrink-0" />
+                              <Sparkles className="w-3 h-3 text-amber-300 shrink-0" />
                             </div>
-                            <h5 className="text-sm sm:text-base font-bold text-white leading-tight">Verifique o seu e-mail de cadastro!</h5>
-                            <p className="text-xs text-white/80 leading-relaxed font-medium">
+                            <h5 className="text-xs sm:text-base font-bold text-white leading-tight">Verifique o seu e-mail de cadastro!</h5>
+                            <p className="text-[11px] sm:text-xs text-white/80 leading-relaxed font-medium">
                               Preparamos uma <strong className="text-amber-300">surpresa exclusiva</strong> para você! Enviamos a confirmação e o seu presente para{' '}
                               <strong className="text-white underline underline-offset-2 break-all">
                                 {successData.email || 'o seu e-mail cadastrado'}
                               </strong>.
                             </p>
-                            <p className="text-[10px] sm:text-[11px] text-white/50 pt-1 flex items-center gap-1.5">
-                              <Mail className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-300 shrink-0" />
+                            <p className="text-[9px] sm:text-[11px] text-white/50 pt-0.5 flex items-center gap-1">
+                              <Mail className="w-3 h-3 text-amber-300 shrink-0" />
                               <span>Verifique também sua pasta de <strong>Spam/Lixo</strong>.</span>
                             </p>
                           </div>
@@ -901,37 +901,37 @@ export default function Home() {
                       </div>
 
                       {/* RESUMO DAS INFORMAÇÕES DO CADASTRO */}
-                      <div className="p-4 sm:p-6 bg-white/[0.02] rounded-2xl sm:rounded-[2rem] border border-white/[0.08] max-w-md mx-auto text-left space-y-3 sm:space-y-4 shadow-inner">
-                        <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-                          <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/40">Informações</span>
+                      <div className="p-3 sm:p-6 bg-white/[0.02] rounded-xl sm:rounded-[2rem] border border-white/[0.08] max-w-md mx-auto text-left space-y-2.5 sm:space-y-4 shadow-inner">
+                        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                          <span className="text-[8px] sm:text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/40">Informações</span>
                           <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Ativo
+                            <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Ativo
                           </span>
                         </div>
                         
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs">
                           <div>
-                            <p className="text-white/40 font-bold uppercase tracking-wider text-[9px]">Participante</p>
-                            <p className="text-white font-semibold mt-0.5 truncate">{successData.nome}</p>
+                            <p className="text-white/40 font-bold uppercase tracking-wider text-[8px] sm:text-[9px]">Participante</p>
+                            <p className="text-white font-semibold mt-0.5 truncate text-xs sm:text-sm">{successData.nome}</p>
                           </div>
                           {successData.email && (
                             <div>
-                              <p className="text-white/40 font-bold uppercase tracking-wider text-[9px]">E-mail</p>
-                              <p className="text-white font-semibold mt-0.5 truncate">{successData.email}</p>
+                              <p className="text-white/40 font-bold uppercase tracking-wider text-[8px] sm:text-[9px]">E-mail</p>
+                              <p className="text-white font-semibold mt-0.5 truncate text-xs sm:text-sm">{successData.email}</p>
                             </div>
                           )}
                           {successData.eventoTitulo && (
                             <div className="sm:col-span-2">
-                              <p className="text-white/40 font-bold uppercase tracking-wider text-[9px]">Evento</p>
-                              <p className="text-white font-semibold mt-0.5 truncate">{successData.eventoTitulo}</p>
+                              <p className="text-white/40 font-bold uppercase tracking-wider text-[8px] sm:text-[9px]">Evento</p>
+                              <p className="text-white font-semibold mt-0.5 truncate text-xs sm:text-sm">{successData.eventoTitulo}</p>
                             </div>
                           )}
                         </div>
 
-                        <div className="pt-3 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div className="pt-2 sm:pt-3 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3">
                           <div className="text-center sm:text-left">
-                            <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/30">Código da Credencial</p>
-                            <span className="font-display text-xl sm:text-2xl font-black tracking-tight text-white select-all">
+                            <p className="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/30">Código da Credencial</p>
+                            <span className="font-display text-lg sm:text-2xl font-black tracking-tight text-white select-all">
                               {successData.codigo}
                             </span>
                           </div>
@@ -939,7 +939,7 @@ export default function Home() {
                             variant="ghost"
                             size="sm"
                             onClick={() => copyText(successData.codigo)}
-                            className="text-white/70 hover:text-white hover:bg-white/10 rounded-xl gap-2 text-xs font-bold transition-all px-4 h-9 border border-white/10 w-full sm:w-auto touch-press"
+                            className="text-white/70 hover:text-white hover:bg-white/10 rounded-xl gap-1.5 text-xs font-bold transition-all px-3 h-8 border border-white/10 w-full sm:w-auto touch-press"
                           >
                             <Copy className="w-3.5 h-3.5" /> Copiar Código
                           </Button>
@@ -947,8 +947,8 @@ export default function Home() {
                       </div>
 
                       {/* QR CODE DE CREDENCIAMENTO */}
-                      <div className="flex flex-col items-center space-y-3">
-                        <div id="registration-qr-code" className="p-3 sm:p-4 bg-white rounded-2xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-white/10 flex items-center justify-center">
+                      <div className="flex flex-col items-center space-y-2">
+                        <div id="registration-qr-code" className="p-2.5 sm:p-4 bg-white rounded-xl sm:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)] border border-white/10 flex items-center justify-center">
                           <QRCodeSVG
                             value={successData.codigo}
                             size={qrSize}
@@ -959,10 +959,10 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="pt-2 max-w-sm mx-auto">
+                      <div className="pt-1 max-w-sm mx-auto">
                         <Button
                           onClick={closeRegistration}
-                          className="modern-button w-full h-12 text-sm touch-press"
+                          className="modern-button w-full h-11 sm:h-12 text-xs sm:text-sm touch-press"
                         >
                           Concluir e Fechar
                         </Button>
@@ -974,37 +974,37 @@ export default function Home() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
-                      className="space-y-5 sm:space-y-6"
+                      className="space-y-4 sm:space-y-6"
                     >
-                      <div className="space-y-4">
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-white/40 font-bold uppercase tracking-wider">
-                          <span className="inline-flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-primary" />
+                      <div className="space-y-3 sm:space-y-4">
+                        <div className="flex flex-wrap items-center gap-2.5 text-[11px] sm:text-xs text-white/40 font-bold uppercase tracking-wider">
+                          <span className="inline-flex items-center gap-1.5">
+                            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                             {formatEventDate(selectedEvent.data)}
                           </span>
-                          <span className="inline-flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-primary" />
+                          <span className="inline-flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" />
                             {formatEventDate(selectedEvent.data, "HH:mm'h'")}
                           </span>
                         </div>
-                        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 sm:p-5">
-                          <p className="whitespace-pre-line text-sm sm:text-base text-white/65 leading-relaxed font-medium">
+                        <div className="rounded-xl sm:rounded-2xl border border-white/[0.08] bg-white/[0.02] p-3.5 sm:p-5">
+                          <p className="whitespace-pre-line text-xs sm:text-base text-white/65 leading-relaxed font-medium">
                             {selectedEvent.descricao || 'Sem descrição fornecida.'}
                           </p>
                         </div>
                       </div>
 
-                      <div className="pt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 border-t border-white/5">
+                      <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row gap-2.5 sm:gap-4 border-t border-white/5">
                         {(() => {
                           const status = getEventStatus(selectedEvent);
                           if (status === 'em_breve') {
                             const inicioStr = selectedEvent.dataInicioInscricao || selectedEvent.data_inicio_inscricao;
                             return (
-                              <div className="w-full p-4 bg-sky-500/10 border border-sky-500/20 rounded-2xl text-center space-y-1">
+                              <div className="w-full p-3.5 sm:p-4 bg-sky-500/10 border border-sky-500/20 rounded-xl sm:rounded-2xl text-center space-y-1">
                                 <p className="text-sky-400 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5">
                                   <Clock className="w-4 h-4" /> Inscrições Em Breve
                                 </p>
-                                <p className="text-white/50 text-xs">
+                                <p className="text-white/50 text-[11px] sm:text-xs">
                                   As inscrições iniciam em {formatEventDate(inicioStr, "dd/MM/yyyy 'às' HH:mm'h'")}.
                                 </p>
                               </div>
@@ -1012,11 +1012,11 @@ export default function Home() {
                           }
                           if (status === 'encerrado') {
                             return (
-                              <div className="w-full p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-center space-y-1">
+                              <div className="w-full p-3.5 sm:p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl sm:rounded-2xl text-center space-y-1">
                                 <p className="text-amber-400 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5">
                                   <XCircle className="w-4 h-4" /> Inscrições Encerradas
                                 </p>
-                                <p className="text-white/50 text-xs">Este evento está inativo ou o período de inscrições expirou.</p>
+                                <p className="text-white/50 text-[11px] sm:text-xs">Este evento está inativo ou o período de inscrições expirou.</p>
                               </div>
                             );
                           }
@@ -1025,7 +1025,7 @@ export default function Home() {
                               <Button
                                 type="button"
                                 onClick={() => setActiveModalTab('cadastro')}
-                                className="modern-button h-12 flex-1 text-sm font-bold uppercase touch-press"
+                                className="modern-button h-11 sm:h-12 flex-1 text-xs sm:text-sm font-bold uppercase touch-press"
                               >
                                 Participar
                                 <ArrowRight className="w-4 h-4" />
@@ -1034,7 +1034,7 @@ export default function Home() {
                                 type="button"
                                 variant="outline"
                                 onClick={closeRegistration}
-                                className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6 touch-press"
+                                className="h-11 sm:h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-xl sm:rounded-2xl hover:text-white transition-all text-xs sm:text-sm px-5 sm:px-6 touch-press"
                               >
                                 Fechar
                               </Button>
@@ -1051,34 +1051,34 @@ export default function Home() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 10 }}
                       onSubmit={handleSubmit(onSubmitRegistration)}
-                      className="space-y-4 sm:space-y-5 md:space-y-6"
+                      className="space-y-3 sm:space-y-4 md:space-y-5"
                     >
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 md:gap-5">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="nome" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">Nome Completo</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-4 md:gap-5">
+                        <div className="space-y-1">
+                          <Label htmlFor="nome" className="text-white/60 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest pl-0.5">Nome Completo</Label>
                           <Input
                             id="nome"
-                            placeholder="Informe seu nome"
+                            placeholder="Informe seu nome completo"
                             {...register('nome')}
-                            className={cn("liquid-input h-12 text-base md:text-sm", errors.nome && "border-red-500/50 focus:border-red-500/50")}
+                            className={cn("liquid-input h-10 sm:h-12 text-sm", errors.nome && "border-red-500/50 focus:border-red-500/50")}
                           />
-                          {errors.nome && <p className="text-[10px] text-red-400 font-bold uppercase pl-1">{errors.nome.message}</p>}
+                          {errors.nome && <p className="text-[10px] text-red-400 font-bold uppercase pl-0.5">{errors.nome.message}</p>}
                         </div>
 
-                        <div className="space-y-1.5">
-                          <Label htmlFor="email" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">E-mail</Label>
+                        <div className="space-y-1">
+                          <Label htmlFor="email" className="text-white/60 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest pl-0.5">E-mail</Label>
                           <Input
                             id="email"
                             type="email"
                             placeholder="seu@email.com"
                             {...register('email')}
-                            className={cn("liquid-input h-12 text-base md:text-sm", errors.email && "border-red-500/50 focus:border-red-500/50")}
+                            className={cn("liquid-input h-10 sm:h-12 text-sm", errors.email && "border-red-500/50 focus:border-red-500/50")}
                           />
-                          {errors.email && <p className="text-[10px] text-red-400 font-bold uppercase pl-1">{errors.email.message}</p>}
+                          {errors.email && <p className="text-[10px] text-red-400 font-bold uppercase pl-0.5">{errors.email.message}</p>}
                         </div>
 
-                        <div className="space-y-1.5">
-                          <Label htmlFor="cidade" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">Cidade</Label>
+                        <div className="space-y-1">
+                          <Label htmlFor="cidade" className="text-white/60 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest pl-0.5">Cidade</Label>
                           <div className="relative">
                             <select
                               id="cidade"
@@ -1088,7 +1088,7 @@ export default function Home() {
                                 setValue('escola', '');
                               }}
                               className={cn(
-                                "liquid-input h-12 w-full appearance-none pr-10 cursor-pointer text-base md:text-sm",
+                                "liquid-input h-10 sm:h-12 w-full appearance-none pr-10 cursor-pointer text-sm",
                                 errors.cidade && "border-red-500/50 focus:border-red-500/50"
                               )}
                             >
@@ -1103,18 +1103,18 @@ export default function Home() {
                               <ChevronDown className="w-4 h-4" />
                             </div>
                           </div>
-                          {errors.cidade && <p className="text-[10px] text-red-400 font-bold uppercase pl-1">{errors.cidade.message}</p>}
+                          {errors.cidade && <p className="text-[10px] text-red-400 font-bold uppercase pl-0.5">{errors.cidade.message}</p>}
                         </div>
 
-                        <div className="space-y-1.5">
-                          <Label htmlFor="escola" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">Escola / Instituição</Label>
+                        <div className="space-y-1">
+                          <Label htmlFor="escola" className="text-white/60 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest pl-0.5">Escola / Instituição</Label>
                           <div className="relative">
                             <select
                               id="escola"
                               disabled={!selectedCity}
                               {...register('escola')}
                               className={cn(
-                                "liquid-input h-12 w-full appearance-none pr-10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-base md:text-sm",
+                                "liquid-input h-10 sm:h-12 w-full appearance-none pr-10 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-sm",
                                 errors.escola && "border-red-500/50 focus:border-red-500/50"
                               )}
                             >
@@ -1131,21 +1131,21 @@ export default function Home() {
                               <ChevronDown className="w-4 h-4" />
                             </div>
                           </div>
-                          {errors.escola && <p className="text-[10px] text-red-400 font-bold uppercase pl-1">{errors.escola.message}</p>}
+                          {errors.escola && <p className="text-[10px] text-red-400 font-bold uppercase pl-0.5">{errors.escola.message}</p>}
                         </div>
 
-                        <div className="space-y-1.5">
-                          <Label htmlFor="gremio" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">Grêmio Estudantil (Opcional)</Label>
+                        <div className="space-y-1">
+                          <Label htmlFor="gremio" className="text-white/60 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest pl-0.5">Grêmio Estudantil (Opcional)</Label>
                           <Input
                             id="gremio"
                             placeholder="Nome do seu grêmio"
                             {...register('gremio')}
-                            className="liquid-input h-12 text-base md:text-sm"
+                            className="liquid-input h-10 sm:h-12 text-sm"
                           />
                         </div>
 
-                        <div className="space-y-1.5">
-                          <Label htmlFor="telefone" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">WhatsApp / Telefone</Label>
+                        <div className="space-y-1">
+                          <Label htmlFor="telefone" className="text-white/60 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest pl-0.5">WhatsApp / Telefone</Label>
                           <Input
                             id="telefone"
                             type="tel"
@@ -1155,34 +1155,34 @@ export default function Home() {
                             maxLength={15}
                             {...register('telefone')}
                             onChange={(e) => setValue('telefone', formatPhone(e.target.value))}
-                            className={cn("liquid-input h-12 text-base md:text-sm", errors.telefone && "border-red-500/50 focus:border-red-500/50")}
+                            className={cn("liquid-input h-10 sm:h-12 text-sm", errors.telefone && "border-red-500/50 focus:border-red-500/50")}
                           />
-                          {errors.telefone && <p className="text-[10px] text-red-400 font-bold uppercase pl-1">{errors.telefone.message}</p>}
+                          {errors.telefone && <p className="text-[10px] text-red-400 font-bold uppercase pl-0.5">{errors.telefone.message}</p>}
                         </div>
                       </div>
 
-                      <div className="pt-2">
-                        <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="pt-1 sm:pt-2">
+                        <label className="flex items-start gap-2.5 sm:gap-3 cursor-pointer group">
                           <div className="relative flex items-center justify-center mt-0.5 shrink-0">
                             <input
                               type="checkbox"
                               {...register('aceiteTermos')}
-                              className="peer appearance-none w-5 h-5 border-2 border-white/20 rounded-md bg-transparent checked:bg-primary checked:border-primary transition-all focus:ring-2 focus:ring-primary/30 outline-none cursor-pointer"
+                              className="peer appearance-none w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/20 rounded-md bg-transparent checked:bg-primary checked:border-primary transition-all focus:ring-2 focus:ring-primary/30 outline-none cursor-pointer"
                             />
-                            <CheckCircle2 className="absolute w-3.5 h-3.5 text-black opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
+                            <CheckCircle2 className="absolute w-3 h-3 sm:w-3.5 sm:h-3.5 text-black opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" />
                           </div>
-                          <span className="text-xs sm:text-sm text-white/60 leading-tight">
+                          <span className="text-[11px] sm:text-xs md:text-sm text-white/60 leading-tight">
                             Declaro que li e concordo com os <Link to="/termos" target="_blank" className="text-primary hover:underline underline-offset-4">Termos de Uso</Link> e a <Link to="/politica-de-privacidade" target="_blank" className="text-primary hover:underline underline-offset-4">Política de Privacidade</Link>, e autorizo o tratamento dos meus dados conforme a LGPD.
                           </span>
                         </label>
-                        {errors.aceiteTermos && <p className="text-[10px] text-red-400 font-bold uppercase pl-1 mt-2">{errors.aceiteTermos.message}</p>}
+                        {errors.aceiteTermos && <p className="text-[10px] text-red-400 font-bold uppercase pl-0.5 mt-1.5">{errors.aceiteTermos.message}</p>}
                       </div>
 
-                      <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 border-t border-white/5 mt-5 sm:mt-6">
+                      <div className="pt-2.5 sm:pt-4 flex flex-col sm:flex-row gap-2.5 sm:gap-4 border-t border-white/5 mt-3 sm:mt-6">
                         <Button
                           type="submit"
                           disabled={submittingRegistration || isEventInactive(selectedEvent)}
-                          className="modern-button h-12 flex-1 text-xs sm:text-sm font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed touch-press"
+                          className="modern-button h-11 sm:h-12 flex-1 text-xs sm:text-sm font-bold uppercase disabled:opacity-50 disabled:cursor-not-allowed touch-press"
                         >
                           {submittingRegistration && <LoadingSpinner size="xs" variant="white" className="mr-2" />}
                           {getEventStatus(selectedEvent) === 'em_breve'
@@ -1198,7 +1198,7 @@ export default function Home() {
                           type="button"
                           variant="outline"
                           onClick={closeRegistration}
-                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6 touch-press"
+                          className="h-11 sm:h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-xl sm:rounded-2xl hover:text-white transition-all text-xs sm:text-sm px-5 sm:px-6 touch-press"
                         >
                           Cancelar
                         </Button>
@@ -1212,10 +1212,10 @@ export default function Home() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
                       onSubmit={handleSubscribeExisting}
-                      className="space-y-5 sm:space-y-6 py-2 sm:py-4"
+                      className="space-y-4 sm:space-y-6 py-1 sm:py-4"
                     >
-                      <div className="space-y-2">
-                        <Label htmlFor="existing-search" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="existing-search" className="text-white/60 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest pl-0.5">
                           E-mail ou Código da Credencial
                         </Label>
                         <Input
@@ -1223,11 +1223,11 @@ export default function Home() {
                           placeholder="seu@email.com ou EVT-XXXXXX"
                           value={existingCredentialSearch}
                           onChange={(e) => setExistingCredentialSearch(e.target.value)}
-                          className="liquid-input h-12 text-base md:text-sm tracking-wide"
+                          className="liquid-input h-10 sm:h-12 text-sm tracking-wide"
                           required
                           disabled={searchingExisting}
                         />
-                        <p className="text-[11px] text-white/30 pl-1 leading-relaxed">
+                        <p className="text-[10px] sm:text-[11px] text-white/30 pl-0.5 leading-relaxed">
                           Informe o e-mail cadastrado anteriormente ou seu código permanente `EVT-XXXXXX` para se vincular instantaneamente a este evento.
                         </p>
                       </div>
@@ -1236,9 +1236,9 @@ export default function Home() {
                         <motion.div
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3"
+                          className="p-3 sm:p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-2.5"
                         >
-                          <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-amber-300 font-medium leading-relaxed">
                             {INACTIVE_EVENT_MESSAGE}
                           </p>
@@ -1249,20 +1249,20 @@ export default function Home() {
                         <motion.div
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="p-4 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-3"
+                          className="p-3 sm:p-4 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-2.5"
                         >
-                          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-red-300 font-medium leading-relaxed">
                             {existingError}
                           </p>
                         </motion.div>
                       )}
 
-                      <div className="pt-3 sm:pt-4 flex flex-col sm:flex-row gap-3 sm:gap-4 border-t border-white/5">
+                      <div className="pt-2 sm:pt-4 flex flex-col sm:flex-row gap-2.5 sm:gap-4 border-t border-white/5">
                         <Button
                           type="submit"
                           disabled={searchingExisting || !existingCredentialSearch.trim() || isEventInactive(selectedEvent)}
-                          className="modern-button h-12 flex-1 text-xs sm:text-sm font-bold uppercase touch-press"
+                          className="modern-button h-11 sm:h-12 flex-1 text-xs sm:text-sm font-bold uppercase touch-press"
                         >
                           {searchingExisting ? 'Localizando...' : 'Confirmar Inscrição'}
                           {!searchingExisting && <ArrowRight className="w-4 h-4" />}
@@ -1271,7 +1271,7 @@ export default function Home() {
                           type="button"
                           variant="outline"
                           onClick={closeRegistration}
-                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-sm px-6 touch-press"
+                          className="h-11 sm:h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-xl sm:rounded-2xl hover:text-white transition-all text-xs sm:text-sm px-5 sm:px-6 touch-press"
                         >
                           Cancelar
                         </Button>
@@ -1294,18 +1294,18 @@ export default function Home() {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.96, y: 30, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="w-full max-w-lg bg-card border border-white/10 rounded-t-[2rem] sm:rounded-[2.5rem] overflow-y-auto max-h-[92dvh] custom-scrollbar shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative p-5 sm:p-8 md:p-10 space-y-5 sm:space-y-6"
+              className="w-full max-w-lg bg-card border border-white/10 rounded-t-[1.75rem] sm:rounded-[2.5rem] overflow-y-auto max-h-[92dvh] custom-scrollbar shadow-[0_20px_50px_rgba(0,0,0,0.8)] relative p-4 sm:p-8 md:p-10 space-y-4 sm:space-y-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="h-1.5 sm:h-2 bg-gradient-to-r from-primary via-primary to-primary-dark absolute top-0 left-0 right-0" />
 
               <button
                 onClick={() => setShowCredentialModal(false)}
-                className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10 touch-press"
+                className="absolute top-3 right-3 sm:top-6 sm:right-6 p-1.5 sm:p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 text-white/60 hover:text-white transition-all z-10 touch-press"
                 title="Fechar modal de consulta"
                 aria-label="Fechar"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
 
               <AnimatePresence mode="wait">
@@ -1316,23 +1316,23 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 10 }}
                     transition={{ duration: 0.3 }}
-                    className="space-y-5 sm:space-y-6"
+                    className="space-y-4 sm:space-y-6"
                   >
                     <div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary pl-1">
+                      <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary pl-0.5">
                         Consulta de Acesso
                       </span>
-                      <h3 className="font-display font-bold text-xl sm:text-2xl md:text-3xl text-white mt-1 tracking-tight">
+                      <h3 className="font-display font-bold text-lg sm:text-2xl md:text-3xl text-white mt-0.5 tracking-tight">
                         Buscar Minha Credencial
                       </h3>
-                      <p className="text-white/40 text-xs sm:text-sm mt-1.5 sm:mt-2 font-medium">
+                      <p className="text-white/40 text-xs sm:text-sm mt-1 font-medium">
                         Informe o e-mail cadastrado para obter seu código de acesso e QR Code.
                       </p>
                     </div>
 
-                    <form onSubmit={handleSearchCredential} className="space-y-4 sm:space-y-5">
-                      <div className="space-y-2">
-                        <Label htmlFor="cred-email" className="text-white/60 font-bold text-[10px] uppercase tracking-widest pl-1">
+                    <form onSubmit={handleSearchCredential} className="space-y-3 sm:space-y-5">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="cred-email" className="text-white/60 font-bold text-[9px] sm:text-[10px] uppercase tracking-widest pl-0.5">
                           E-mail Cadastrado
                         </Label>
                         <Input
@@ -1341,7 +1341,7 @@ export default function Home() {
                           placeholder="seu@email.com"
                           value={credentialEmail}
                           onChange={(e) => setCredentialEmail(e.target.value)}
-                          className="liquid-input h-12 text-base md:text-sm tracking-wide"
+                          className="liquid-input h-10 sm:h-12 text-sm tracking-wide"
                           required
                           disabled={searchingCredential}
                         />
@@ -1351,20 +1351,20 @@ export default function Home() {
                         <motion.div
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="p-4 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-3"
+                          className="p-3 sm:p-4 rounded-xl bg-red-500/10 border border-red-500/25 flex items-start gap-2.5"
                         >
-                          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400 flex-shrink-0 mt-0.5" />
                           <p className="text-xs text-red-300 font-medium leading-relaxed">
                             {credentialError}
                           </p>
                         </motion.div>
                       )}
 
-                      <div className="flex gap-3 sm:gap-4 pt-2">
+                      <div className="flex gap-2.5 sm:gap-4 pt-1 sm:pt-2">
                         <Button
                           type="submit"
                           disabled={searchingCredential || !credentialEmail.trim()}
-                          className="modern-button h-12 flex-1 text-xs sm:text-sm touch-press"
+                          className="modern-button h-11 sm:h-12 flex-1 text-xs sm:text-sm touch-press"
                         >
                           {searchingCredential ? 'Buscando...' : 'Verificar Credencial'}
                           {!searchingCredential && <ArrowRight className="w-4 h-4" />}
@@ -1373,7 +1373,7 @@ export default function Home() {
                           type="button"
                           variant="outline"
                           onClick={() => setShowCredentialModal(false)}
-                          className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-xs sm:text-sm px-5 sm:px-6 touch-press"
+                          className="h-11 sm:h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-xl sm:rounded-2xl hover:text-white transition-all text-xs sm:text-sm px-4 sm:px-6 touch-press"
                         >
                           Fechar
                         </Button>
@@ -1387,38 +1387,38 @@ export default function Home() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
                     transition={{ duration: 0.3 }}
-                    className="text-center space-y-5 sm:space-y-6"
+                    className="text-center space-y-3.5 sm:space-y-6"
                   >
                     <div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-emerald-400">
+                      <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.2em] text-emerald-400">
                         Credencial Encontrada
                       </span>
-                      <h3 className="font-display font-bold text-xl sm:text-2xl text-white mt-1 truncate">
+                      <h3 className="font-display font-bold text-lg sm:text-2xl text-white mt-0.5 truncate">
                         Olá, {credentialData.nome}!
                       </h3>
-                      <p className="text-white/40 text-xs mt-1 font-medium">
+                      <p className="text-white/40 text-xs mt-0.5 font-medium">
                         Aqui está o seu passe de acesso aos eventos.
                       </p>
                     </div>
 
-                    <div className="p-4 sm:p-6 bg-white/[0.02] rounded-2xl border border-white/5 flex flex-col items-center space-y-2.5 sm:space-y-3">
-                      <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/30">
+                    <div className="p-3.5 sm:p-6 bg-white/[0.02] rounded-xl sm:rounded-2xl border border-white/5 flex flex-col items-center space-y-2 sm:space-y-3">
+                      <p className="text-[8px] sm:text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/30">
                         Código da Credencial
                       </p>
-                      <span className="font-display text-2xl sm:text-3xl font-black tracking-tight text-white select-all">
+                      <span className="font-display text-xl sm:text-3xl font-black tracking-tight text-white select-all">
                         {credentialData.codigo}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => copyText(credentialData.codigo)}
-                        className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl gap-2 text-[10px] font-bold tracking-wider uppercase px-4 h-8 border border-white/5 mt-1 touch-press"
+                        className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl gap-1.5 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase px-3 h-7 sm:h-8 border border-white/5 mt-0.5 touch-press"
                       >
-                        <Copy className="w-3.5 h-3.5" /> Copiar Código
+                        <Copy className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Copiar Código
                       </Button>
                     </div>
 
-                    <div id="credential-search-qr-code" className="flex flex-col items-center justify-center p-4 sm:p-6 bg-white rounded-2xl sm:rounded-3xl w-40 h-40 sm:w-48 sm:h-48 mx-auto shadow-xl border border-white/10">
+                    <div id="credential-search-qr-code" className="flex flex-col items-center justify-center p-3 sm:p-6 bg-white rounded-xl sm:rounded-3xl w-36 h-36 sm:w-48 sm:h-48 mx-auto shadow-xl border border-white/10">
                       <QRCodeSVG
                         value={credentialData.codigo}
                         size={qrSize}
@@ -1428,21 +1428,21 @@ export default function Home() {
                       />
                     </div>
 
-                    <p className="text-xs text-white/40 max-w-xs mx-auto leading-relaxed">
+                    <p className="text-[11px] sm:text-xs text-white/40 max-w-xs mx-auto leading-relaxed">
                       Mostre este QR Code ou informe o código acima no credenciamento físico dos eventos.
                     </p>
 
-                    <div className="flex gap-3 sm:gap-4 pt-2">
+                    <div className="flex gap-2.5 sm:gap-4 pt-1 sm:pt-2">
                       <Button
                         variant="outline"
                         onClick={() => setCredentialData(null)}
-                        className="h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-2xl hover:text-white transition-all text-xs flex-1 touch-press"
+                        className="h-11 sm:h-12 border-white/10 hover:bg-white/5 text-white font-bold rounded-xl sm:rounded-2xl hover:text-white transition-all text-xs flex-1 touch-press"
                       >
                         Consultar Outro
                       </Button>
                       <Button
                         onClick={() => setShowCredentialModal(false)}
-                        className="modern-button h-12 flex-1 text-xs touch-press"
+                        className="modern-button h-11 sm:h-12 flex-1 text-xs touch-press rounded-xl sm:rounded-2xl"
                       >
                         Concluído
                       </Button>

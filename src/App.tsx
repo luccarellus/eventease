@@ -167,12 +167,12 @@ function BottomNav() {
   const navItems = userIsAdmin ? ADMIN_NAV_ITEMS : PUBLIC_NAV_ITEMS;
 
   return (
-    <div className="md:hidden fixed bottom-3 inset-x-3 max-w-[340px] mx-auto z-50 pointer-events-none mb-[env(safe-area-inset-bottom)]">
+    <div className="md:hidden fixed bottom-2.5 inset-x-3 max-w-[320px] mx-auto z-50 pointer-events-none mb-[env(safe-area-inset-bottom)]">
       <motion.div
         initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="bg-[#0a111e]/95 backdrop-blur-2xl border border-white/15 rounded-full p-1.5 flex items-center justify-around shadow-[0_15px_40px_rgba(0,0,0,0.85)] pointer-events-auto"
+        className="bg-[#0a111e]/95 backdrop-blur-2xl border border-white/15 rounded-full p-1 flex items-center justify-around shadow-[0_15px_40px_rgba(0,0,0,0.85)] pointer-events-auto"
       >
         {navItems.map((item) => (
           <MobileNavLink
@@ -273,9 +273,9 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-[100dvh] pt-[calc(4.5rem+env(safe-area-inset-top))] md:pt-24 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col bg-[#020610]">
+    <div className="min-h-[100dvh] pt-[calc(3.75rem+env(safe-area-inset-top))] md:pt-24 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-12 overflow-x-hidden selection:bg-primary/30 flex flex-col bg-[#020610]">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-4 md:px-6 flex-grow w-full">
+      <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 flex-grow w-full">
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             <Route path="/" element={<Home />} />
