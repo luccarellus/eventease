@@ -661,7 +661,7 @@ export default function Home() {
                     openEventModal(evento, 'detalhes');
                   }
                 }}
-                className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group cursor-pointer will-change-transform !shadow-[0_16px_50px_rgba(0,0,0,0.5)] hover:!shadow-[0_24px_70px_rgba(0,0,0,0.7)] hover:-translate-y-1 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-2xl sm:rounded-3xl gap-1.5 sm:gap-2"
+                className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col h-full group cursor-pointer will-change-transform !shadow-[0_16px_50px_rgba(0,0,0,0.5)] hover:!shadow-[0_24px_70px_rgba(0,0,0,0.7)] hover:-translate-y-1 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-2xl sm:rounded-3xl gap-1.5 sm:gap-2"
               >
                 <CardHeader className="p-4 sm:p-7 md:p-8 pb-1 sm:pb-2">
                   <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
@@ -697,12 +697,11 @@ export default function Home() {
                   <CardTitle className="font-display font-bold text-lg sm:text-2xl text-white tracking-tight leading-snug group-hover:text-primary transition-colors line-clamp-2">
                     {evento.titulo}
                   </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-7 md:p-8 pt-0 pb-3 sm:pb-6 flex-grow">
-                  <p className="text-xs sm:text-sm text-white/50 leading-relaxed font-medium mb-3 sm:mb-5 line-clamp-2 sm:line-clamp-3">
+                  <p className="text-xs sm:text-sm text-white/50 leading-relaxed font-medium mt-2 sm:mt-2.5 line-clamp-2 sm:line-clamp-3">
                     {evento.descricao || 'Sem descrição fornecida.'}
                   </p>
-
+                </CardHeader>
+                <CardContent className="p-4 sm:p-7 md:p-8 pt-0 pb-3 sm:pb-6 flex-grow flex flex-col justify-end">
                   <div className="space-y-1.5 sm:space-y-2.5 border-t border-white/5 pt-3 sm:pt-4 text-xs text-white/40 font-bold uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
