@@ -725,11 +725,11 @@ export default function Admin() {
                       <Card
                         key={evt.id}
                         className={cn(
-                          "glass-card border-white/[0.08] bg-white/[0.01] hover:bg-white/[0.03] transition-all duration-300 rounded-[2rem] flex flex-col justify-between overflow-hidden",
+                          "glass-card border-white/[0.08] bg-white/[0.01] hover:bg-white/[0.03] transition-all duration-300 rounded-[2rem] flex flex-col justify-between overflow-hidden gap-1.5 sm:gap-2",
                           !evt.publicado && "opacity-75 border-dashed border-white/20"
                         )}
                       >
-                        <CardHeader className="p-5 sm:p-6">
+                        <CardHeader className="p-5 sm:p-6 pb-2 sm:pb-3">
                           <div className="flex justify-between items-start mb-3">
                             <span className={cn(
                               "px-2.5 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest border flex items-center gap-1.5",

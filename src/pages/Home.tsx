@@ -661,9 +661,9 @@ export default function Home() {
                     openEventModal(evento, 'detalhes');
                   }
                 }}
-                className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group cursor-pointer will-change-transform !shadow-[0_16px_50px_rgba(0,0,0,0.5)] hover:!shadow-[0_24px_70px_rgba(0,0,0,0.7)] hover:-translate-y-1 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-2xl sm:rounded-3xl"
+                className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col justify-between h-full group cursor-pointer will-change-transform !shadow-[0_16px_50px_rgba(0,0,0,0.5)] hover:!shadow-[0_24px_70px_rgba(0,0,0,0.7)] hover:-translate-y-1 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-2xl sm:rounded-3xl gap-1.5 sm:gap-2"
               >
-                <CardHeader className="p-4 sm:p-7 md:p-8 pb-2 sm:pb-4">
+                <CardHeader className="p-4 sm:p-7 md:p-8 pb-1 sm:pb-2">
                   <div className="flex items-center justify-between gap-2 mb-2 sm:mb-3">
                     {(() => {
                       const status = getEventStatus(evento);
