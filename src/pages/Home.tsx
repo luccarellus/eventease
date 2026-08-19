@@ -661,15 +661,18 @@ export default function Home() {
                     openEventModal(evento, 'detalhes');
                   }
                 }}
-                className="glass-card border-white/[0.10] hover:border-primary/30 bg-card/90 transition-all duration-300 relative overflow-hidden flex flex-col h-full group cursor-pointer will-change-transform !shadow-[0_16px_50px_rgba(0,0,0,0.5)] hover:!shadow-[0_24px_70px_rgba(0,0,0,0.7)] hover:-translate-y-1 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-2xl sm:rounded-3xl gap-1.5 sm:gap-2"
+                className="relative overflow-hidden group flex flex-col justify-between h-full cursor-pointer transition-all duration-300 rounded-[1.75rem] sm:rounded-[2rem] border border-white/10 bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-transparent hover:border-primary/40 hover:shadow-[0_16px_50px_rgba(0,191,165,0.18)] hover:-translate-y-1 active:translate-y-0 focus-visible:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
               >
-                <CardHeader className="p-5 sm:p-6 pb-2">
-                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                {/* Linha de acento decorativa superior */}
+                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+
+                <CardHeader className="p-5 sm:p-7 pb-4 space-y-3.5">
+                  <div className="flex items-center justify-between gap-2">
                     {(() => {
                       const status = getEventStatus(evento);
                       if (status === 'em_breve') {
                         return (
-                          <span className="px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                          <span className="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5 shadow-sm shadow-sky-500/10">
                             <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
                             Em Breve
                           </span>
@@ -677,44 +680,52 @@ export default function Home() {
                       }
                       if (status === 'encerrado') {
                         return (
-                          <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                          <span className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5 shadow-sm shadow-amber-500/10">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                             Encerrado
                           </span>
                         );
                       }
                       return (
-                        <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5 shadow-sm shadow-emerald-500/10">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+                          </span>
                           Aberto
                         </span>
                       );
                     })()}
-                    <span className="text-xs text-white/70 font-semibold flex items-center gap-1.5">
+                    <span className="text-xs text-white/80 font-medium flex items-center gap-1.5 bg-white/[0.04] px-3 py-1 rounded-full border border-white/10 shadow-inner">
                       <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
                       {formatEventDate(evento.data)}
                     </span>
                   </div>
-                  <CardTitle className="font-display font-bold text-lg sm:text-xl md:text-2xl text-white tracking-tight leading-snug group-hover:text-primary transition-colors line-clamp-2">
-                    {evento.titulo}
-                  </CardTitle>
-                  <p className="text-xs sm:text-sm text-white/70 leading-relaxed font-normal mt-2.5 line-clamp-3 sm:line-clamp-4">
+
+                  <div className="space-y-2">
+                    <CardTitle className="font-display font-extrabold text-lg sm:text-xl md:text-2xl text-white tracking-tight leading-snug group-hover:text-primary transition-colors line-clamp-2">
+                      {evento.titulo}
+                    </CardTitle>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-white/70 font-medium">
+                      <span className="inline-flex items-center gap-1.5 bg-white/[0.03] px-2.5 py-1 rounded-xl border border-white/5">
+                        <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                        {formatEventDate(evento.data, "HH:mm'h'")}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 bg-white/[0.03] px-2.5 py-1 rounded-xl border border-white/5 truncate max-w-[220px]">
+                        <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                        {evento.local}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs sm:text-sm text-white/70 leading-relaxed font-normal pt-1 line-clamp-3">
                     {evento.descricao || 'Sem descrição fornecida.'}
                   </p>
                 </CardHeader>
-                <CardContent className="p-5 sm:p-6 pt-2 pb-3 flex-grow flex flex-col justify-end">
-                  <div className="space-y-2 border-t border-white/10 pt-3 text-xs text-white/60 font-medium">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0" />
-                      <span className="text-xs">{formatEventDate(evento.data, "HH:mm'h'")}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0 animate-pulse" />
-                      <span className="truncate max-w-[220px] sm:max-w-[260px] text-xs">{evento.local}</span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="p-5 sm:p-6 pt-0 border-none bg-transparent">
+
+                <CardContent className="p-5 sm:p-7 pt-0 flex-grow flex flex-col justify-end" />
+
+                <CardFooter className="p-5 sm:p-7 pt-0 border-none bg-transparent">
                   {(() => {
                     const status = getEventStatus(evento);
                     if (status === 'em_breve') {
@@ -725,7 +736,7 @@ export default function Home() {
                             openEventModal(evento, 'detalhes');
                           }}
                           variant="outline"
-                          className="w-full h-10 sm:h-11 text-xs uppercase tracking-wider font-bold border-sky-500/30 text-sky-400 hover:bg-sky-500/10 bg-sky-500/5 rounded-xl cursor-pointer touch-press"
+                          className="w-full h-11 sm:h-12 text-xs uppercase tracking-wider font-bold border-sky-500/30 text-sky-400 hover:bg-sky-500/10 bg-sky-500/5 rounded-xl sm:rounded-2xl cursor-pointer touch-press"
                         >
                           Inscrições Em Breve
                         </Button>
@@ -739,7 +750,7 @@ export default function Home() {
                             openEventModal(evento, 'detalhes');
                           }}
                           variant="outline"
-                          className="w-full h-10 sm:h-11 text-xs uppercase tracking-wider font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 bg-amber-500/5 rounded-xl cursor-pointer touch-press"
+                          className="w-full h-11 sm:h-12 text-xs uppercase tracking-wider font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 bg-amber-500/5 rounded-xl sm:rounded-2xl cursor-pointer touch-press"
                         >
                           Inscrições Encerradas
                         </Button>
@@ -751,7 +762,7 @@ export default function Home() {
                           event.stopPropagation();
                           openEventModal(evento, 'cadastro');
                         }}
-                        className="modern-button w-full h-10 sm:h-11 text-xs sm:text-sm uppercase tracking-wider font-bold touch-press rounded-xl"
+                        className="modern-button w-full h-11 sm:h-12 text-xs sm:text-sm uppercase tracking-wider font-bold touch-press rounded-xl sm:rounded-2xl shadow-lg shadow-primary/20 hover:shadow-primary/30"
                       >
                         Participar
                         <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />

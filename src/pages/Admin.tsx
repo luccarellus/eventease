@@ -725,40 +725,53 @@ export default function Admin() {
                       <Card
                         key={evt.id}
                         className={cn(
-                          "glass-card border-white/[0.08] bg-card hover:bg-white/[0.03] transition-all duration-300 rounded-[2rem] flex flex-col justify-between overflow-hidden gap-1.5 sm:gap-2",
-                          !evt.publicado && "opacity-75 border-dashed border-white/20"
+                          "relative overflow-hidden group flex flex-col justify-between transition-all duration-300 rounded-[1.75rem] border border-white/10 bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-transparent hover:border-primary/40 hover:shadow-[0_12px_40px_rgba(0,191,165,0.15)]",
+                          !evt.publicado && "opacity-70 border-dashed border-white/20"
                         )}
                       >
-                        <CardHeader className="p-5 sm:p-6 pb-2 sm:pb-3">
-                          <div className="flex justify-between items-center mb-3 gap-2">
+                        {/* Linha de acento decorativa superior */}
+                        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-40 group-hover:opacity-100 transition-opacity" />
+
+                        <CardHeader className="p-5 sm:p-6 pb-4 space-y-3">
+                          <div className="flex justify-between items-center gap-2">
                             <span className={cn(
-                              "px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border flex items-center gap-1.5 shrink-0",
+                              "px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-widest border flex items-center gap-1.5 shrink-0 shadow-sm",
                               evt.publicado
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-emerald-500/10"
+                                : "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-amber-500/10"
                             )}>
-                              <span className={cn("w-1.5 h-1.5 rounded-full", evt.publicado ? "bg-emerald-400" : "bg-amber-400")} />
+                              <span className="relative flex h-2 w-2">
+                                {evt.publicado && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />}
+                                <span className={cn("relative inline-flex rounded-full h-2 w-2", evt.publicado ? "bg-emerald-400" : "bg-amber-400")} />
+                              </span>
                               {evt.publicado ? 'Ativo' : 'Inativo'}
                             </span>
-                            <span className="text-xs text-white/70 font-semibold flex items-center gap-1">
+                            <span className="text-xs text-white/80 font-medium flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 rounded-full border border-white/10 shadow-inner">
                               <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
                               {format(new Date(evt.data), "dd/MM/yyyy", { locale: ptBR })}
                             </span>
                           </div>
-                          <CardTitle className="text-lg sm:text-xl font-display font-bold text-white line-clamp-2 leading-snug">{evt.titulo}</CardTitle>
-                          <CardDescription className="text-white/60 text-xs flex items-center gap-1.5 mt-1.5">
-                            <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <span className="truncate">{evt.local}</span>
-                          </CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-5 sm:p-6 pt-0 flex-1 flex flex-col justify-between">
-                          <p className="text-xs text-white/70 line-clamp-3 mb-4 leading-relaxed min-h-[3.6rem]">
+
+                          <div className="space-y-1.5">
+                            <CardTitle className="text-lg sm:text-xl font-display font-extrabold text-white truncate tracking-tight group-hover:text-primary transition-colors">
+                              {evt.titulo}
+                            </CardTitle>
+                            <div className="inline-flex items-center gap-1.5 text-xs text-white/70 font-medium bg-white/[0.03] px-2.5 py-1 rounded-xl border border-white/5 max-w-full">
+                              <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                              <span className="truncate">{evt.local}</span>
+                            </div>
+                          </div>
+
+                          <p className="text-xs text-white/70 line-clamp-3 leading-relaxed pt-1">
                             {evt.descricao || 'Sem descrição.'}
                           </p>
-                          <div className="flex gap-2">
+                        </CardHeader>
+
+                        <CardContent className="p-5 sm:p-6 pt-0 flex-1 flex flex-col justify-end">
+                          <div className="flex gap-2 pt-3 border-t border-white/5">
                             <Button
                               onClick={() => setSelectedEvento(evt)}
-                              className="flex-1 rounded-xl bg-primary text-white hover:bg-primary-dark transition-all h-10 text-xs font-bold uppercase tracking-wider touch-press shadow-md shadow-primary/10"
+                              className="flex-1 rounded-xl bg-primary text-white hover:bg-primary-dark transition-all h-10 text-xs font-bold uppercase tracking-wider touch-press shadow-lg shadow-primary/20 hover:shadow-primary/30"
                             >
                               Inscritos & Estatísticas
                             </Button>
