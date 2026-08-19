@@ -725,14 +725,14 @@ export default function Admin() {
                       <Card
                         key={evt.id}
                         className={cn(
-                          "glass-card border-white/[0.08] bg-white/[0.01] hover:bg-white/[0.03] transition-all duration-300 rounded-[2rem] flex flex-col justify-between overflow-hidden gap-1.5 sm:gap-2",
+                          "glass-card border-white/[0.08] bg-card hover:bg-white/[0.03] transition-all duration-300 rounded-[2rem] flex flex-col justify-between overflow-hidden gap-1.5 sm:gap-2",
                           !evt.publicado && "opacity-75 border-dashed border-white/20"
                         )}
                       >
                         <CardHeader className="p-5 sm:p-6 pb-2 sm:pb-3">
-                          <div className="flex justify-between items-start mb-3">
+                          <div className="flex justify-between items-center mb-3 gap-2">
                             <span className={cn(
-                              "px-2.5 py-1 rounded-full text-[8px] font-bold uppercase tracking-widest border flex items-center gap-1.5",
+                              "px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border flex items-center gap-1.5 shrink-0",
                               evt.publicado
                                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                 : "bg-amber-500/10 text-amber-400 border-amber-500/20"
@@ -740,23 +740,25 @@ export default function Admin() {
                               <span className={cn("w-1.5 h-1.5 rounded-full", evt.publicado ? "bg-emerald-400" : "bg-amber-400")} />
                               {evt.publicado ? 'Ativo' : 'Inativo'}
                             </span>
-                            <span className="text-[10px] text-white/40 font-bold">
+                            <span className="text-xs text-white/70 font-semibold flex items-center gap-1">
+                              <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
                               {format(new Date(evt.data), "dd/MM/yyyy", { locale: ptBR })}
                             </span>
                           </div>
-                          <CardTitle className="text-lg sm:text-xl font-display font-bold text-white truncate">{evt.titulo}</CardTitle>
-                          <CardDescription className="text-white/40 text-xs truncate mt-1">
-                            {evt.local}
+                          <CardTitle className="text-lg sm:text-xl font-display font-bold text-white line-clamp-2 leading-snug">{evt.titulo}</CardTitle>
+                          <CardDescription className="text-white/60 text-xs flex items-center gap-1.5 mt-1.5">
+                            <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span className="truncate">{evt.local}</span>
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="p-5 sm:p-6 pt-0">
-                          <p className="text-xs text-white/50 line-clamp-3 mb-4 h-12 leading-relaxed">
+                        <CardContent className="p-5 sm:p-6 pt-0 flex-1 flex flex-col justify-between">
+                          <p className="text-xs text-white/70 line-clamp-3 mb-4 leading-relaxed min-h-[3.6rem]">
                             {evt.descricao || 'Sem descrição.'}
                           </p>
                           <div className="flex gap-2">
                             <Button
                               onClick={() => setSelectedEvento(evt)}
-                              className="flex-1 rounded-xl bg-primary text-white hover:bg-primary-dark transition-all h-10 text-xs font-bold uppercase tracking-wider touch-press"
+                              className="flex-1 rounded-xl bg-primary text-white hover:bg-primary-dark transition-all h-10 text-xs font-bold uppercase tracking-wider touch-press shadow-md shadow-primary/10"
                             >
                               Inscritos & Estatísticas
                             </Button>
