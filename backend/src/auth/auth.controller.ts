@@ -28,7 +28,8 @@ import {
   getRefreshTokenCookieOptions,
   getRefreshTokenClearCookieOptions,
 } from '../common/cookie-options.util';
-import { MultiTenantRequest, TenantId } from '../common/decorators/tenant.decorator';
+import type { MultiTenantRequest } from '../common/decorators/tenant.decorator';
+import { TenantId } from '../common/decorators/tenant.decorator';
 import { ALL_ROLES, ROLE_PERMISSIONS, Role, getRolePermissions } from './rbac.constants';
 import { AdminRoute } from './decorators/admin-route.decorator';
 
