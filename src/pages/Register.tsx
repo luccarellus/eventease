@@ -21,8 +21,12 @@ export default function Register() {
   const { user } = useAuth();
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
-      navigate('/admin');
+    if (user) {
+      if (user.role === 'staff') {
+        navigate('/confirmar');
+      } else if (user.role !== 'user') {
+        navigate('/admin');
+      }
     }
   }, [user, navigate]);
 

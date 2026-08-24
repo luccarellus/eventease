@@ -14,22 +14,27 @@ import { AdminRoute } from '../auth/decorators/admin-route.decorator';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { toDate, toDateOrNull } from '../common/date.util';
+import { TenantId } from '../common/decorators/tenant.decorator';
+import { Role } from '../auth/rbac.constants';
 
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Get()
-  findAllPublished() {
-    // Apenas eventos publicados devem ficar visíveis publicamente.
-    return this.eventsService.findAll(true);
+  findAllPublished(@TenantId() tenantId: string) {
+    // Apenas eventos publicados da organização atual ficam visíveis publicamente
+    return this.eventsService.findAll(tenantId, true);
   }
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  @AdminRoute()
-  create(@Body() data: CreateEventDto) {
-    return this.eventsService.create({
+  @AdminRoute(Role.SUPER_ADMIN, Role.ADMIN, Role.ORGANIZER)
+  create(
+    @TenantId() tenantId: string,
+    @Body() data: CreateEventDto,
+  ) {
+    return this.eventsService.create(tenantId, {
       ...data,
       data: toDate(data.data),
       dataInicioInscricao: toDateOrNull(data.dataInicioInscricao),
@@ -38,21 +43,28 @@ export class EventsController {
   }
 
   @Get('admin/all')
-  @AdminRoute()
-  findAll() {
-    return this.eventsService.findAll(false);
+  @AdminRoute(Role.SUPER_ADMIN, Role.ADMIN, Role.ORGANIZER, Role.STAFF, Role.VIEWER)
+  findAll(@TenantId() tenantId: string) {
+    return this.eventsService.findAll(tenantId, false);
   }
 
   @Get(':id')
-  @AdminRoute()
-  findOne(@Param('id') id: string) {
-    return this.eventsService.findOne(id);
+  @AdminRoute(Role.SUPER_ADMIN, Role.ADMIN, Role.ORGANIZER, Role.STAFF, Role.VIEWER)
+  findOne(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.eventsService.findOne(tenantId, id);
   }
 
   @Patch(':id')
-  @AdminRoute()
-  update(@Param('id') id: string, @Body() data: UpdateEventDto) {
-    return this.eventsService.update(id, {
+  @AdminRoute(Role.SUPER_ADMIN, Role.ADMIN, Role.ORGANIZER)
+  update(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+    @Body() data: UpdateEventDto,
+  ) {
+    return this.eventsService.update(tenantId, id, {
       ...data,
       data: data.data ? toDate(data.data) : undefined,
       dataInicioInscricao: toDateOrNull(data.dataInicioInscricao),
@@ -61,8 +73,11 @@ export class EventsController {
   }
 
   @Delete(':id')
-  @AdminRoute()
-  remove(@Param('id') id: string) {
-    return this.eventsService.remove(id);
+  @AdminRoute(Role.SUPER_ADMIN, Role.ADMIN)
+  remove(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.eventsService.remove(tenantId, id);
   }
 }

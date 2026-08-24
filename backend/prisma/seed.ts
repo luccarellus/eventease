@@ -28,8 +28,29 @@ function generateSecurePassword(length = 32): string {
 }
 
 async function main() {
-  const email = ADMIN_EMAIL;
+  console.log('🌱 Inicializando seed com Multi-Tenancy e RBAC...');
 
+  // 1. Garantir existência do Tenant padrão ("Instituto Olhar Jovem")
+  let defaultTenant = await prisma.tenant.findFirst({
+    where: { OR: [{ slug: 'default' }, { slug: 'olhar-jovem' }] },
+  });
+
+  if (!defaultTenant) {
+    console.log('🏢 Criando organização principal (Instituto Olhar Jovem)...');
+    defaultTenant = await prisma.tenant.create({
+      data: {
+        name: 'Instituto Olhar Jovem',
+        slug: 'olhar-jovem',
+        isActive: true,
+      },
+    });
+    console.log(`✅ Organização principal criada: ${defaultTenant.id} (${defaultTenant.name})`);
+  } else {
+    console.log(`ℹ️ Organização principal existente: ${defaultTenant.id} (${defaultTenant.name})`);
+  }
+
+  // 2. Garantir usuário Super Administrador
+  const email = ADMIN_EMAIL;
   const existingUser = await prisma.adminUser.findUnique({
     where: { email },
   });
@@ -39,36 +60,36 @@ async function main() {
     const generated = !ADMIN_PASSWORD;
     const passwordHash = await bcrypt.hash(rawPassword, 10);
 
-    console.log(`Criando usuário administrador local (${email})...`);
+    console.log(`Criando usuário super administrador (${email})...`);
 
     const user = await prisma.adminUser.create({
       data: {
+        id: crypto.randomUUID(),
         email,
-        fullName: 'Administrador',
-        role: 'admin',
+        fullName: 'Super Administrador',
+        role: 'super_admin',
+        tenantId: defaultTenant.id,
         passwordHash,
       },
     });
 
-    console.log(`✅ Usuário administrador criado com sucesso: ${user.id}`);
+    console.log(`✅ Super Administrador criado com sucesso: ${user.id}`);
     if (generated) {
-      // Nunca logar a senha. Defina ADMIN_SEED_PASSWORD no ambiente e rode o seed de novo
-      // se precisar de uma senha conhecida.
       console.log('ℹ️  A senha foi gerada aleatoriamente e NÃO é exibida por segurança.');
       console.log('ℹ️  Para definir uma senha conhecida, configure ADMIN_SEED_PASSWORD antes de rodar o seed.');
     }
   } else {
-    // Garante a role admin e, se ADMIN_SEED_PASSWORD foi definida, redefine a senha.
     await prisma.adminUser.update({
       where: { email },
       data: {
-        role: 'admin',
+        role: 'super_admin',
+        tenantId: defaultTenant.id,
         ...(ADMIN_PASSWORD
           ? { passwordHash: await bcrypt.hash(ADMIN_PASSWORD, 10) }
           : {}),
       },
     });
-    console.log(`ℹ️ O usuário administrador ${email} já existe na tabela admin_users. A role foi atualizada para 'admin'.`);
+    console.log(`ℹ️ O usuário administrador ${email} foi atualizado para 'super_admin' vinculado à organização principal.`);
   }
 }
 

@@ -236,6 +236,13 @@ export default function Home() {
 
   useEffect(() => {
     fetchEvents();
+    const handleSync = () => fetchEvents();
+    window.addEventListener('sync-data', handleSync);
+    window.addEventListener('tenant-changed', handleSync);
+    return () => {
+      window.removeEventListener('sync-data', handleSync);
+      window.removeEventListener('tenant-changed', handleSync);
+    };
   }, []);
 
   // Form de cadastro/inscrição

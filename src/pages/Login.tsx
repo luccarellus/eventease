@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Role } from '@/types/rbac';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -22,8 +23,17 @@ export default function Login() {
   const { user, checkAuth } = useAuth();
 
   useEffect(() => {
-    if (user && user.role === 'admin') {
-      navigate('/admin');
+    if (user) {
+      if (user.role === Role.STAFF) {
+        navigate('/confirmar');
+      } else if (
+        user.role === Role.SUPER_ADMIN ||
+        user.role === Role.ADMIN ||
+        user.role === Role.ORGANIZER ||
+        user.role === Role.VIEWER
+      ) {
+        navigate('/admin');
+      }
     }
   }, [user, navigate]);
 
@@ -46,8 +56,7 @@ export default function Login() {
           email: cleanEmail,
           password,
         });
-      } catch (networkError) {
-        // Erro de rede: backend offline ou sem conexão
+      } catch {
         toast.error('Não foi possível conectar ao servidor. Verifique se o backend está rodando.');
         setLoading(false);
         return;
@@ -77,10 +86,17 @@ export default function Login() {
         return;
       }
 
+      const loginData = await res.json();
       await checkAuth();
       toast.success('Login realizado com sucesso!');
       setLoginAttempts(0);
-      navigate('/admin');
+
+      const loggedRole = loginData.user?.role;
+      if (loggedRole === Role.STAFF) {
+        navigate('/confirmar');
+      } else {
+        navigate('/admin');
+      }
     } catch (error) {
       console.error('Login error inesperado:', error);
       toast.error('Ocorreu um erro inesperado. Tente novamente.');
@@ -151,54 +167,34 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Remember Me and Forgot Password links */}
-              <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.1em] pt-0.5 sm:pt-1">
-                <label className="flex items-center gap-1.5 sm:gap-2 text-white/40 cursor-pointer hover:text-white/60 transition-colors">
-                  <input
-                    type="checkbox"
-                    className="w-3.5 h-3.5 rounded bg-input border-white/[0.1] text-primary focus:ring-0 cursor-pointer"
-                  />
-                  <span>Lembrar-me</span>
-                </label>
-                <a href="#" className="text-primary hover:text-primary-dark transition-colors" onClick={(e) => e.preventDefault()}>
-                  Esqueceu a senha?
-                </a>
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-11 sm:h-14 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl sm:rounded-2xl text-xs sm:text-sm uppercase tracking-[0.15em] sm:tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                >
+                  {loading ? (
+                    <LoadingSpinner size="sm" />
+                  ) : (
+                    <>
+                      <span>Entrar no Sistema</span>
+                      <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </Button>
               </div>
+            </form>
 
-              <Button
-                type="submit"
-                className="modern-button w-full h-11 sm:h-14 text-xs sm:text-base font-bold uppercase tracking-wider mt-2 sm:mt-4 touch-press rounded-xl sm:rounded-2xl"
-                disabled={loading || (lockoutUntil !== null && Date.now() < lockoutUntil)}
-              >
-                {loading && <LoadingSpinner size="sm" variant="white" className="mr-2" />}
-                {loading ? 'Autenticando...' : (lockoutUntil && Date.now() < lockoutUntil ? 'Acesso Bloqueado' : 'Acessar')}
-                {!loading && (!lockoutUntil || Date.now() >= lockoutUntil) && <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1" />}
-              </Button>
-
-              <div className="text-center text-xs sm:text-sm text-white/40 mt-3 sm:mt-4">
-                Não tem conta?{' '}
-                <Link to="/cadastro" className="text-primary hover:text-primary-dark transition-colors font-bold">
+            <div className="mt-8 pt-6 border-t border-white/5 text-center">
+              <p className="text-xs text-white/40">
+                Primeiro acesso da instituição?{' '}
+                <Link to="/cadastro" className="text-primary hover:underline font-semibold">
                   Criar conta
                 </Link>
-              </div>
-
-            </form>
+              </p>
+            </div>
           </CardContent>
         </Card>
-
-        {/* Footer links under the card */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-4 sm:mt-8 flex flex-col items-center gap-2 sm:gap-3 text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-white/20"
-        >
-          <div className="flex gap-4">
-            <Link to="/politica-de-privacidade" className="hover:text-white/40 transition-colors">Privacidade</Link>
-            <Link to="/termos" className="hover:text-white/40 transition-colors">Cookies</Link>
-          </div>
-          <span>© 2026 Instituto Olhar Jovem</span>
-        </motion.div>
       </motion.div>
     </div>
   );

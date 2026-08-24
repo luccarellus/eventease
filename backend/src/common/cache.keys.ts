@@ -1,21 +1,21 @@
 /**
- * Chaves e TTLs centralizados do cache Redis.
- * O RedisService já opera em modo fallback: se o Redis estiver fora,
+ * Chaves e TTLs centralizados do cache Redis com suporte a Multi-Tenancy.
+ * O RedisService opera em modo fallback: se o Redis estiver fora,
  * get/set retornam null e a aplicação segue funcionando sem cache.
  */
 export const CACHE_KEYS = {
-  eventsPublished: 'events:published',
-  eventsAll: 'events:all',
-  eventById: (id: string) => `event:${id}`,
-  participantByEmail: (email: string) =>
-    `participant:email:${email.trim().toLowerCase()}`,
-  participantByCode: (code: string) =>
-    `participant:code:${code.trim().toUpperCase()}`,
-  participantsCount: 'metrics:participants-count',
-  registrationsByEvent: (eventoId: string) =>
-    `registrations:event:${eventoId}`,
-  registrationCheck: (eventoId: string, participanteId: string) =>
-    `registration:check:${eventoId}:${participanteId}`,
+  eventsPublished: (tenantId: string) => `${tenantId}:events:published`,
+  eventsAll: (tenantId: string) => `${tenantId}:events:all`,
+  eventById: (tenantId: string, id: string) => `${tenantId}:event:${id}`,
+  participantByEmail: (tenantId: string, email: string) =>
+    `${tenantId}:participant:email:${email.trim().toLowerCase()}`,
+  participantByCode: (tenantId: string, code: string) =>
+    `${tenantId}:participant:code:${code.trim().toUpperCase()}`,
+  participantsCount: (tenantId: string) => `${tenantId}:metrics:participants-count`,
+  registrationsByEvent: (tenantId: string, eventoId: string) =>
+    `${tenantId}:registrations:event:${eventoId}`,
+  registrationCheck: (tenantId: string, eventoId: string, participanteId: string) =>
+    `${tenantId}:registration:check:${eventoId}:${participanteId}`,
 } as const;
 
 export const CACHE_TTL = {

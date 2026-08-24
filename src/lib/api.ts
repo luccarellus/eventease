@@ -1,11 +1,36 @@
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
+export const TENANT_STORAGE_KEY = 'eventease_tenant_id';
+
+export function getActiveTenantId(): string | null {
+  try {
+    return localStorage.getItem(TENANT_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setActiveTenantId(tenantId: string | null) {
+  try {
+    if (tenantId) {
+      localStorage.setItem(TENANT_STORAGE_KEY, tenantId);
+    } else {
+      localStorage.removeItem(TENANT_STORAGE_KEY);
+    }
+  } catch {
+    // Ignora erro de localStorage
+  }
+}
+
 export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_URL}${endpoint}`;
+
+  const currentTenantId = getActiveTenantId();
   
-  const headers = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(currentTenantId ? { 'x-tenant-id': currentTenantId } : {}),
+    ...(options.headers as Record<string, string>),
   };
 
   const response = await fetch(url, {
@@ -14,14 +39,22 @@ export const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     headers,
   });
 
-  // We do not want to throw on 401/403 for /auth/me checks.
-  // The caller handles error checking.
   return response;
 };
 
 export const api = {
   get: (endpoint: string, options?: RequestInit) => apiFetch(endpoint, { ...options, method: 'GET' }),
-  post: (endpoint: string, data: any, options?: RequestInit) => apiFetch(endpoint, { ...options, method: 'POST', body: JSON.stringify(data) }),
-  patch: (endpoint: string, data: any, options?: RequestInit) => apiFetch(endpoint, { ...options, method: 'PATCH', body: JSON.stringify(data) }),
+  post: (endpoint: string, data?: unknown, options?: RequestInit) =>
+    apiFetch(endpoint, {
+      ...options,
+      method: 'POST',
+      body: data !== undefined ? JSON.stringify(data) : undefined,
+    }),
+  patch: (endpoint: string, data?: unknown, options?: RequestInit) =>
+    apiFetch(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: data !== undefined ? JSON.stringify(data) : undefined,
+    }),
   delete: (endpoint: string, options?: RequestInit) => apiFetch(endpoint, { ...options, method: 'DELETE' }),
 };

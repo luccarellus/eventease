@@ -1,17 +1,29 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { api, setActiveTenantId } from '@/lib/api';
+import { Permission, Role, hasPermission as checkPermission, getRolePermissions } from '@/types/rbac';
+import { Tenant } from '@/types/tenant';
 
 export interface User {
   id: string;
   email: string;
-  role: string;
-  fullName?: string;
+  role: Role | string;
+  fullName?: string | null;
+  tenantId?: string | null;
+  tenant?: Tenant | null;
+  permissions?: Permission[];
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
-  userIsAdmin: boolean;
   loading: boolean;
+  userIsAdmin: boolean;
+  isSuperAdmin: boolean;
+  isAdmin: boolean;
+  isOrganizer: boolean;
+  isStaff: boolean;
+  isViewer: boolean;
+  hasPermission: (permission: Permission) => boolean;
+  hasRole: (roles: (Role | string)[]) => boolean;
   signOut: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
@@ -22,13 +34,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get('/auth/me');
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user);
+        const userData: User = data.user;
+        setUser(userData);
+        if (userData.tenantId) {
+          setActiveTenantId(userData.tenantId);
+        }
         return;
       }
 
@@ -36,11 +52,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (res.status === 401) {
         const refreshRes = await api.post('/auth/refresh', {});
         if (refreshRes.ok) {
-          // Refresh OK — tenta buscar o usuário novamente
           const retryRes = await api.get('/auth/me');
           if (retryRes.ok) {
             const data = await retryRes.json();
-            setUser(data.user);
+            const userData: User = data.user;
+            setUser(userData);
+            if (userData.tenantId) {
+              setActiveTenantId(userData.tenantId);
+            }
             return;
           }
         }
@@ -52,11 +71,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   const signOut = async () => {
     try {
@@ -66,10 +85,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const isSuperAdmin = user?.role === Role.SUPER_ADMIN;
+  const isAdmin = isSuperAdmin || user?.role === Role.ADMIN;
+  const isOrganizer = isAdmin || user?.role === Role.ORGANIZER;
+  const isStaff = isOrganizer || user?.role === Role.STAFF;
+  const isViewer = isStaff || user?.role === Role.VIEWER;
+
+  const hasPermission = useCallback(
+    (permission: Permission): boolean => {
+      if (!user) return false;
+      if (isSuperAdmin) return true;
+      return checkPermission(user.role, permission);
+    },
+    [user, isSuperAdmin],
+  );
+
+  const hasRole = useCallback(
+    (roles: (Role | string)[]): boolean => {
+      if (!user) return false;
+      if (isSuperAdmin) return true;
+      return roles.includes(user.role);
+    },
+    [user, isSuperAdmin],
+  );
+
   const value: AuthContextType = {
     user,
-    userIsAdmin: user?.role === 'admin',
     loading,
+    userIsAdmin: isAdmin,
+    isSuperAdmin,
+    isAdmin,
+    isOrganizer,
+    isStaff,
+    isViewer,
+    hasPermission,
+    hasRole,
     signOut,
     checkAuth,
   };
@@ -82,6 +132,5 @@ export const useAuth = (): AuthContextType => {
   if (!context) {
     throw new Error('useAuth deve ser utilizado dentro de um AuthProvider');
   }
-  return context as AuthContextType;
+  return context;
 };
-

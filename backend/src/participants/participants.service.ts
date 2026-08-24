@@ -11,10 +11,6 @@ import { NevaProService } from '../common/nevapro.service';
 import { RedisService } from '../common/redis.service';
 import { CACHE_KEYS, CACHE_TTL, safeParse } from '../common/cache.keys';
 
-// Dados mínimos expostos publicamente.
-// ATENÇÃO: `codigo` é mantido para o fluxo de recuperação de credencial
-// (o participante recupera o próprio código informando o e-mail).
-// `email` e `telefone` NÃO são devolvidos (LGPD).
 const PUBLIC_PARTICIPANT_SELECT = {
   id: true,
   nome: true,
@@ -22,7 +18,6 @@ const PUBLIC_PARTICIPANT_SELECT = {
   cidade: true,
 } as const;
 
-/** Forma pública retornada nas buscas de credencial (LGPD-safe). */
 type PublicParticipant = Pick<Participante, 'id' | 'nome' | 'codigo' | 'cidade'>;
 
 @Injectable()
@@ -34,11 +29,15 @@ export class ParticipantsService {
   ) {}
 
   private async findByEmailQuery(
+    tenantId: string,
     email: string,
     select?: Prisma.ParticipanteSelect,
   ) {
     const participant = await this.prisma.participante.findFirst({
-      where: { email: { equals: email, mode: 'insensitive' } },
+      where: {
+        tenantId,
+        email: { equals: email, mode: 'insensitive' },
+      },
       select,
     });
 
@@ -50,11 +49,12 @@ export class ParticipantsService {
   }
 
   private async findByCodeQuery(
+    tenantId: string,
     codigo: string,
     select?: Prisma.ParticipanteSelect,
   ) {
-    const participant = await this.prisma.participante.findUnique({
-      where: { codigo },
+    const participant = await this.prisma.participante.findFirst({
+      where: { tenantId, codigo },
       select,
     });
 
@@ -65,7 +65,7 @@ export class ParticipantsService {
     return participant;
   }
 
-  async create(data: Prisma.ParticipanteCreateInput) {
+  async create(tenantId: string, data: Omit<Prisma.ParticipanteUncheckedCreateInput, 'tenantId'>) {
     const email = data.email;
     const codigo = data.codigo;
 
@@ -73,6 +73,7 @@ export class ParticipantsService {
       const created = await this.prisma.$transaction(async (tx) => {
         const existing = await tx.participante.findFirst({
           where: {
+            tenantId,
             OR: [{ email: { equals: email, mode: 'insensitive' } }, { codigo }],
           },
           select: { id: true },
@@ -80,17 +81,22 @@ export class ParticipantsService {
 
         if (existing) {
           throw new ConflictException(
-            'Participante com este código ou email já existe.',
+            'Participante com este código ou email já existe nesta organização.',
           );
         }
 
-        return tx.participante.create({ data });
+        return tx.participante.create({
+          data: {
+            ...data,
+            tenantId,
+          },
+        });
       });
 
       // Novo participante altera a contagem do dashboard
-      await this.redis.del(CACHE_KEYS.participantsCount);
+      await this.redis.del(CACHE_KEYS.participantsCount(tenantId));
 
-      // 🚀 Sincronização automática de novo participante com NevaPro (fire-and-forget)
+      // Sincronização fire-and-forget com NevaPro
       void this.nevaProService.sync({
         email: created.email,
         fullName: created.nome,
@@ -101,24 +107,23 @@ export class ParticipantsService {
 
       return created;
     } catch (error) {
-      // Converte violação de unicidade (P2002) em 409 Conflict
       return throwUniqueConstraintError(
         error,
-        'Participante com este código ou email já existe.',
+        'Participante com este código ou email já existe nesta organização.',
       );
     }
   }
 
-  async findAll() {
+  async findAll(tenantId: string) {
     return this.prisma.participante.findMany({
+      where: { tenantId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findPage(page: number, limit: number, search: string) {
+  async findPage(tenantId: string, page: number, limit: number, search: string) {
     const normalizedSearch = search.trim();
 
-    // Chamada de métricas do dashboard (page=1&limit=1 sem busca) — cacheada.
     const isMetricsCall = page === 1 && limit === 1 && !normalizedSearch;
     if (isMetricsCall) {
       const cached = safeParse<{
@@ -126,19 +131,22 @@ export class ParticipantsService {
         total: number;
         page: number;
         limit: number;
-      }>(await this.redis.get(CACHE_KEYS.participantsCount));
+      }>(await this.redis.get(CACHE_KEYS.participantsCount(tenantId)));
       if (cached) return cached;
     }
 
-    const where: Prisma.ParticipanteWhereInput = normalizedSearch
-      ? {
-          OR: [
-            { nome: { contains: normalizedSearch, mode: 'insensitive' } },
-            { email: { contains: normalizedSearch, mode: 'insensitive' } },
-            { codigo: { contains: normalizedSearch, mode: 'insensitive' } },
-          ],
-        }
-      : {};
+    const where: Prisma.ParticipanteWhereInput = {
+      tenantId,
+      ...(normalizedSearch
+        ? {
+            OR: [
+              { nome: { contains: normalizedSearch, mode: 'insensitive' } },
+              { email: { contains: normalizedSearch, mode: 'insensitive' } },
+              { codigo: { contains: normalizedSearch, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.participante.findMany({
@@ -154,7 +162,7 @@ export class ParticipantsService {
 
     if (isMetricsCall) {
       await this.redis.set(
-        CACHE_KEYS.participantsCount,
+        CACHE_KEYS.participantsCount(tenantId),
         JSON.stringify(result),
         CACHE_TTL.participantsCount,
       );
@@ -163,23 +171,21 @@ export class ParticipantsService {
     return result;
   }
 
-  async findByEmail(email: string) {
-    return this.findByEmailQuery(email);
+  async findByEmail(tenantId: string, email: string) {
+    return this.findByEmailQuery(tenantId, email);
   }
 
-  async findByEmailPublic(email: string): Promise<PublicParticipant> {
-    const key = CACHE_KEYS.participantByEmail(email);
-    const cached = safeParse<PublicParticipant>(
-      await this.redis.get(key),
-    );
+  async findByEmailPublic(tenantId: string, email: string): Promise<PublicParticipant> {
+    const key = CACHE_KEYS.participantByEmail(tenantId, email);
+    const cached = safeParse<PublicParticipant>(await this.redis.get(key));
     if (cached) return cached;
 
     const participant = await this.findByEmailQuery(
+      tenantId,
       email,
       PUBLIC_PARTICIPANT_SELECT,
     );
 
-    // Só cacheia respostas positivas (não cacheia 404 para não bloquear cadastros novos)
     await this.redis.set(
       key,
       JSON.stringify(participant),
@@ -188,18 +194,17 @@ export class ParticipantsService {
     return participant;
   }
 
-  async findByCode(codigo: string) {
-    return this.findByCodeQuery(codigo);
+  async findByCode(tenantId: string, codigo: string) {
+    return this.findByCodeQuery(tenantId, codigo);
   }
 
-  async findByCodePublic(codigo: string): Promise<PublicParticipant> {
-    const key = CACHE_KEYS.participantByCode(codigo);
-    const cached = safeParse<PublicParticipant>(
-      await this.redis.get(key),
-    );
+  async findByCodePublic(tenantId: string, codigo: string): Promise<PublicParticipant> {
+    const key = CACHE_KEYS.participantByCode(tenantId, codigo);
+    const cached = safeParse<PublicParticipant>(await this.redis.get(key));
     if (cached) return cached;
 
     const participant = await this.findByCodeQuery(
+      tenantId,
       codigo,
       PUBLIC_PARTICIPANT_SELECT,
     );
@@ -212,16 +217,22 @@ export class ParticipantsService {
     return participant;
   }
 
-  async remove(id: string) {
-    // P2025 (registro inexistente) é convertido em 404 pelo filtro global de exceções.
+  async remove(tenantId: string, id: string) {
+    const existing = await this.prisma.participante.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Participante não encontrado nesta organização.');
+    }
+
     const removed = await this.prisma.participante.delete({
       where: { id },
     });
 
-    // Invalida cache de credencial e contagem do dashboard
-    await this.redis.del(CACHE_KEYS.participantsCount);
-    await this.redis.del(CACHE_KEYS.participantByEmail(removed.email));
-    await this.redis.del(CACHE_KEYS.participantByCode(removed.codigo));
+    await this.redis.del(CACHE_KEYS.participantsCount(tenantId));
+    await this.redis.del(CACHE_KEYS.participantByEmail(tenantId, removed.email));
+    await this.redis.del(CACHE_KEYS.participantByCode(tenantId, removed.codigo));
 
     return removed;
   }

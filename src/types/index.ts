@@ -1,5 +1,19 @@
+import { Tenant } from './tenant';
+import { Role } from './rbac';
+
+export interface AdminUserRecord {
+  id: string;
+  email: string;
+  fullName?: string | null;
+  role: Role | string;
+  tenantId?: string | null;
+  tenant?: Tenant;
+  createdAt?: string;
+}
+
 export interface Participante {
   id: string;
+  tenantId?: string;
   nome: string;
   email: string;
   telefone: string;
@@ -18,6 +32,7 @@ export type NewParticipante = Omit<Participante, 'id' | 'presente' | 'confirmado
 
 export interface Evento {
   id: string;
+  tenantId?: string;
   titulo: string;
   descricao?: string;
   data: string;
@@ -34,9 +49,9 @@ export interface Evento {
 
 export interface InscricaoEvento {
   id: string;
+  tenantId?: string;
   evento_id: string;
   participante_id: string;
-  // API NestJS retorna em camelCase também
   eventoId?: string;
   participanteId?: string;
   presente: boolean;
@@ -44,7 +59,5 @@ export interface InscricaoEvento {
   createdAt?: string;
   created_at?: string;
   participantes?: Participante;
+  participante?: Participante;
 }
-
-
-

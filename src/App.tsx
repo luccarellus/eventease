@@ -8,12 +8,15 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { Toaster } from './components/ui/event-toaster';
 import CookieBanner from '@/components/CookieBanner';
 import { motion } from 'motion/react';
-import { Calendar, UserCheck, LayoutDashboard, LogOut, RefreshCcw } from 'lucide-react';
+import { Calendar, UserCheck, LayoutDashboard, LogOut, RefreshCcw, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { TenantProvider } from '@/contexts/TenantContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { TenantSelector } from '@/components/rbac/TenantSelector';
+import { Role, ROLE_LABELS, ROLE_BADGE_STYLES } from '@/types/rbac';
 import { initRecaptcha } from '@/lib/recaptcha';
 import { LoadingSpinner as CustomSpinner } from '@/components/ui/LoadingSpinner';
 import { useSecurityProtection } from '@/hooks/useSecurityProtection';
@@ -49,21 +52,6 @@ const PUBLIC_NAV_ITEMS: NavItem[] = [
   },
 ];
 
-const ADMIN_NAV_ITEMS: NavItem[] = [
-  {
-    to: '/confirmar',
-    label: 'Check-in',
-    icon: <UserCheck className="w-4 h-4" />,
-    isActive: (pathname) => pathname === '/confirmar',
-  },
-  {
-    to: '/admin',
-    label: 'Dashboard',
-    icon: <LayoutDashboard className="w-4 h-4" />,
-    isActive: (pathname) => pathname === '/admin',
-  },
-];
-
 function LoadingSpinner() {
   return (
     <div className="flex items-center justify-center min-h-[50vh]">
@@ -74,20 +62,50 @@ function LoadingSpinner() {
 
 function Navbar() {
   const location = useLocation();
-  const { userIsAdmin, signOut } = useAuth();
-  const navItems = userIsAdmin ? ADMIN_NAV_ITEMS : PUBLIC_NAV_ITEMS;
+  const { user, isStaff, isViewer, isSuperAdmin, signOut } = useAuth();
+
+  const isMember = !!user && user.role !== Role.USER;
+
+  const memberNavItems: NavItem[] = [];
+
+  if (isStaff) {
+    memberNavItems.push({
+      to: '/confirmar',
+      label: 'Check-in',
+      icon: <UserCheck className="w-4 h-4" />,
+      isActive: (pathname) => pathname === '/confirmar',
+    });
+  }
+
+  if (isViewer || isSuperAdmin) {
+    memberNavItems.push({
+      to: '/admin',
+      label: 'Dashboard',
+      icon: <LayoutDashboard className="w-4 h-4" />,
+      isActive: (pathname) => pathname === '/admin',
+    });
+  }
+
+  const navItems = isMember ? memberNavItems : PUBLIC_NAV_ITEMS;
+
+  const currentRole = (user?.role as Role) || Role.USER;
+  const badgeStyle = ROLE_BADGE_STYLES[currentRole] || ROLE_BADGE_STYLES[Role.USER];
+  const roleLabel = ROLE_LABELS[currentRole] || user?.role;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#020610]/85 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3 group shrink-0">
-          <img
-            src="/logo_oficial.png"
-            alt="Olhar Jovem"
-            className="h-8 md:h-12 w-auto transition-transform group-hover:scale-105"
-            referrerPolicy="no-referrer"
-          />
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 group shrink-0">
+            <img
+              src="/logo_oficial.png"
+              alt="Olhar Jovem"
+              className="h-8 md:h-12 w-auto transition-transform group-hover:scale-105"
+              referrerPolicy="no-referrer"
+            />
+          </Link>
+          {isMember && <TenantSelector className="hidden lg:flex" />}
+        </div>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-2 p-1 bg-white/5 rounded-2xl border border-white/10">
@@ -101,8 +119,21 @@ function Navbar() {
             />
           ))}
 
-          {userIsAdmin && (
+          {isMember && (
             <>
+              <div
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border',
+                  badgeStyle.bg,
+                  badgeStyle.text,
+                  badgeStyle.border,
+                )}
+                title={`Cargo atual: ${roleLabel}`}
+              >
+                <Shield className="w-3 h-3" />
+                <span>{roleLabel}</span>
+              </div>
+
               <Button
                 variant="ghost"
                 size="sm"
@@ -128,9 +159,10 @@ function Navbar() {
           )}
         </div>
 
-        {/* Mobile Top Actions for Admin */}
-        {userIsAdmin && (
+        {/* Mobile Top Actions for Members */}
+        {isMember && (
           <div className="flex md:hidden items-center gap-1.5">
+            <TenantSelector className="flex max-w-[120px]" />
             <Button
               variant="ghost"
               size="icon"
@@ -163,8 +195,30 @@ function Navbar() {
 
 function BottomNav() {
   const location = useLocation();
-  const { userIsAdmin } = useAuth();
-  const navItems = userIsAdmin ? ADMIN_NAV_ITEMS : PUBLIC_NAV_ITEMS;
+  const { user, isStaff, isViewer, isSuperAdmin } = useAuth();
+  const isMember = !!user && user.role !== Role.USER;
+
+  const memberNavItems: NavItem[] = [];
+
+  if (isStaff) {
+    memberNavItems.push({
+      to: '/confirmar',
+      label: 'Check-in',
+      icon: <UserCheck className="w-4 h-4" />,
+      isActive: (pathname) => pathname === '/confirmar',
+    });
+  }
+
+  if (isViewer || isSuperAdmin) {
+    memberNavItems.push({
+      to: '/admin',
+      label: 'Dashboard',
+      icon: <LayoutDashboard className="w-4 h-4" />,
+      isActive: (pathname) => pathname === '/admin',
+    });
+  }
+
+  const navItems = isMember ? memberNavItems : PUBLIC_NAV_ITEMS;
 
   return (
     <div className="md:hidden fixed bottom-2.5 inset-x-3 max-w-[320px] mx-auto z-50 pointer-events-none mb-[env(safe-area-inset-bottom)]">
@@ -229,21 +283,25 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <TenantProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </TenantProvider>
     </AuthProvider>
   );
 }
 
 function AppContent() {
-  const { userIsAdmin } = useAuth();
+  const { user } = useAuth();
+  const isMember = !!user && user.role !== Role.USER;
+
   useSecurityProtection({
     disableContextMenu: false,
     disableInspectKeys: true,
   });
 
-  // Modo de manutenção desativado por padrão (ou ativado se VITE_MAINTENANCE_MODE === 'true')
+  // Modo de manutenção desativado por padrão
   const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
 
   if (isMaintenanceMode) {
@@ -284,7 +342,7 @@ function AppContent() {
             <Route
               path="/confirmar"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRoles={[Role.SUPER_ADMIN, Role.ADMIN, Role.ORGANIZER, Role.STAFF]}>
                   <Confirm />
                 </ProtectedRoute>
               }
@@ -292,7 +350,7 @@ function AppContent() {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRoles={[Role.SUPER_ADMIN, Role.ADMIN, Role.ORGANIZER, Role.VIEWER]}>
                   <Admin />
                 </ProtectedRoute>
               }
@@ -305,10 +363,10 @@ function AppContent() {
         </Suspense>
       </main>
 
-      {!userIsAdmin && (
+      {!isMember && (
         <footer className="mt-auto py-8 text-center opacity-40 hover:opacity-100 transition-opacity">
           <Link to="/login" className="text-xs uppercase tracking-[0.2em] font-bold text-white hover:text-primary">
-            Staff/Organização
+            Staff / Organização
           </Link>
         </footer>
       )}

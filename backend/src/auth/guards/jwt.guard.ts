@@ -5,17 +5,17 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import type { Request } from 'express';
 import { PrismaService } from '../../prisma.service';
+import type { MultiTenantRequest } from '../../common/decorators/tenant.decorator';
+import { Role } from '../rbac.constants';
 
 interface AccessTokenPayload {
   sub: string;
   email: string;
   role: string;
+  tenantId?: string | null;
   tokenType?: string;
 }
-
-type AuthenticatedRequest = Request & { user?: AccessTokenPayload };
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -25,7 +25,7 @@ export class JwtAuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const request = context.switchToHttp().getRequest<MultiTenantRequest>();
     const token = this.extractTokenFromHeaderOrCookie(request);
     if (!token) {
       throw new UnauthorizedException('Token não encontrado.');
@@ -37,29 +37,46 @@ export class JwtAuthGuard implements CanActivate {
         !payload.sub ||
         (payload.tokenType && payload.tokenType !== 'access')
       ) {
-        throw new UnauthorizedException('Token invalido.');
+        throw new UnauthorizedException('Token inválido.');
       }
 
       const user = await this.prisma.adminUser.findUnique({
         where: { id: payload.sub },
-        select: { id: true, email: true, role: true },
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          role: true,
+          tenantId: true,
+          tenant: true,
+        },
       });
       if (!user) {
-        throw new UnauthorizedException('Usuario nao autorizado.');
+        throw new UnauthorizedException('Usuário não autorizado.');
       }
 
       request.user = {
         sub: user.id,
+        id: user.id,
         email: user.email,
         role: user.role,
-        tokenType: 'access',
+        tenantId: user.tenantId,
       };
+
+      // Se o usuário tem tenantId vinculado e não é super_admin, força o tenantId da requisição
+      if (user.tenantId && user.role !== Role.SUPER_ADMIN) {
+        request.tenantId = user.tenantId;
+        if (user.tenant) {
+          request.tenant = user.tenant;
+        }
+      }
     } catch {
       throw new UnauthorizedException('Token inválido.');
     }
     return true;
   }
-  private extractTokenFromHeaderOrCookie(request: Request): string | undefined {
+
+  private extractTokenFromHeaderOrCookie(request: MultiTenantRequest): string | undefined {
     let token: string | undefined = request.cookies?.access_token as
       | string
       | undefined;

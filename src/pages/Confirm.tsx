@@ -136,6 +136,13 @@ export default function Confirm() {
 
   useEffect(() => {
     fetchEvents();
+    const handleSync = () => fetchEvents();
+    window.addEventListener('sync-data', handleSync);
+    window.addEventListener('tenant-changed', handleSync);
+    return () => {
+      window.removeEventListener('sync-data', handleSync);
+      window.removeEventListener('tenant-changed', handleSync);
+    };
   }, []);
 
   const handleManualCheckin = async (e?: React.FormEvent, codeOverride?: string) => {

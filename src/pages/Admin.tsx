@@ -1,13 +1,24 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { Participante, Evento, InscricaoEvento } from '@/types/index';
+import { useTenant } from '@/contexts/TenantContext';
+import { Participante, Evento, InscricaoEvento, AdminUserRecord } from '@/types/index';
+import { Tenant } from '@/types/tenant';
+import {
+  Role,
+  Permission,
+  ROLE_LABELS,
+  ROLE_BADGE_STYLES,
+  ALL_ROLES,
+} from '@/types/rbac';
+import { HasPermission } from '@/components/rbac/HasPermission';
+import { HasRole } from '@/components/rbac/HasRole';
 import rawSchoolsData from '@/data/cidades_escolas.json';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -26,17 +37,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import {
-  Download,
   Search,
   Users,
   UserCheck,
-  UserMinus,
   MoreVertical,
   Filter,
   BarChart3,
   RefreshCcw,
-  LogOut,
-  TrendingUp,
   FileSpreadsheet,
   Plus,
   X,
@@ -51,7 +58,11 @@ import {
   EyeOff,
   UserPlus,
   CheckCircle2,
-  XCircle
+  Building2,
+  Shield,
+  ShieldCheck,
+  KeyRound,
+  ShieldAlert,
 } from 'lucide-react';
 import {
   PieChart,
@@ -66,7 +77,6 @@ import { generateCredentialCode } from '@/lib/credential-code';
 import { executeRecaptcha } from '@/lib/recaptcha';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 type ParticipantRecord = Participante & {
   createdAt?: string;
@@ -98,7 +108,7 @@ export default function Admin() {
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'eventos' | 'alunos'>('eventos');
+  const [activeTab, setActiveTab] = useState<'eventos' | 'alunos' | 'equipe' | 'organizacoes'>('eventos');
 
   // Evento selecionado para exibição de detalhes/inscritos
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
@@ -114,11 +124,36 @@ export default function Admin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'present' | 'absent'>('all');
 
-  // Modais de Criação
+  // Modais de Eventos & Alunos
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showAddStudentToEventModal, setShowAddStudentToEventModal] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
+
+  // Gestão de Equipe & RBAC
+  const [teamUsers, setTeamUsers] = useState<AdminUserRecord[]>([]);
+  const [loadingTeam, setLoadingTeam] = useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showEditRoleModal, setShowEditRoleModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUserRecord | null>(null);
+  const [selectedRole, setSelectedRole] = useState<Role>(Role.STAFF);
+  const [submittingUser, setSubmittingUser] = useState(false);
+  const [newUser, setNewUser] = useState({
+    fullName: '',
+    email: '',
+    password: '',
+    role: Role.STAFF,
+    tenantId: '',
+  });
+
+  // Gestão de Organizações (Tenants - Super Admin)
+  const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
+  const [submittingTenant, setSubmittingTenant] = useState(false);
+  const [newTenant, setNewTenant] = useState({
+    name: '',
+    slug: '',
+    domain: '',
+  });
 
   // States dos formulários
   const [newStudent, setNewStudent] = useState({
@@ -153,25 +188,20 @@ export default function Admin() {
   const [searchStudentForEvent, setSearchStudentForEvent] = useState('');
 
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { user, isSuperAdmin, isAdmin, hasPermission } = useAuth();
+  const { currentTenant, tenantList, switchTenant, refreshTenants } = useTenant();
 
   const formatOptionalDate = (value?: string | null, fallback = 'Não Informado') => {
-    if (!value) {
-      return fallback;
-    }
-
+    if (!value) return fallback;
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return fallback;
-    }
-
+    if (Number.isNaN(date.getTime())) return fallback;
     return format(date, 'dd/MM/yyyy HH:mm:ss');
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Obter contagem global leve de Alunos para os Stats
+      // Obter contagem global de Alunos para os Stats
       const pRes = await api.get('/participants?page=1&limit=1');
       if (pRes.ok) {
         const page = await pRes.json() as { total: number };
@@ -184,16 +214,15 @@ export default function Admin() {
         const evts = await evtRes.json();
         setEventos(evts || []);
       }
-
     } catch (error) {
       console.error('Error fetching general stats/events:', error);
       toast.error('Erro ao carregar dados dos eventos.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchParticipantes = async (page: number, search: string) => {
+  const fetchParticipantes = useCallback(async (page: number, search: string) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -216,7 +245,24 @@ export default function Admin() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [itemsPerPage]);
+
+  const fetchTeamUsers = useCallback(async () => {
+    if (!isAdmin && !isSuperAdmin) return;
+    setLoadingTeam(true);
+    try {
+      const res = await api.get('/auth/users');
+      if (res.ok) {
+        const data = await res.json();
+        setTeamUsers(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error('Error fetching team users:', error);
+      toast.error('Erro ao carregar lista da equipe.');
+    } finally {
+      setLoadingTeam(false);
+    }
+  }, [isAdmin, isSuperAdmin]);
 
   // Buscar inscrições do evento selecionado
   const fetchInscritosEvento = async (eventoId: string) => {
@@ -226,7 +272,6 @@ export default function Admin() {
       if (!res.ok) throw new Error('Failed to fetch event registrations');
       const data = (await res.json()) as RegistrationRecord[];
 
-      // Mapear os dados para o formato esperado pelo frontend
       const mappedData = data.map((item) => ({
         ...item,
         created_at: item.createdAt || item.created_at,
@@ -242,39 +287,37 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
+    if (activeTab === 'alunos') {
+      void fetchParticipantes(currentPage, searchTerm);
+    } else if (activeTab === 'equipe') {
+      void fetchTeamUsers();
+    }
 
     const handleSync = () => {
-      fetchData();
+      void fetchData();
       if (activeTab === 'alunos') {
-        fetchParticipantes(currentPage, searchTerm);
+        void fetchParticipantes(currentPage, searchTerm);
+      } else if (activeTab === 'equipe') {
+        void fetchTeamUsers();
       }
     };
+
     window.addEventListener('sync-data', handleSync);
+    window.addEventListener('tenant-changed', handleSync);
 
     return () => {
       window.removeEventListener('sync-data', handleSync);
+      window.removeEventListener('tenant-changed', handleSync);
     };
-  }, []);
-
-  // Efeito para recarregar alunos quando a aba, página ou busca mudar
-  useEffect(() => {
-    if (activeTab === 'alunos') {
-      fetchParticipantes(currentPage, searchTerm);
-    }
-  }, [activeTab, currentPage, searchTerm]);
+  }, [fetchData, fetchParticipantes, fetchTeamUsers, activeTab, currentPage, searchTerm]);
 
   // Efeito para recarregar inscritos quando o evento selecionado mudar
   useEffect(() => {
     if (selectedEvento) {
-      fetchInscritosEvento(selectedEvento.id);
+      void fetchInscritosEvento(selectedEvento.id);
     }
-  }, [selectedEvento, participantes]);
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/login');
-  };
+  }, [selectedEvento]);
 
   // --- Ações de Alunos (Global) ---
   const handleDeleteStudent = async (id: string, nome: string) => {
@@ -285,8 +328,9 @@ export default function Admin() {
       if (!res.ok) throw new Error('Falha ao deletar participante');
 
       toast.success('Participante removido com sucesso.');
-      fetchData();
-    } catch (error) {
+      void fetchData();
+      void fetchParticipantes(currentPage, searchTerm);
+    } catch {
       toast.error('Erro ao remover participante.');
     }
   };
@@ -294,7 +338,6 @@ export default function Admin() {
   const handleAddStudentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalCode = generateCredentialCode();
-
 
     try {
       const recaptchaToken = await executeRecaptcha('participant_create');
@@ -317,8 +360,9 @@ export default function Admin() {
         escola: '',
         gremio: ''
       });
-      fetchData();
-    } catch (error) {
+      void fetchData();
+      void fetchParticipantes(currentPage, searchTerm);
+    } catch {
       toast.error('Erro ao realizar cadastro.');
     }
   };
@@ -361,141 +405,219 @@ export default function Admin() {
         dataInicioInscricao: '',
         dataFimInscricao: ''
       });
-      fetchData();
-    } catch (error) {
-      console.error('Error saving event:', error);
-      toast.error('Erro ao salvar evento.');
+      void fetchData();
+    } catch {
+      toast.error(editingEventId ? 'Erro ao atualizar evento.' : 'Erro ao criar evento.');
     } finally {
       setSubmittingEvent(false);
     }
   };
 
   const handleDeleteEvent = async (id: string, titulo: string) => {
-    if (!confirm(`Tem certeza que deseja excluir o evento "${titulo}"? Todas as inscrições associadas serão perdidas.`)) return;
+    if (!confirm(`Tem certeza que deseja excluir o evento "${titulo}"? Todas as inscrições deste evento serão perdidas.`)) return;
+
     try {
       const res = await api.delete(`/events/${id}`);
-      if (!res.ok) throw new Error('Falha ao excluir evento');
+      if (!res.ok) throw new Error('Falha ao deletar evento');
 
       toast.success('Evento excluído com sucesso.');
       if (selectedEvento?.id === id) {
         setSelectedEvento(null);
       }
-      fetchData();
-    } catch (err) {
+      void fetchData();
+    } catch {
       toast.error('Erro ao excluir evento.');
     }
   };
 
-  const handleTogglePublish = async (event: Evento) => {
+  const handleTogglePublish = async (evento: Evento) => {
     try {
-      const newStatus = !event.publicado;
-      const res = await api.patch(`/events/${event.id}`, { publicado: newStatus });
-      if (!res.ok) throw new Error('Falha ao alterar status');
+      const res = await api.patch(`/events/${evento.id}`, { publicado: !evento.publicado });
+      if (!res.ok) throw new Error('Falha ao alternar visibilidade');
 
-      toast.success(
-        newStatus
-          ? 'Evento marcado como ATIVO (recebendo inscrições).'
-          : 'Evento marcado como INATIVO (inscrições encerradas).'
-      );
-      fetchData();
-      if (selectedEvento?.id === event.id) {
-        setSelectedEvento({ ...selectedEvento, publicado: newStatus });
+      toast.success(evento.publicado ? 'Evento despublicado.' : 'Evento publicado com sucesso!');
+      void fetchData();
+      if (selectedEvento?.id === evento.id) {
+        setSelectedEvento({ ...selectedEvento, publicado: !evento.publicado });
       }
-    } catch (err) {
+    } catch {
       toast.error('Erro ao alterar status do evento.');
     }
   };
 
-  // --- Ações de Inscrições/Presença em Evento Específico ---
-  const handleTogglePresence = async (inscricao: InscricaoEvento) => {
-    const newPresence = !inscricao.presente;
-    try {
-      const res = await api.patch(`/registrations/${inscricao.id}`, {
-        presente: newPresence,
-        confirmado_em: newPresence ? new Date().toISOString() : null
-      });
-
-      if (!res.ok) throw new Error('Falha ao atualizar presença');
-      toast.success(`Check-in ${newPresence ? 'confirmado' : 'cancelado'}!`);
-      if (selectedEvento) {
-        fetchInscritosEvento(selectedEvento.id);
-      }
-    } catch (err) {
-      toast.error('Erro ao atualizar presença.');
-    }
-  };
-
-  const handleRemoveFromEvent = async (inscricaoId: string) => {
-    if (!confirm('Deseja remover este aluno do evento? A inscrição dele será cancelada.')) return;
-    try {
-      const res = await api.delete(`/registrations/${inscricaoId}`);
-      if (!res.ok) throw new Error('Falha ao remover aluno do evento');
-
-      toast.success('Aluno removido do evento com sucesso.');
-      if (selectedEvento) {
-        fetchInscritosEvento(selectedEvento.id);
-      }
-    } catch (err) {
-      toast.error('Erro ao remover aluno do evento.');
-    }
-  };
-
-  const handleAddStudentToEvent = async (participanteId: string) => {
+  // --- Ações de Inscrição em Evento ---
+  const handleAddStudentToEvent = async (studentId: string) => {
     if (!selectedEvento) return;
     try {
       const recaptchaToken = await executeRecaptcha('registration_create');
       const res = await api.post('/registrations', {
         eventoId: selectedEvento.id,
-        participanteId: participanteId,
+        participanteId: studentId,
         recaptchaToken,
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        if (errorData.message?.includes('Unique constraint failed') || errorData.message?.includes('já existe')) {
-          toast.info('Aluno já inscrito neste evento.');
-          return;
-        }
-        throw new Error('Falha ao inscrever aluno');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Falha ao inscrever aluno no evento');
       }
 
-      toast.success('Aluno inscrito com sucesso!');
-      fetchInscritosEvento(selectedEvento.id);
-      setShowAddStudentToEventModal(false);
-    } catch (err) {
-      toast.error('Erro ao inscrever aluno no evento.');
+      toast.success('Aluno inscrito no evento com sucesso!');
+      void fetchInscritosEvento(selectedEvento.id);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erro ao inscrever aluno';
+      toast.error(msg);
+    }
+  };
+
+  const handleRemoveRegistration = async (registrationId: string) => {
+    if (!confirm('Deseja remover esta inscrição do evento?')) return;
+    try {
+      const res = await api.delete(`/registrations/${registrationId}`);
+      if (!res.ok) throw new Error('Falha ao remover inscrição');
+
+      toast.success('Inscrição removida.');
+      if (selectedEvento) {
+        void fetchInscritosEvento(selectedEvento.id);
+      }
+    } catch {
+      toast.error('Erro ao remover inscrição.');
+    }
+  };
+
+  // --- Ações de Equipe & RBAC ---
+  const handleCreateUserSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingUser(true);
+    try {
+      const res = await api.post('/auth/users', {
+        fullName: newUser.fullName.trim() || undefined,
+        email: newUser.email.trim().toLowerCase(),
+        password: newUser.password,
+        role: newUser.role,
+        tenantId: newUser.tenantId || (currentTenant?.id ?? undefined),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao criar membro');
+      }
+
+      toast.success('Membro da equipe adicionado com sucesso!');
+      setShowCreateUserModal(false);
+      setNewUser({
+        fullName: '',
+        email: '',
+        password: '',
+        role: Role.STAFF,
+        tenantId: '',
+      });
+      void fetchTeamUsers();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar usuário');
+    } finally {
+      setSubmittingUser(false);
+    }
+  };
+
+  const handleUpdateRoleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    try {
+      const res = await api.post('/auth/set-role', {
+        userId: editingUser.id,
+        role: selectedRole,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao alterar cargo');
+      }
+
+      toast.success(`Cargo de ${editingUser.fullName || editingUser.email} atualizado para ${ROLE_LABELS[selectedRole]}!`);
+      setShowEditRoleModal(false);
+      setEditingUser(null);
+      void fetchTeamUsers();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar cargo');
+    }
+  };
+
+  const handleDeleteUser = async (userRecord: AdminUserRecord) => {
+    if (userRecord.id === user?.id) {
+      toast.error('Você não pode excluir sua própria conta.');
+      return;
+    }
+    if (!confirm(`Tem certeza que deseja remover o usuário ${userRecord.fullName || userRecord.email} da equipe?`)) return;
+
+    try {
+      const res = await api.delete(`/auth/users/${userRecord.id}`);
+      if (!res.ok) throw new Error('Falha ao excluir usuário');
+
+      toast.success('Membro removido da equipe.');
+      void fetchTeamUsers();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao remover usuário');
+    }
+  };
+
+  // --- Ações de Organizações (Tenants - Super Admin) ---
+  const handleCreateTenantSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingTenant(true);
+    try {
+      const res = await api.post('/tenants', {
+        name: newTenant.name.trim(),
+        slug: newTenant.slug.trim().toLowerCase(),
+        domain: newTenant.domain.trim() || undefined,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Falha ao criar organização');
+      }
+
+      toast.success('Organização criada com sucesso!');
+      setShowCreateTenantModal(false);
+      setNewTenant({ name: '', slug: '', domain: '' });
+      void refreshTenants();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao criar organização');
+    } finally {
+      setSubmittingTenant(false);
     }
   };
 
   // --- Estatísticas ---
   const statsGlobal = useMemo(() => {
-    const totalAlunos = totalStudents;
     const totalEventos = eventos.length;
-    const eventosPublicados = eventos.filter((e: Evento) => e.publicado).length;
-    return { totalAlunos, totalEventos, eventosPublicados };
-  }, [totalStudents, eventos]);
+    const eventosPublicados = eventos.filter(e => e.publicado).length;
+    return {
+      totalAlunos: totalStudents,
+      totalEventos,
+      eventosPublicados
+    };
+  }, [eventos, totalStudents]);
 
   const statsEvento = useMemo(() => {
-    if (!selectedEvento) return { total: 0, presentes: 0, ausentes: 0, porcentagem: 0 };
+    if (!selectedEvento) return { total: 0, presentes: 0, ausentes: 0, taxaPresenca: 0 };
     const total = inscritosEvento.length;
-    const presentes = inscritosEvento.filter((p: InscricaoEvento) => p.presente).length;
+    const presentes = inscritosEvento.filter((i: InscricaoEvento) => i.presente).length;
     const ausentes = total - presentes;
-    const porcentagem = total > 0 ? (presentes / total) * 100 : 0;
-    return { total, presentes, ausentes, porcentagem };
-  }, [inscritosEvento, selectedEvento]);
+    const taxaPresenca = total > 0 ? Math.round((presentes / total) * 100) : 0;
+    return { total, presentes, ausentes, taxaPresenca };
+  }, [selectedEvento, inscritosEvento]);
 
-  // --- Filtros e Pesquisas ---
-  const filteredAlunos = participantes;
-
+  // Filtrar inscritos no evento com base na busca e filtro de presença
   const filteredInscritos = useMemo(() => {
     return inscritosEvento.filter((i: InscricaoEvento) => {
       const p = i.participantes;
-      if (!p) return false;
-
-      const matchesSearch =
-        p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.codigo.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = !searchTerm || (
+        (p?.nome && p.nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p?.codigo && p.codigo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p?.email && p.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p?.cidade && p.cidade.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (p?.escola && p.escola.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
 
       const matchesFilter =
         filter === 'all' ||
@@ -506,7 +628,7 @@ export default function Admin() {
     });
   }, [inscritosEvento, searchTerm, filter]);
 
-  // Filtrar alunos que NÃO estão inscritos no evento selecionado (para adicionar)
+  // Filtrar alunos que NÃO estão inscritos no evento selecionado
   const studentsNotSubscribed = useMemo(() => {
     if (!selectedEvento) return [];
     const subscribedIds = new Set(inscritosEvento.map((i: InscricaoEvento) => i.participanteId ?? i.participante_id));
@@ -519,7 +641,6 @@ export default function Admin() {
     });
   }, [participantes, inscritosEvento, selectedEvento, searchStudentForEvent]);
 
-  // --- Exportação CSV ---
   // --- Exportação CSV ---
   const exportEventCSV = (type: 'all' | 'present' = 'all') => {
     if (!selectedEvento) return;
@@ -545,7 +666,6 @@ export default function Admin() {
     });
 
     const csv = Papa.unparse(dataToExport, { delimiter: ';' });
-    // Adiciona o BOM do UTF-8 para o Excel reconhecer os caracteres especiais (acentos)
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -556,7 +676,7 @@ export default function Admin() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success(`Relatório de ${type === 'all' ? 'todos os inscritos' : 'alunos confirmados'} gerado com sucesso!`);
+    toast.success(`Relatório gerado com sucesso!`);
   };
 
   const exportAllStudentsCSV = () => {
@@ -577,7 +697,6 @@ export default function Admin() {
     }));
 
     const csv = Papa.unparse(dataToExport, { delimiter: ';' });
-    // Adiciona o BOM do UTF-8 para o Excel reconhecer os caracteres especiais (acentos)
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -587,17 +706,13 @@ export default function Admin() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Planilha da Base Geral de Alunos exportada com sucesso!');
+    toast.success('Planilha exportada com sucesso!');
   };
 
   const chartData = [
     { name: 'Presentes', value: statsEvento.presentes },
     { name: 'Ausentes', value: statsEvento.ausentes },
   ];
-
-  const handleChartFilter = (index: number) => {
-    setFilter(index === 0 ? 'present' : 'absent');
-  };
 
   if (loading && eventos.length === 0) {
     return (
@@ -613,15 +728,18 @@ export default function Admin() {
   return (
     <div className="space-y-10 pb-12">
       {/* Header Admin */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-8 md:mb-12 px-2 md:px-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 md:mb-10 px-2 md:px-0">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-primary text-[9px] md:text-[10px] font-bold uppercase tracking-widest mb-4">
-            Controle Administrativo
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10 text-primary text-[9px] md:text-[10px] font-bold uppercase tracking-widest mb-3">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Painel Administrativo • {currentTenant?.name || 'Organização'}</span>
           </div>
-          <h1 className="heading-display text-3xl md:text-4xl mb-2 text-white leading-tight">
-            Painel do <span className="text-primary">Staff</span>
+          <h1 className="heading-display text-3xl md:text-4xl mb-1.5 text-white leading-tight">
+            Gestão <span className="text-primary">EventEase</span>
           </h1>
-          <p className="text-white/40 text-base md:text-lg font-medium">Gerenciamento integrado de múltiplos eventos, inscrições e cadastro de alunos.</p>
+          <p className="text-white/40 text-sm md:text-base font-medium">
+            Gerencie eventos, participantes, controle de equipe e acessos RBAC em um só lugar.
+          </p>
         </motion.div>
       </div>
 
@@ -634,19 +752,19 @@ export default function Admin() {
               title="Total de Alunos"
               value={statsGlobal.totalAlunos}
               icon={<Users className="w-5 h-5 text-primary" />}
-              description="Cadastrados no sistema"
+              description="Cadastrados na organização"
             />
             <StatCard
               title="Total de Eventos"
               value={statsGlobal.totalEventos}
               icon={<Calendar className="w-5 h-5 text-primary" />}
-              description="Gerenciados"
+              description="Nesta organização"
             />
             <StatCard
               title="Eventos Ativos"
               value={statsGlobal.eventosPublicados}
               icon={<Sparkles className="w-5 h-5 text-primary" />}
-              description="Publicados para os alunos"
+              description="Publicados para inscrição"
             />
           </div>
 
@@ -672,13 +790,42 @@ export default function Admin() {
                   : "border-transparent text-white/40 hover:text-white/60"
               )}
             >
-              Base Geral de Alunos
+              Base de Alunos
             </button>
+            {(isAdmin || isSuperAdmin) && (
+              <button
+                onClick={() => { setActiveTab('equipe'); setSearchTerm(''); }}
+                className={cn(
+                  "px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-[11px] sm:text-xs uppercase tracking-widest border-b-2 transition-all whitespace-nowrap touch-press flex items-center gap-1.5",
+                  activeTab === 'equipe'
+                    ? "border-primary text-white"
+                    : "border-transparent text-white/40 hover:text-white/60"
+                )}
+              >
+                <Shield className="w-3.5 h-3.5 text-blue-400" />
+                Equipe & Cargos (RBAC)
+              </button>
+            )}
+            {isSuperAdmin && (
+              <button
+                onClick={() => { setActiveTab('organizacoes'); setSearchTerm(''); }}
+                className={cn(
+                  "px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-[11px] sm:text-xs uppercase tracking-widest border-b-2 transition-all whitespace-nowrap touch-press flex items-center gap-1.5",
+                  activeTab === 'organizacoes'
+                    ? "border-primary text-white"
+                    : "border-transparent text-white/40 hover:text-white/60"
+                )}
+              >
+                <Building2 className="w-3.5 h-3.5 text-purple-400" />
+                Organizações (Multi-Tenancy)
+              </button>
+            )}
           </div>
 
           {/* CONTEÚDO DAS ABAS */}
           <AnimatePresence mode="wait">
-            {activeTab === 'eventos' ? (
+            {/* ABA 1: EVENTOS */}
+            {activeTab === 'eventos' && (
               <motion.div
                 key="tab-eventos"
                 initial={{ opacity: 0, y: 15 }}
@@ -689,153 +836,169 @@ export default function Admin() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 px-1 sm:px-0">
                   <div>
                     <h2 className="text-lg sm:text-xl font-bold text-white">Eventos Cadastrados</h2>
-                    <p className="text-white/40 text-xs mt-0.5">Planeje e acompanhe as datas dos eventos.</p>
+                    <p className="text-white/40 text-xs mt-0.5">Planeje e acompanhe os eventos desta organização.</p>
                   </div>
-                  <Button
-                    onClick={() => {
-                      setEditingEventId(null);
-                      setNewEvent({
-                        titulo: '',
-                        descricao: '',
-                        data: '',
-                        local: '',
-                        cidade: '',
-                        publicado: false,
-                        dataInicioInscricao: '',
-                        dataFimInscricao: ''
-                      });
-                      setShowCreateEventModal(true);
-                    }}
-                    className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-11 px-5 sm:px-6 shadow-lg shadow-primary/20 text-xs sm:text-sm touch-press w-full sm:w-auto"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Novo Evento
-                  </Button>
+                  <HasPermission permission={Permission.EVENTS_CREATE}>
+                    <Button
+                      onClick={() => {
+                        setEditingEventId(null);
+                        setNewEvent({
+                          titulo: '',
+                          descricao: '',
+                          data: '',
+                          local: '',
+                          cidade: '',
+                          publicado: false,
+                          dataInicioInscricao: '',
+                          dataFimInscricao: ''
+                        });
+                        setShowCreateEventModal(true);
+                      }}
+                      className="bg-primary hover:bg-primary-dark text-white font-bold h-11 px-5 rounded-2xl shadow-lg shadow-primary/20 text-xs uppercase tracking-widest transition-all touch-press shrink-0 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Novo Evento
+                    </Button>
+                  </HasPermission>
                 </div>
 
                 {eventos.length === 0 ? (
-                  <Card className="glass-card text-center p-8 sm:p-12 border-white/[0.08] rounded-[2rem]">
-                    <Calendar className="w-12 h-12 text-white/10 mx-auto mb-4" />
-                    <h3 className="text-lg font-bold text-white mb-1">Nenhum evento registrado</h3>
-                    <p className="text-white/40 text-sm">Crie seu primeiro evento clicando no botão acima.</p>
+                  <Card className="glass-card border-white/5 py-12 text-center">
+                    <CardContent className="space-y-3">
+                      <Calendar className="w-12 h-12 text-white/20 mx-auto" />
+                      <p className="text-white/60 font-medium text-sm">Nenhum evento cadastrado para esta organização.</p>
+                      <HasPermission permission={Permission.EVENTS_CREATE}>
+                        <Button
+                          onClick={() => setShowCreateEventModal(true)}
+                          variant="outline"
+                          size="sm"
+                          className="border-white/10 text-white font-bold"
+                        >
+                          Criar Primeiro Evento
+                        </Button>
+                      </HasPermission>
+                    </CardContent>
                   </Card>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {eventos.map((evt: Evento) => (
+                    {eventos.map((evento) => (
                       <Card
-                        key={evt.id}
+                        key={evento.id}
                         className={cn(
-                          "relative overflow-hidden group flex flex-col justify-between transition-all duration-300 rounded-[1.75rem] border border-white/10 bg-gradient-to-b from-white/[0.05] via-white/[0.02] to-transparent hover:border-primary/40 hover:shadow-[0_12px_40px_rgba(0,191,165,0.15)]",
-                          !evt.publicado && "opacity-70 border-dashed border-white/20"
+                          "glass-card border-white/5 hover:border-white/15 transition-all overflow-hidden flex flex-col justify-between group",
+                          evento.publicado ? "bg-white/[0.02]" : "bg-white/[0.01] opacity-75"
                         )}
                       >
-                        {/* Linha de acento decorativa superior */}
-                        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-40 group-hover:opacity-100 transition-opacity" />
-
-                        <CardHeader className="p-5 sm:p-6 pb-4 space-y-3">
-                          <div className="flex justify-between items-center gap-2">
-                            <span className={cn(
-                              "px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-widest border flex items-center gap-1.5 shrink-0 shadow-sm",
-                              evt.publicado
-                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-emerald-500/10"
-                                : "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-amber-500/10"
-                            )}>
-                              <span className="relative flex h-2 w-2">
-                                {evt.publicado && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />}
-                                <span className={cn("relative inline-flex rounded-full h-2 w-2", evt.publicado ? "bg-emerald-400" : "bg-amber-400")} />
-                              </span>
-                              {evt.publicado ? 'Ativo' : 'Inativo'}
-                            </span>
-                            <span className="text-xs text-white/80 font-medium flex items-center gap-1.5 bg-white/[0.04] px-2.5 py-1 rounded-full border border-white/10 shadow-inner">
-                              <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
-                              {format(new Date(evt.data), "dd/MM/yyyy", { locale: ptBR })}
-                            </span>
-                          </div>
-
-                          <div className="space-y-1.5">
-                            <CardTitle className="text-lg sm:text-xl font-display font-extrabold text-white truncate tracking-tight group-hover:text-primary transition-colors">
-                              {evt.titulo}
-                            </CardTitle>
-                            <div className="inline-flex items-center gap-1.5 text-xs text-white/70 font-medium bg-white/[0.03] px-2.5 py-1 rounded-xl border border-white/5 max-w-full">
-                              <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-                              <span className="truncate">{evt.local}</span>
-                            </div>
-                          </div>
-
-                          <p className="text-xs text-white/70 line-clamp-3 leading-relaxed pt-1">
-                            {evt.descricao || 'Sem descrição.'}
-                          </p>
-                        </CardHeader>
-
-                        <CardContent className="p-5 sm:p-6 pt-0 flex-1 flex flex-col justify-end">
-                          <div className="flex gap-2 pt-3 border-t border-white/5">
-                            <Button
-                              onClick={() => setSelectedEvento(evt)}
-                              className="flex-1 rounded-xl bg-primary text-white hover:bg-primary-dark transition-all h-10 text-xs font-bold uppercase tracking-wider touch-press shadow-lg shadow-primary/20 hover:shadow-primary/30"
+                        <CardHeader className="p-5 pb-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <span
+                              className={cn(
+                                "px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border",
+                                evento.publicado
+                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                  : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                              )}
                             >
-                              Inscritos & Estatísticas
-                            </Button>
+                              {evento.publicado ? 'Publicado' : 'Rascunho / Inativo'}
+                            </span>
                             <DropdownMenu>
-                              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-white/5 text-white/50 hover:text-white touch-press" />}>
+                              <DropdownMenuTrigger className="h-8 w-8 text-white/40 hover:text-white rounded-lg flex items-center justify-center cursor-pointer outline-none hover:bg-white/10 transition-colors">
                                 <MoreVertical className="w-4 h-4" />
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="rounded-2xl bg-black/90 border-white/10 p-2 min-w-[170px]">
-                                <DropdownMenuItem
-                                  onClick={() => handleTogglePublish(evt)}
-                                  className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer flex items-center gap-2"
-                                >
-                                  {evt.publicado ? (
-                                    <>
-                                      <XCircle className="w-3.5 h-3.5 text-amber-400" />
-                                      <span>Marcar como Inativo</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                                      <span>Marcar como Ativo</span>
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    const inicio = evt.dataInicioInscricao || evt.data_inicio_inscricao;
-                                    const fim = evt.dataFimInscricao || evt.data_fim_inscricao;
-                                    setEditingEventId(evt.id);
-                                    setNewEvent({
-                                      titulo: evt.titulo,
-                                      descricao: evt.descricao || '',
-                                      data: formatToDatetimeLocal(evt.data),
-                                      local: evt.local,
-                                      cidade: evt.cidade || '',
-                                      publicado: evt.publicado,
-                                      dataInicioInscricao: formatToDatetimeLocal(inicio),
-                                      dataFimInscricao: formatToDatetimeLocal(fim),
-                                    });
-                                    setShowCreateEventModal(true);
-                                  }}
-                                  className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer flex items-center gap-2"
-                                >
-                                  <Edit className="w-3.5 h-3.5" />
-                                  <span>Editar</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator className="bg-white/5" />
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteEvent(evt.id, evt.titulo)}
-                                  className="text-xs font-bold text-red-400 rounded-xl px-4 py-2.5 focus:bg-red-500/10 cursor-pointer flex items-center gap-2"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  <span>Excluir</span>
-                                </DropdownMenuItem>
+                              <DropdownMenuContent align="end" className="bg-[#0a111e] border-white/10 text-white">
+                                <HasPermission permission={Permission.EVENTS_UPDATE}>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setEditingEventId(evento.id);
+                                      setNewEvent({
+                                        titulo: evento.titulo,
+                                        descricao: evento.descricao || '',
+                                        data: formatToDatetimeLocal(evento.data),
+                                        local: evento.local,
+                                        cidade: evento.cidade || '',
+                                        publicado: evento.publicado,
+                                        dataInicioInscricao: formatToDatetimeLocal(evento.dataInicioInscricao || evento.data_inicio_inscricao),
+                                        dataFimInscricao: formatToDatetimeLocal(evento.dataFimInscricao || evento.data_fim_inscricao)
+                                      });
+                                      setShowCreateEventModal(true);
+                                    }}
+                                    className="cursor-pointer gap-2 text-xs"
+                                  >
+                                    <Edit className="w-3.5 h-3.5" /> Editar
+                                  </DropdownMenuItem>
+                                </HasPermission>
+
+                                <HasPermission permission={Permission.EVENTS_PUBLISH}>
+                                  <DropdownMenuItem
+                                    onClick={() => handleTogglePublish(evento)}
+                                    className="cursor-pointer gap-2 text-xs"
+                                  >
+                                    {evento.publicado ? (
+                                      <>
+                                        <EyeOff className="w-3.5 h-3.5 text-amber-400" /> Despublicar
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Eye className="w-3.5 h-3.5 text-emerald-400" /> Publicar
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                </HasPermission>
+
+                                <HasPermission permission={Permission.EVENTS_DELETE}>
+                                  <DropdownMenuSeparator className="bg-white/10" />
+                                  <DropdownMenuItem
+                                    onClick={() => handleDeleteEvent(evento.id, evento.titulo)}
+                                    className="cursor-pointer gap-2 text-xs text-red-400 focus:text-red-400 focus:bg-red-500/10"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" /> Excluir Evento
+                                  </DropdownMenuItem>
+                                </HasPermission>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
+                          <CardTitle className="text-base font-bold text-white mt-2 group-hover:text-primary transition-colors">
+                            {evento.titulo}
+                          </CardTitle>
+                          {evento.descricao && (
+                            <CardDescription className="text-xs text-white/50 line-clamp-2 mt-1">
+                              {evento.descricao}
+                            </CardDescription>
+                          )}
+                        </CardHeader>
+
+                        <CardContent className="p-5 pt-0 space-y-2">
+                          <div className="flex items-center gap-2 text-xs text-white/60">
+                            <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span>{format(new Date(evento.data), 'dd/MM/yyyy HH:mm')}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-white/60">
+                            <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span className="truncate">{evento.local} {evento.cidade ? `(${evento.cidade})` : ''}</span>
+                          </div>
                         </CardContent>
+
+                        <div className="p-5 pt-2 border-t border-white/5 bg-white/[0.01] flex items-center justify-between">
+                          <Button
+                            onClick={() => {
+                              setSelectedEvento(evento);
+                              setSearchTerm('');
+                              setFilter('all');
+                            }}
+                            className="w-full bg-primary/20 hover:bg-primary text-primary hover:text-white font-bold h-9 rounded-xl text-xs transition-all touch-press cursor-pointer"
+                          >
+                            Ver Inscritos & Check-in
+                          </Button>
+                        </div>
                       </Card>
                     ))}
                   </div>
                 )}
               </motion.div>
-            ) : (
+            )}
+
+            {/* ABA 2: BASE GERAL DE ALUNOS */}
+            {activeTab === 'alunos' && (
               <motion.div
                 key="tab-alunos"
                 initial={{ opacity: 0, y: 15 }}
@@ -843,107 +1006,95 @@ export default function Admin() {
                 exit={{ opacity: 0, y: -15 }}
                 className="space-y-6"
               >
-                {/* Tabela de Alunos Geral */}
-                <Card className="glass-card overflow-hidden border-white/[0.08] shadow-3xl rounded-[2rem] md:rounded-[2.5rem]">
-                  <CardHeader className="p-5 sm:p-7 md:p-8 lg:p-10 border-b border-white/[0.08] bg-white/[0.02]">
-                    <div className="space-y-5 sm:space-y-6">
-                      {/* Linha 1: Título e Botões de Ação */}
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                          <CardTitle className="font-display font-bold text-xl sm:text-2xl md:text-3xl text-white tracking-tight leading-tight sm:whitespace-nowrap">
-                            Base Geral de Alunos
-                          </CardTitle>
-                          <CardDescription className="text-white/40 text-xs md:text-sm font-medium">
-                            Lista de todos os alunos registrados no sistema.
-                          </CardDescription>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
-                          <Button
-                            onClick={exportAllStudentsCSV}
-                            variant="outline"
-                            className="flex-1 sm:flex-none rounded-2xl gap-2 border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all h-10 sm:h-11 px-3 sm:px-4 text-[11px] sm:text-xs font-bold uppercase tracking-wider touch-press"
-                          >
-                            <Download className="w-4 h-4 text-primary" />
-                            <span>Planilha Geral</span>
-                          </Button>
-                          <Button
-                            onClick={() => setShowAddStudentModal(true)}
-                            className="flex-1 sm:flex-none rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 sm:h-11 px-4 sm:px-5 shadow-lg shadow-primary/20 text-[11px] sm:text-xs uppercase tracking-wider touch-press"
-                          >
-                            <Plus className="w-4 h-4" />
-                            <span>Cadastrar</span>
-                          </Button>
-                        </div>
-                      </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-white">Participantes Registrados</h2>
+                    <p className="text-white/40 text-xs mt-0.5">Base cadastral de participantes da organização.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <HasPermission permission={Permission.PARTICIPANTS_EXPORT}>
+                      <Button
+                        variant="outline"
+                        onClick={exportAllStudentsCSV}
+                        className="border-white/10 hover:bg-white/5 text-white/80 font-bold h-11 px-4 rounded-2xl text-xs uppercase tracking-widest transition-all touch-press flex items-center gap-2"
+                      >
+                        <FileSpreadsheet className="w-4 h-4" />
+                        <span className="hidden sm:inline">Exportar CSV</span>
+                      </Button>
+                    </HasPermission>
 
-                      {/* Linha 2: Busca e Filtros */}
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-white/5">
-                        <div className="relative w-full sm:w-72 md:w-80">
-                          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                          <Input
-                            placeholder="Buscar aluno..."
-                            className="liquid-input h-10 sm:h-11 w-full text-base md:text-sm pl-11"
-                            value={searchTerm}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              setSearchTerm(e.target.value);
-                              setCurrentPage(1); // Resetar para a primeira página ao buscar
-                            }}
-                          />
-                        </div>
-                        <div className="text-[10px] text-white/30 font-bold uppercase tracking-wider hidden sm:block">
-                          Total: {totalStudents} cadastrados
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <div className="overflow-x-auto custom-scrollbar overscroll-x-contain">
-                    <Table className="min-w-[620px] sm:min-w-[700px]">
-                      <TableHeader className="bg-white/[0.02] border-b border-white/[0.08] sticky top-0 z-10 font-bold uppercase text-[10px] tracking-[0.2em]">
-                        <TableRow className="hover:bg-transparent border-none">
-                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Nome</TableHead>
-                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Escola</TableHead>
-                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Cidade</TableHead>
-                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Grêmio</TableHead>
-                          <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-center text-white/30">Código</TableHead>
-                          <TableHead className="w-[50px] md:w-[70px]"></TableHead>
+                    <HasPermission permission={Permission.PARTICIPANTS_CREATE}>
+                      <Button
+                        onClick={() => setShowAddStudentModal(true)}
+                        className="bg-primary hover:bg-primary-dark text-white font-bold h-11 px-5 rounded-2xl shadow-lg shadow-primary/20 text-xs uppercase tracking-widest transition-all touch-press flex items-center gap-2"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                        Cadastrar Aluno
+                      </Button>
+                    </HasPermission>
+                  </div>
+                </div>
+
+                {/* Filtro de Busca */}
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <Input
+                    placeholder="Pesquisar por nome, email ou código de credencial..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="liquid-input pl-11 h-12 rounded-2xl bg-white/[0.02] border-white/10 text-white placeholder:text-white/30 text-sm"
+                  />
+                </div>
+
+                {/* Tabela de Participantes */}
+                <Card className="glass-card border-white/5 overflow-hidden rounded-2xl sm:rounded-3xl">
+                  <div className="overflow-x-auto custom-scrollbar">
+                    <Table>
+                      <TableHeader className="bg-white/[0.02]">
+                        <TableRow className="border-white/5">
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Código</TableHead>
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Nome</TableHead>
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Contato</TableHead>
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Escola / Cidade</TableHead>
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Grêmio</TableHead>
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider text-right">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredAlunos.length === 0 ? (
+                        {participantes.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={6} className="h-40 sm:h-48 text-center text-white/20 font-medium text-sm">
-                              Nenhum participante encontrado.
+                            <TableCell colSpan={6} className="text-center py-12 text-white/30 text-sm">
+                              Nenhum aluno encontrado.
                             </TableCell>
                           </TableRow>
                         ) : (
-                          filteredAlunos.map((p: Participante) => (
-                            <TableRow key={p.id} className="hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] group text-sm">
-                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 font-bold text-white text-xs sm:text-sm md:text-base">
-                                {p.nome}
+                          participantes.map((aluno) => (
+                            <TableRow key={aluno.id} className="border-white/5 hover:bg-white/[0.02] transition-colors">
+                              <TableCell className="font-mono text-xs text-primary font-bold">{aluno.codigo}</TableCell>
+                              <TableCell className="font-bold text-white text-xs">{aluno.nome}</TableCell>
+                              <TableCell className="text-xs text-white/60">
+                                <div>{aluno.email}</div>
+                                <div className="text-[10px] text-white/40">{aluno.telefone}</div>
                               </TableCell>
-                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 text-white/60 text-xs sm:text-sm">
-                                {p.escola}
+                              <TableCell className="text-xs text-white/60">
+                                <div>{aluno.escola}</div>
+                                <div className="text-[10px] text-white/40">{aluno.cidade}</div>
                               </TableCell>
-                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 text-white/60 text-xs sm:text-sm">
-                                {p.cidade}
-                              </TableCell>
-                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 text-white/60 text-xs sm:text-sm">
-                                {p.gremio || '-'}
-                              </TableCell>
-                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 text-center">
-                                <code className="text-[9px] md:text-[11px] font-black bg-white/5 text-white/80 border border-white/10 rounded-xl px-2 md:px-2.5 py-1 md:py-1.5 shadow-sm uppercase tracking-wider">
-                                  {p.codigo}
-                                </code>
-                              </TableCell>
-                              <TableCell className="px-2 sm:px-4 md:px-6">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDeleteStudent(p.id, p.nome)}
-                                  className="h-8 w-8 sm:h-9 sm:w-9 text-white/30 hover:text-red-400 rounded-xl hover:bg-red-500/10 touch-press"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                </Button>
+                              <TableCell className="text-xs text-white/40">{aluno.gremio || '-'}</TableCell>
+                              <TableCell className="text-right">
+                                <HasPermission permission={Permission.PARTICIPANTS_DELETE}>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteStudent(aluno.id, aluno.nome)}
+                                    className="h-8 w-8 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </HasPermission>
                               </TableCell>
                             </TableRow>
                           ))
@@ -951,44 +1102,230 @@ export default function Admin() {
                       </TableBody>
                     </Table>
                   </div>
-                  <div className="p-4 sm:p-6 md:p-8 border-t border-white/[0.08] bg-white/[0.02] flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 px-5 sm:px-8 md:px-10">
-                    <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-[0.2em] text-white/20">
-                      Total: {totalStudents} cadastrados
-                    </span>
+                </Card>
+              </motion.div>
+            )}
 
-                    {/* Controles de Paginação */}
-                    {totalStudents > itemsPerPage && (
-                      <div className="flex items-center gap-1.5 sm:gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={currentPage === 1 || loading}
-                          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                          className="rounded-xl border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-35 text-[10px] font-bold uppercase tracking-widest px-2.5 sm:px-3 h-8 sm:h-9 touch-press"
-                        >
-                          Anterior
-                        </Button>
-                        <span className="text-white/45 text-xs font-bold px-1 sm:px-2">
-                          {currentPage} / {Math.ceil(totalStudents / itemsPerPage)}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={currentPage >= Math.ceil(totalStudents / itemsPerPage) || loading}
-                          onClick={() => setCurrentPage(prev => prev + 1)}
-                          className="rounded-xl border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-35 text-[10px] font-bold uppercase tracking-widest px-2.5 sm:px-3 h-8 sm:h-9 touch-press"
-                        >
-                          Próximo
-                        </Button>
-                      </div>
-                    )}
+            {/* ABA 3: EQUIPE & ACESSOS RBAC */}
+            {activeTab === 'equipe' && (isAdmin || isSuperAdmin) && (
+              <motion.div
+                key="tab-equipe"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                className="space-y-6"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-blue-400" />
+                      Membros da Equipe & Papéis (RBAC)
+                    </h2>
+                    <p className="text-white/40 text-xs mt-0.5">
+                      Controle quem tem acesso à organização e atribua funções granulares.
+                    </p>
+                  </div>
+                  <HasPermission permission={Permission.USERS_WRITE}>
+                    <Button
+                      onClick={() => {
+                        setNewUser({
+                          fullName: '',
+                          email: '',
+                          password: '',
+                          role: Role.STAFF,
+                          tenantId: currentTenant?.id || '',
+                        });
+                        setShowCreateUserModal(true);
+                      }}
+                      className="bg-primary hover:bg-primary-dark text-white font-bold h-11 px-5 rounded-2xl shadow-lg shadow-primary/20 text-xs uppercase tracking-widest transition-all touch-press flex items-center gap-2"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Adicionar Membro
+                    </Button>
+                  </HasPermission>
+                </div>
 
-                    <span className="flex items-center gap-2 text-[9px] md:text-[10px] uppercase font-bold tracking-[0.2em] text-white/20">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                      Banco de Dados Ativo
-                    </span>
+                <Card className="glass-card border-white/5 overflow-hidden rounded-2xl sm:rounded-3xl">
+                  <div className="overflow-x-auto custom-scrollbar">
+                    <Table>
+                      <TableHeader className="bg-white/[0.02]">
+                        <TableRow className="border-white/5">
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Membro</TableHead>
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Cargo / Papel</TableHead>
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Organização</TableHead>
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Criado em</TableHead>
+                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {teamUsers.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-12 text-white/30 text-sm">
+                              {loadingTeam ? 'Carregando membros...' : 'Nenhum membro encontrado.'}
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          teamUsers.map((membro) => {
+                            const roleKey = (membro.role as Role) || Role.USER;
+                            const badge = ROLE_BADGE_STYLES[roleKey] || ROLE_BADGE_STYLES[Role.USER];
+                            const label = ROLE_LABELS[roleKey] || membro.role;
+
+                            return (
+                              <TableRow key={membro.id} className="border-white/5 hover:bg-white/[0.02] transition-colors">
+                                <TableCell>
+                                  <div className="font-bold text-white text-xs">{membro.fullName || 'Sem nome'}</div>
+                                  <div className="text-[10px] text-white/40">{membro.email}</div>
+                                </TableCell>
+                                <TableCell>
+                                  <span
+                                    className={cn(
+                                      "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border",
+                                      badge.bg,
+                                      badge.text,
+                                      badge.border,
+                                    )}
+                                  >
+                                    <KeyRound className="w-3 h-3" />
+                                    {label}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-xs text-white/60">
+                                  {membro.tenant?.name || 'Todas (Global)'}
+                                </TableCell>
+                                <TableCell className="text-xs text-white/40">
+                                  {formatOptionalDate(membro.createdAt)}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex items-center justify-end gap-1">
+                                    <HasPermission permission={Permission.USERS_ROLES}>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          setEditingUser(membro);
+                                          setSelectedRole((membro.role as Role) || Role.STAFF);
+                                          setShowEditRoleModal(true);
+                                        }}
+                                        className="h-8 px-2.5 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-lg"
+                                      >
+                                        Alterar Cargo
+                                      </Button>
+                                    </HasPermission>
+                                    <HasPermission permission={Permission.USERS_DELETE}>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleDeleteUser(membro)}
+                                        disabled={membro.id === user?.id}
+                                        className="h-8 w-8 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </HasPermission>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
                   </div>
                 </Card>
+              </motion.div>
+            )}
+
+            {/* ABA 4: ORGANIZAÇÕES (MULTI-TENANCY - SUPER ADMIN) */}
+            {activeTab === 'organizacoes' && isSuperAdmin && (
+              <motion.div
+                key="tab-organizacoes"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                className="space-y-6"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                      <Building2 className="w-5 h-5 text-purple-400" />
+                      Organizações do Sistema (Multi-Tenancy)
+                    </h2>
+                    <p className="text-white/40 text-xs mt-0.5">
+                      Crie e alterne entre instâncias isoladas de clientes e parceiros.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowCreateTenantModal(true)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold h-11 px-5 rounded-2xl shadow-lg shadow-purple-600/20 text-xs uppercase tracking-widest transition-all touch-press flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Nova Organização
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {tenantList.map((tenant: Tenant) => {
+                    const isSelected = tenant.id === currentTenant?.id;
+                    return (
+                      <Card
+                        key={tenant.id}
+                        className={cn(
+                          "glass-card border-white/10 transition-all p-5 flex flex-col justify-between",
+                          isSelected ? "border-purple-500/40 bg-purple-500/[0.04]" : "hover:border-white/20"
+                        )}
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                <Building2 className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <h3 className="font-bold text-white text-sm">{tenant.name}</h3>
+                                <p className="text-[11px] text-white/40">@{tenant.slug}</p>
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                Ativa
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/5 text-center">
+                            <div className="p-2 rounded-lg bg-white/[0.02]">
+                              <p className="text-[10px] text-white/40 uppercase">Eventos</p>
+                              <p className="font-bold text-white text-sm">{tenant._count?.eventos ?? '-'}</p>
+                            </div>
+                            <div className="p-2 rounded-lg bg-white/[0.02]">
+                              <p className="text-[10px] text-white/40 uppercase">Alunos</p>
+                              <p className="font-bold text-white text-sm">{tenant._count?.participantes ?? '-'}</p>
+                            </div>
+                            <div className="p-2 rounded-lg bg-white/[0.02]">
+                              <p className="text-[10px] text-white/40 uppercase">Equipe</p>
+                              <p className="font-bold text-white text-sm">{tenant._count?.users ?? '-'}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-5 pt-3 border-t border-white/5">
+                          {isSelected ? (
+                            <Button disabled variant="outline" className="w-full h-9 rounded-xl border-purple-500/30 text-purple-300 text-xs font-bold">
+                              Organização Selecionada
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={() => void switchTenant(tenant.id)}
+                              className="w-full h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+                            >
+                              Alternar para esta Organização
+                            </Button>
+                          )}
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -996,330 +1333,183 @@ export default function Admin() {
       ) : (
         /* DETALHE DO EVENTO SELECIONADO */
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6 sm:space-y-8"
+          className="space-y-6"
         >
-          {/* Botão Voltar */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Button
-              onClick={() => { setSelectedEvento(null); setFilter('all'); setSearchTerm(''); }}
-              variant="ghost"
-              className="rounded-xl text-white/60 hover:text-white hover:bg-white/5 gap-2 px-3 h-10 touch-press"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Voltar aos Eventos
-            </Button>
-
-            <Button
-              onClick={() => handleTogglePublish(selectedEvento)}
-              variant="outline"
-              size="sm"
-              className={cn(
-                "rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all cursor-pointer touch-press",
-                selectedEvento.publicado
-                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-amber-500/20 hover:text-amber-400"
-                  : "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-emerald-500/20 hover:text-emerald-400"
-              )}
-            >
-              {selectedEvento.publicado ? (
-                <>
-                  <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-emerald-400" />
-                  Ativo (Inscrições Abertas)
-                </>
-              ) : (
-                <>
-                  <XCircle className="w-3.5 h-3.5 mr-1 text-amber-400" />
-                  Inativo (Inscrições Encerradas)
-                </>
-              )}
-            </Button>
-          </div>
-
-          {/* Dados do Evento e Stats */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
-
-            {/* Info Evento */}
-            <div className="lg:col-span-8 space-y-6">
-              <Card className="glass-card border-white/[0.08] bg-white/[0.01] p-5 sm:p-7 md:p-8 rounded-[2rem] space-y-5 sm:space-y-6 relative overflow-hidden">
-                <div>
-                  <h2 className="text-2xl sm:text-3xl font-display font-bold text-white tracking-tight leading-tight">{selectedEvento.titulo}</h2>
-                  <p className="text-white/40 text-xs sm:text-sm mt-2 font-medium leading-relaxed">
-                    {selectedEvento.descricao || 'Sem descrição.'}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-white/5 text-xs text-white/50 font-bold uppercase tracking-wider">
-                  <div className="flex items-center gap-2.5">
-                    <Calendar className="w-4 h-4 text-primary shrink-0" />
-                    <span>{format(new Date(selectedEvento.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
-                  </div>
-                  <div className="flex items-center gap-2.5">
-                    <Clock className="w-4 h-4 text-primary shrink-0" />
-                    <span>{format(new Date(selectedEvento.data), "HH:mm'h'", { locale: ptBR })}</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 sm:col-span-2">
-                    <MapPin className="w-4 h-4 text-primary shrink-0 animate-pulse" />
-                    <span className="truncate">{selectedEvento.local}</span>
-                  </div>
-                </div>
-
-                {/* Efeito decorativo */}
-                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl" />
-              </Card>
-
-              {/* Tabela de Inscritos neste Evento */}
-              <Card className="glass-card overflow-hidden border-white/[0.08] shadow-3xl rounded-[2rem] md:rounded-[2.5rem]">
-                <CardHeader className="p-5 sm:p-7 md:p-8 border-b border-white/[0.08] bg-white/[0.02]">
-                  <div className="space-y-5 sm:space-y-6">
-                    {/* Linha 1: Título e Botão de Ação */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                      <div className="space-y-1">
-                        <CardTitle className="font-display font-bold text-xl sm:text-2xl text-white tracking-tight leading-tight sm:whitespace-nowrap">Lista de Inscritos</CardTitle>
-                        <CardDescription className="text-white/40 text-xs md:text-sm font-medium">Controle de inscrições e presenças para este evento.</CardDescription>
-                      </div>
-                      <Button
-                        onClick={() => setShowAddStudentToEventModal(true)}
-                        className="rounded-2xl gap-2 bg-primary hover:bg-primary/95 text-white font-bold h-10 px-4 sm:px-5 shadow-lg shadow-primary/20 text-[11px] sm:text-xs uppercase tracking-wider touch-press w-full sm:w-auto"
-                      >
-                        <Plus className="w-4 h-4" />
-                        <span>Adicionar Aluno</span>
-                      </Button>
-                    </div>
-
-                    {/* Linha 2: Busca e Filtro */}
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-3 sm:pt-4 border-t border-white/5">
-                      <div className="relative w-full sm:w-64">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                        <Input
-                          placeholder="Buscar inscrito..."
-                          className="liquid-input h-10 w-full text-base md:text-xs pl-11"
-                          value={searchTerm}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger render={<Button variant="outline" className="flex-1 sm:flex-none h-10 rounded-xl bg-white/5 border-white/10 gap-2 px-4 shadow-sm hover:bg-white/10 transition-all font-bold text-xs uppercase tracking-wider text-white/60 touch-press" />}>
-                            <Filter className="w-3.5 h-3.5" />
-                            <span>Filtro</span>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="rounded-2xl border-white/10 shadow-3xl bg-black/90 p-2 min-w-[160px]">
-                            <DropdownMenuItem onClick={() => setFilter('all')} className="rounded-xl focus:bg-white/10 focus:text-white transition-all px-4 py-2 cursor-pointer font-medium text-xs text-white/80">Todos</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setFilter('present')} className="rounded-xl focus:bg-emerald-500/20 focus:text-emerald-400 transition-all px-4 py-2 cursor-pointer font-medium text-xs text-emerald-400/80">Confirmados</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setFilter('absent')} className="rounded-xl focus:bg-white/10 focus:text-white transition-all px-4 py-2 cursor-pointer font-medium text-xs text-white/60">Apenas Inscritos</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <div className="overflow-x-auto custom-scrollbar overscroll-x-contain">
-                  <Table className="min-w-[560px] sm:min-w-[700px]">
-                    <TableHeader className="bg-white/[0.02] border-b border-white/[0.08] sticky top-0 z-10 font-bold uppercase text-[10px] tracking-[0.2em]">
-                      <TableRow className="hover:bg-transparent border-none">
-                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Participante</TableHead>
-                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-center text-white/30">Código</TableHead>
-                        <TableHead className="py-3 md:py-4 px-3 md:px-6 lg:px-8 text-white/30">Status</TableHead>
-                        <TableHead className="w-[50px] md:w-[70px]"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {loadingInscritos ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="h-40 sm:h-48 text-center text-white/20 font-medium text-sm">
-                            <div className="flex flex-col items-center justify-center gap-3">
-                              <LoadingSpinner size="md" />
-                              <span>Carregando inscrições...</span>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ) : filteredInscritos.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="h-40 sm:h-48 text-center text-white/20 font-medium text-sm">
-                            Nenhum aluno inscrito neste evento.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        filteredInscritos.map((i: InscricaoEvento) => {
-                          const p = i.participantes;
-                          if (!p) return null;
-                          return (
-                            <TableRow key={i.id} className="hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] group text-sm">
-                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8">
-                                <div className="flex flex-col min-w-0">
-                                  <span className="font-bold text-white text-xs sm:text-sm md:text-base mb-0.5 truncate">{p.nome}</span>
-                                  <span className="text-[9px] sm:text-xs text-white/30 font-medium truncate">{p.cidade} • {p.escola}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8 text-center">
-                                <code className="text-[9px] md:text-[11px] font-black bg-white/5 text-white/80 border border-white/10 rounded-xl px-2 sm:px-2.5 py-1 sm:py-1.5 shadow-sm uppercase tracking-wider">
-                                  {p.codigo}
-                                </code>
-                              </TableCell>
-                              <TableCell className="py-2.5 sm:py-3.5 md:py-4 px-3 md:px-6 lg:px-8">
-                                <div className={cn(
-                                  "inline-flex items-center gap-1.5 sm:gap-2 px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[8px] md:text-[9px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] shadow-sm border",
-                                  i.presente
-                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                    : "bg-white/5 text-white/50 border-white/10"
-                                )}>
-                                  <div className={cn("w-1 h-1 md:w-1.5 md:h-1.5 rounded-full", i.presente ? "bg-emerald-400 animate-pulse" : "bg-white/40")} />
-                                  {i.presente ? 'Confirmado' : 'Inscrito'}
-                                </div>
-                              </TableCell>
-                              <TableCell className="px-2 sm:px-4 md:px-6">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 opacity-50 hover:opacity-100 transition-all rounded-xl hover:bg-white/10 touch-press" />}>
-                                    <MoreVertical className="w-4 h-4 text-white" />
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="rounded-2xl bg-black/95 border-white/10 p-2 min-w-[150px]">
-                                    <DropdownMenuItem onClick={() => handleTogglePresence(i)} className="text-xs font-bold text-white/80 rounded-xl px-4 py-2.5 focus:bg-white/10 cursor-pointer">
-                                      <UserCheck className="w-3.5 h-3.5 mr-2 text-primary" />
-                                      {i.presente ? 'Cancelar Check-in' : 'Fazer Check-in'}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator className="bg-white/5" />
-                                    <DropdownMenuItem
-                                      onClick={() => handleRemoveFromEvent(i.id)}
-                                      className="text-xs font-bold text-red-400 rounded-xl px-4 py-2.5 focus:bg-red-500/10 cursor-pointer"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5 mr-2" />
-                                      Remover do Evento
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-                <div className="p-4 sm:p-6 md:p-8 border-t border-white/[0.08] bg-white/[0.02] text-[9px] md:text-[10px] uppercase font-bold tracking-[0.2em] text-white/20 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 px-5 sm:px-8 md:px-10">
-                  <span>{filteredInscritos.length} de {inscritosEvento.length} inscritos exibidos</span>
-                  <span className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    Sincronização em tempo real
-                  </span>
-                </div>
-              </Card>
-            </div>
-
-            {/* Sidebar Evento: Stats & Export */}
-            <div className="lg:col-span-4 space-y-5 sm:space-y-6 h-full">
-
-              {/* Mini Stats Card */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-4 sm:p-5 rounded-2xl">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Inscritos</span>
-                  <div className="text-2xl sm:text-3xl font-display font-bold text-white mt-1">{statsEvento.total}</div>
-                </div>
-                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-4 sm:p-5 rounded-2xl">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Confirmados</span>
-                  <div className="text-2xl sm:text-3xl font-display font-bold text-emerald-400 mt-1">{statsEvento.presentes}</div>
-                </div>
-                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-4 sm:p-5 rounded-2xl">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Apenas Inscritos</span>
-                  <div className="text-2xl sm:text-3xl font-display font-bold text-white mt-1">{statsEvento.ausentes}</div>
-                </div>
-                <div className="glass-card bg-white/[0.01] border-white/[0.08] p-4 sm:p-5 rounded-2xl">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/30">Frequência</span>
-                  <div className="text-2xl sm:text-3xl font-display font-bold text-primary mt-1">{statsEvento.porcentagem.toFixed(0)}%</div>
-                </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedEvento(null)}
+                className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <span className="text-primary font-bold text-[10px] uppercase tracking-widest">Painel do Evento</span>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">{selectedEvento.titulo}</h2>
               </div>
+            </div>
 
-              {/* Chart Pie */}
-              {statsEvento.total > 0 && (
-                <Card className="glass-card border-white/[0.08] shadow-3xl overflow-hidden bg-white/[0.01] rounded-[2rem] md:rounded-[2.5rem]">
-                  <CardHeader className="pb-2 p-4 sm:p-6 border-b border-white/[0.08] bg-white/[0.02]">
-                    <CardTitle className="font-display text-sm text-white">Engajamento Presencial</CardTitle>
-                  </CardHeader>
-                  <CardContent className="h-[180px] sm:h-[200px] pt-4 sm:pt-6 p-4 sm:p-6">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={chartData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={45}
-                          outerRadius={65}
-                          paddingAngle={8}
-                          dataKey="value"
-                          stroke="none"
-                          cursor="pointer"
-                          onClick={(_, index) => handleChartFilter(index)}
-                        >
-                          <Cell fill="var(--color-primary)" />
-                          <Cell fill="rgba(255,255,255,0.05)" />
-                        </Pie>
-                        <Tooltip
-                          contentStyle={{ borderRadius: '15px', border: 'none', backgroundColor: '#000', color: '#fff', fontSize: '10px' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="flex justify-center gap-3 sm:gap-4 text-[9px] uppercase tracking-widest font-bold mt-2">
-                      <button
-                        type="button"
-                        onClick={() => setFilter('present')}
-                        className={cn(
-                          'transition-colors hover:text-primary focus:outline-none touch-press',
-                          filter === 'present' ? 'text-primary' : 'text-primary/70'
-                        )}
-                      >
-                        Confirmados ({statsEvento.presentes})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFilter('absent')}
-                        className={cn(
-                          'transition-colors hover:text-white focus:outline-none touch-press',
-                          filter === 'absent' ? 'text-white' : 'text-white/25'
-                        )}
-                      >
-                        Apenas Inscritos ({statsEvento.ausentes})
-                      </button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Export Event CSV */}
-              <Card className="glass-card bg-primary/20 text-white border-primary/20 shadow-3xl overflow-hidden relative group rounded-[2rem]">
-                <div className="absolute top-0 right-0 p-8 opacity-5 -mr-10 -mt-10 pointer-events-none">
-                  <FileSpreadsheet className="w-48 h-48" />
-                </div>
-                <CardHeader className="p-5 sm:p-6 relative z-10">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 bg-white/20 rounded-xl flex items-center justify-center mb-3 border border-white/20">
-                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  </div>
-                  <CardTitle className="font-display text-base sm:text-lg tracking-tight mb-1">Relatórios CSV</CardTitle>
-                  <CardDescription className="text-white/70 font-medium text-xs mb-3 sm:mb-4">Exportar planilhas deste evento.</CardDescription>
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      onClick={() => exportEventCSV('all')}
-                      className="w-full bg-white text-primary hover:bg-neutral-100 font-bold rounded-xl h-10 shadow-md text-[10px] uppercase tracking-widest touch-press"
-                    >
-                      1. Todos os Inscritos
-                    </Button>
-                    <Button
-                      onClick={() => exportEventCSV('present')}
-                      className="w-full bg-primary text-white hover:bg-primary-dark font-bold rounded-xl h-10 shadow-md border border-white/20 text-[10px] uppercase tracking-widest touch-press"
-                    >
-                      2. Apenas Confirmados
-                    </Button>
-                  </div>
-                </CardHeader>
-              </Card>
+            <div className="flex items-center gap-2">
+              <HasPermission permission={Permission.PARTICIPANTS_EXPORT}>
+                <Button
+                  onClick={() => exportEventCSV('all')}
+                  variant="outline"
+                  size="sm"
+                  className="border-white/10 text-white/80 font-bold h-10 px-4 rounded-xl text-xs flex items-center gap-2"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Exportar CSV
+                </Button>
+              </HasPermission>
+              <HasPermission permission={Permission.REGISTRATIONS_CREATE}>
+                <Button
+                  onClick={() => setShowAddStudentToEventModal(true)}
+                  className="bg-primary hover:bg-primary-dark text-white font-bold h-10 px-4 rounded-xl text-xs flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Inscrever Aluno
+                </Button>
+              </HasPermission>
             </div>
           </div>
+
+          {/* Stats do Evento */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <p className="text-[10px] text-white/40 uppercase font-bold tracking-wider">Inscritos</p>
+              <p className="text-2xl font-bold text-white mt-1">{statsEvento.total}</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <p className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">Presentes</p>
+              <p className="text-2xl font-bold text-emerald-400 mt-1">{statsEvento.presentes}</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <p className="text-[10px] text-amber-400 uppercase font-bold tracking-wider">Ausentes</p>
+              <p className="text-2xl font-bold text-amber-400 mt-1">{statsEvento.ausentes}</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+              <p className="text-[10px] text-primary uppercase font-bold tracking-wider">Taxa de Presença</p>
+              <p className="text-2xl font-bold text-primary mt-1">{statsEvento.taxaPresenca}%</p>
+            </div>
+          </div>
+
+          {/* Tabela de Inscritos do Evento */}
+          <Card className="glass-card border-white/5 overflow-hidden rounded-2xl sm:rounded-3xl">
+            <div className="p-4 border-b border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <Input
+                  placeholder="Buscar inscritos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="liquid-input pl-10 h-10 rounded-xl bg-white/[0.02] border-white/10 text-white text-xs"
+                />
+              </div>
+              <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                <Button
+                  size="sm"
+                  variant={filter === 'all' ? 'default' : 'ghost'}
+                  onClick={() => setFilter('all')}
+                  className={cn("h-8 rounded-lg text-xs font-bold", filter === 'all' ? "bg-white/10 text-white" : "text-white/40")}
+                >
+                  Todos ({statsEvento.total})
+                </Button>
+                <Button
+                  size="sm"
+                  variant={filter === 'present' ? 'default' : 'ghost'}
+                  onClick={() => setFilter('present')}
+                  className={cn("h-8 rounded-lg text-xs font-bold", filter === 'present' ? "bg-emerald-500/20 text-emerald-300" : "text-white/40")}
+                >
+                  Presentes ({statsEvento.presentes})
+                </Button>
+                <Button
+                  size="sm"
+                  variant={filter === 'absent' ? 'default' : 'ghost'}
+                  onClick={() => setFilter('absent')}
+                  className={cn("h-8 rounded-lg text-xs font-bold", filter === 'absent' ? "bg-amber-500/20 text-amber-300" : "text-white/40")}
+                >
+                  Ausentes ({statsEvento.ausentes})
+                </Button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto custom-scrollbar">
+              <Table>
+                <TableHeader className="bg-white/[0.02]">
+                  <TableRow className="border-white/5">
+                    <TableHead className="text-white/40 font-bold text-[10px] uppercase">Código</TableHead>
+                    <TableHead className="text-white/40 font-bold text-[10px] uppercase">Aluno</TableHead>
+                    <TableHead className="text-white/40 font-bold text-[10px] uppercase">Contato</TableHead>
+                    <TableHead className="text-white/40 font-bold text-[10px] uppercase">Status</TableHead>
+                    <TableHead className="text-white/40 font-bold text-[10px] uppercase">Data Check-in</TableHead>
+                    <TableHead className="text-white/40 font-bold text-[10px] uppercase text-right">Ação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredInscritos.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-10 text-white/30 text-xs">
+                        Nenhum participante encontrado neste filtro.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredInscritos.map((inscricao: InscricaoEvento) => {
+                      const aluno = inscricao.participantes;
+                      return (
+                        <TableRow key={inscricao.id} className="border-white/5 hover:bg-white/[0.02]">
+                          <TableCell className="font-mono text-xs text-primary font-bold">{aluno?.codigo}</TableCell>
+                          <TableCell>
+                            <div className="font-bold text-white text-xs">{aluno?.nome}</div>
+                            <div className="text-[10px] text-white/40">{aluno?.escola}</div>
+                          </TableCell>
+                          <TableCell className="text-xs text-white/60">
+                            <div>{aluno?.email}</div>
+                            <div className="text-[10px] text-white/40">{aluno?.telefone}</div>
+                          </TableCell>
+                          <TableCell>
+                            {inscricao.presente ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <CheckCircle2 className="w-3 h-3" /> Presente
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                <Clock className="w-3 h-3" /> Inscrito
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-white/40">
+                            {formatOptionalDate(inscricao.confirmado_em, 'Não Confirmado')}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <HasPermission permission={Permission.REGISTRATIONS_DELETE}>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveRegistration(inscricao.id)}
+                                className="h-8 w-8 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </HasPermission>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
         </motion.div>
       )}
 
-      {/* --- MODAIS --- */}
+      {/* --- MODAIS DO SISTEMA --- */}
 
-      {/* Modal 1: Cadastro Manual de Aluno (Global) */}
+      {/* Modal: Cadastro Manual de Aluno */}
       <AnimatePresence>
         {showAddStudentModal && (
           <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
@@ -1327,102 +1517,84 @@ export default function Admin() {
               initial={{ opacity: 0, scale: 0.96, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 40 }}
-              className="w-full max-w-2xl bg-card border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[92dvh] overflow-y-auto custom-scrollbar overscroll-contain"
+              className="w-full max-w-2xl bg-[#0a111e] border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-3xl max-h-[92dvh] overflow-y-auto custom-scrollbar"
             >
-              <div className="p-5 sm:p-7 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+              <div className="p-5 sm:p-7 border-b border-white/5 flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-display font-bold text-white">Cadastrar Aluno</h3>
-                  <p className="text-white/40 text-xs sm:text-sm mt-0.5 sm:mt-1">Criação de participante na base permanente do sistema.</p>
+                  <h3 className="text-xl font-bold text-white">Cadastrar Participante</h3>
+                  <p className="text-white/40 text-xs mt-0.5">Adiciona o participante na base permanente da organização.</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowAddStudentModal(false)}
-                  className="rounded-full hover:bg-white/10 text-white/40 hover:text-white touch-press"
-                >
-                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                <Button variant="ghost" size="icon" onClick={() => setShowAddStudentModal(false)} className="rounded-full text-white/40 hover:text-white">
+                  <X className="w-5 h-5" />
                 </Button>
               </div>
 
-              <form onSubmit={handleAddStudentSubmit} className="p-5 sm:p-7 md:p-10 space-y-4 sm:space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Nome Completo</label>
+              <form onSubmit={handleAddStudentSubmit} className="p-5 sm:p-7 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Nome Completo</label>
                     <Input
                       required
-                      className="liquid-input h-12 text-base md:text-sm"
+                      className="liquid-input h-11 text-sm"
                       value={newStudent.nome}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, nome: e.target.value })}
+                      onChange={(e) => setNewStudent({ ...newStudent, nome: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">E-mail</label>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">E-mail</label>
                     <Input
                       type="email"
                       required
-                      className="liquid-input h-12 text-base md:text-sm"
+                      className="liquid-input h-11 text-sm"
                       value={newStudent.email}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, email: e.target.value })}
+                      onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Telefone</label>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Telefone</label>
                     <Input
                       required
                       type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      maxLength={15}
-                      pattern="\(\d{2}\) \d{4,5}-\d{4}"
-                      title="Formato esperado: (99) 99999-9999"
                       placeholder="(99) 99999-9999"
-                      className="liquid-input h-12 text-base md:text-sm"
+                      className="liquid-input h-11 text-sm"
                       value={newStudent.telefone}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, telefone: formatPhone(e.target.value) })}
+                      onChange={(e) => setNewStudent({ ...newStudent, telefone: formatPhone(e.target.value) })}
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Cidade</label>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Cidade</label>
                     <Input
                       required
-                      className="liquid-input h-12 text-base md:text-sm"
+                      className="liquid-input h-11 text-sm"
                       value={newStudent.cidade}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, cidade: e.target.value })}
+                      onChange={(e) => setNewStudent({ ...newStudent, cidade: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Escola</label>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Escola / Instituição</label>
                     <Input
                       required
-                      className="liquid-input h-12 text-base md:text-sm"
+                      className="liquid-input h-11 text-sm"
                       value={newStudent.escola}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, escola: e.target.value })}
+                      onChange={(e) => setNewStudent({ ...newStudent, escola: e.target.value })}
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest ml-1">Grêmio Estudantil (Opcional)</label>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Grêmio (Opcional)</label>
                     <Input
-                      className="liquid-input h-12 text-base md:text-sm"
+                      className="liquid-input h-11 text-sm"
                       value={newStudent.gremio}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewStudent({ ...newStudent, gremio: e.target.value })}
+                      onChange={(e) => setNewStudent({ ...newStudent, gremio: e.target.value })}
                     />
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-white/5">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowAddStudentModal(false)}
-                    className="flex-1 h-12 rounded-2xl border-white/10 text-white font-bold touch-press"
-                  >
+                <div className="flex gap-3 pt-4 border-t border-white/5">
+                  <Button type="button" variant="outline" onClick={() => setShowAddStudentModal(false)} className="flex-1 h-11 rounded-xl border-white/10 text-white font-bold">
                     Cancelar
                   </Button>
-                  <Button
-                    type="submit"
-                    className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold touch-press"
-                  >
-                    Confirmar Cadastro
+                  <Button type="submit" className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold">
+                    Cadastrar
                   </Button>
                 </div>
               </form>
@@ -1431,7 +1603,7 @@ export default function Admin() {
         )}
       </AnimatePresence>
 
-      {/* Modal 2: Criar Evento */}
+      {/* Modal: Criar/Editar Evento */}
       <AnimatePresence>
         {showCreateEventModal && (
           <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
@@ -1439,150 +1611,98 @@ export default function Admin() {
               initial={{ opacity: 0, scale: 0.96, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 40 }}
-              className="w-full max-w-xl bg-card border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl max-h-[92dvh] overflow-y-auto custom-scrollbar overscroll-contain"
+              className="w-full max-w-xl bg-[#0a111e] border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-3xl max-h-[92dvh] overflow-y-auto custom-scrollbar"
             >
-              <div className="p-5 sm:p-7 md:p-10 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+              <div className="p-5 sm:p-7 border-b border-white/5 flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-display font-bold text-white">{editingEventId ? 'Editar Evento' : 'Criar Evento'}</h3>
-                  <p className="text-white/40 text-xs sm:text-sm mt-0.5 sm:mt-1">{editingEventId ? 'Modifique os dados do evento.' : 'Insira os dados do próximo encontro/fórum.'}</p>
+                  <h3 className="text-xl font-bold text-white">{editingEventId ? 'Editar Evento' : 'Novo Evento'}</h3>
+                  <p className="text-white/40 text-xs mt-0.5">Preencha as informações do evento para esta organização.</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowCreateEventModal(false)}
-                  className="rounded-full hover:bg-white/10 text-white/40 hover:text-white touch-press"
-                >
-                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                <Button variant="ghost" size="icon" onClick={() => setShowCreateEventModal(false)} className="rounded-full text-white/40 hover:text-white">
+                  <X className="w-5 h-5" />
                 </Button>
               </div>
 
-              <form onSubmit={handleCreateEventSubmit} className="p-5 sm:p-7 md:p-10 space-y-4 sm:space-y-6">
-                <div className="space-y-3.5 sm:space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Título do Evento</label>
+              <form onSubmit={handleCreateEventSubmit} className="p-5 sm:p-7 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Título do Evento</label>
+                  <Input
+                    required
+                    className="liquid-input h-11 text-sm"
+                    value={newEvent.titulo}
+                    onChange={(e) => setNewEvent({ ...newEvent, titulo: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Descrição</label>
+                  <Input
+                    className="liquid-input h-11 text-sm"
+                    value={newEvent.descricao}
+                    onChange={(e) => setNewEvent({ ...newEvent, descricao: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Data e Horário</label>
+                    <Input
+                      type="datetime-local"
+                      required
+                      className="liquid-input h-11 text-sm"
+                      value={newEvent.data}
+                      onChange={(e) => setNewEvent({ ...newEvent, data: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Local</label>
                     <Input
                       required
-                      className="liquid-input h-12 text-base md:text-sm"
-                      placeholder="Ex: I Fórum de Liderança Olhar Jovem"
-                      value={newEvent.titulo}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, titulo: e.target.value })}
+                      className="liquid-input h-11 text-sm"
+                      value={newEvent.local}
+                      onChange={(e) => setNewEvent({ ...newEvent, local: e.target.value })}
                     />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Descrição</label>
-                    <textarea
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-base md:text-sm focus:outline-none focus:border-primary transition-all duration-300 min-h-[90px] sm:min-h-[100px] placeholder:text-white/10"
-                      placeholder="Informações adicionais sobre o cronograma, palestrantes, etc..."
-                      value={newEvent.descricao}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNewEvent({ ...newEvent, descricao: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Data & Hora</label>
-                      <Input
-                        type="datetime-local"
-                        required
-                        className="liquid-input h-12 text-white/70 text-base md:text-sm"
-                        value={newEvent.data}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, data: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Localização</label>
-                      <Input
-                        required
-                        className="liquid-input h-12 text-base md:text-sm"
-                        placeholder="Ex: Auditório Municipal"
-                        value={newEvent.local}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, local: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Cidade do Evento (Restrição de Inscrição)</label>
-                    <select
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 px-4 text-white text-base md:text-sm focus:outline-none focus:border-primary transition-all duration-300"
-                      value={newEvent.cidade}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewEvent({ ...newEvent, cidade: e.target.value })}
-                    >
-                      <option value="" className="bg-neutral-900 text-white/60">Todas as cidades (Sem restrição)</option>
-                      {adminCitiesList.map((c) => (
-                        <option key={c} value={c} className="bg-neutral-900 text-white">{c}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4 border-t border-white/5 pt-3">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Início das Inscrições (Opcional)</label>
-                      <Input
-                        type="datetime-local"
-                        className="liquid-input h-12 text-white/70 text-base md:text-sm"
-                        value={newEvent.dataInicioInscricao}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, dataInicioInscricao: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Término das Inscrições (Opcional)</label>
-                      <Input
-                        type="datetime-local"
-                        className="liquid-input h-12 text-white/70 text-base md:text-sm"
-                        value={newEvent.dataFimInscricao}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewEvent({ ...newEvent, dataFimInscricao: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5 pt-1 sm:pt-2">
-                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest pl-1">Status de Inscrições do Evento</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setNewEvent({ ...newEvent, publicado: true })}
-                        className={cn(
-                          "flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer touch-press",
-                          newEvent.publicado
-                            ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400 shadow-lg shadow-emerald-500/10"
-                            : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
-                        )}
-                      >
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span>Ativo (Recebendo Inscrições)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setNewEvent({ ...newEvent, publicado: false })}
-                        className={cn(
-                          "flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-bold transition-all cursor-pointer touch-press",
-                          !newEvent.publicado
-                            ? "bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-lg shadow-amber-500/10"
-                            : "bg-white/5 border-white/10 text-white/40 hover:bg-white/10"
-                        )}
-                      >
-                        <XCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span>Inativo (Inscrições Encerradas)</span>
-                      </button>
-                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-white/5">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowCreateEventModal(false)}
-                    className="flex-1 h-12 rounded-2xl border-white/10 text-white font-bold touch-press"
-                  >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Início das Inscrições</label>
+                    <Input
+                      type="datetime-local"
+                      className="liquid-input h-11 text-sm"
+                      value={newEvent.dataInicioInscricao}
+                      onChange={(e) => setNewEvent({ ...newEvent, dataInicioInscricao: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Fim das Inscrições</label>
+                    <Input
+                      type="datetime-local"
+                      className="liquid-input h-11 text-sm"
+                      value={newEvent.dataFimInscricao}
+                      onChange={(e) => setNewEvent({ ...newEvent, dataFimInscricao: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="publicado"
+                    checked={newEvent.publicado}
+                    onChange={(e) => setNewEvent({ ...newEvent, publicado: e.target.checked })}
+                    className="h-4 w-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary"
+                  />
+                  <label htmlFor="publicado" className="text-xs text-white/80 font-bold cursor-pointer">
+                    Publicar este evento no site (abrir inscrições públicas)
+                  </label>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-white/5">
+                  <Button type="button" variant="outline" onClick={() => setShowCreateEventModal(false)} className="flex-1 h-11 rounded-xl border-white/10 text-white font-bold">
                     Cancelar
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={submittingEvent}
-                    className="flex-1 h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold disabled:opacity-50 touch-press"
-                  >
-                    {submittingEvent && <LoadingSpinner size="xs" variant="white" className="mr-2" />}
-                    {submittingEvent
-                      ? (editingEventId ? 'Salvando...' : 'Criando...')
-                      : (editingEventId ? 'Salvar Alterações' : 'Criar Evento')}
+                  <Button type="submit" disabled={submittingEvent} className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold">
+                    {submittingEvent ? <LoadingSpinner size="sm" /> : editingEventId ? 'Salvar Alterações' : 'Criar Evento'}
                   </Button>
                 </div>
               </form>
@@ -1591,64 +1711,265 @@ export default function Admin() {
         )}
       </AnimatePresence>
 
-      {/* Modal 3: Inscrever Aluno no Evento Específico */}
+      {/* Modal: Adicionar Membro da Equipe (RBAC) */}
       <AnimatePresence>
-        {showAddStudentToEventModal && selectedEvento && (
+        {showCreateUserModal && (
           <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.96, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 40 }}
-              className="w-full max-w-xl bg-card border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.8)] md:shadow-3xl flex flex-col max-h-[92dvh] custom-scrollbar overscroll-contain"
+              className="w-full max-w-lg bg-[#0a111e] border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-3xl"
             >
-              <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+              <div className="p-5 sm:p-7 border-b border-white/5 flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg sm:text-xl font-display font-bold text-white">Inscrever Aluno no Evento</h3>
-                  <p className="text-white/40 text-xs mt-0.5 sm:mt-1">Inscreva participantes já cadastrados no evento selecionado.</p>
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <UserPlus className="w-5 h-5 text-blue-400" />
+                    Adicionar Membro à Equipe
+                  </h3>
+                  <p className="text-white/40 text-xs mt-0.5">Cadastre um colaborador e defina seu nível de acesso.</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => { setShowAddStudentToEventModal(false); setSearchStudentForEvent(''); }}
-                  className="rounded-full hover:bg-white/10 text-white/40 hover:text-white touch-press"
-                >
+                <Button variant="ghost" size="icon" onClick={() => setShowCreateUserModal(false)} className="rounded-full text-white/40 hover:text-white">
                   <X className="w-5 h-5" />
                 </Button>
               </div>
 
-              {/* Filtro de Busca */}
-              <div className="p-4 sm:p-5 border-b border-white/5">
+              <form onSubmit={handleCreateUserSubmit} className="p-5 sm:p-7 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Nome Completo</label>
+                  <Input
+                    required
+                    className="liquid-input h-11 text-sm"
+                    value={newUser.fullName}
+                    onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">E-mail de Acesso</label>
+                  <Input
+                    type="email"
+                    required
+                    className="liquid-input h-11 text-sm"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Senha Temporária</label>
+                  <Input
+                    type="password"
+                    required
+                    placeholder="Mínimo 10 caracteres com maiúscula, número e símbolo"
+                    className="liquid-input h-11 text-sm"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Função / Cargo (RBAC)</label>
+                  <select
+                    value={newUser.role}
+                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as Role })}
+                    className="liquid-input h-11 w-full text-sm rounded-xl bg-white/[0.05] border-white/10 text-white px-3"
+                  >
+                    <option value={Role.STAFF} className="bg-[#0a111e] text-white">Staff (Check-in e Leitor QR)</option>
+                    <option value={Role.ORGANIZER} className="bg-[#0a111e] text-white">Organizador (Gestor de Eventos e Inscrições)</option>
+                    <option value={Role.ADMIN} className="bg-[#0a111e] text-white">Administrador da Organização</option>
+                    {isSuperAdmin && (
+                      <option value={Role.SUPER_ADMIN} className="bg-[#0a111e] text-white">Super Administrador (Global)</option>
+                    )}
+                    <option value={Role.VIEWER} className="bg-[#0a111e] text-white">Visualizador (Somente Leitura)</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-4 border-t border-white/5">
+                  <Button type="button" variant="outline" onClick={() => setShowCreateUserModal(false)} className="flex-1 h-11 rounded-xl border-white/10 text-white font-bold">
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={submittingUser} className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold">
+                    {submittingUser ? <LoadingSpinner size="sm" /> : 'Criar Membro'}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Alterar Cargo RBAC */}
+      <AnimatePresence>
+        {showEditRoleModal && editingUser && (
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 40 }}
+              className="w-full max-w-md bg-[#0a111e] border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-3xl"
+            >
+              <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-white">Alterar Função RBAC</h3>
+                  <p className="text-white/40 text-xs mt-0.5">{editingUser.fullName || editingUser.email}</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setShowEditRoleModal(false)} className="rounded-full text-white/40 hover:text-white">
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <form onSubmit={handleUpdateRoleSubmit} className="p-5 sm:p-6 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Selecione o Novo Cargo</label>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value as Role)}
+                    className="liquid-input h-11 w-full text-sm rounded-xl bg-white/[0.05] border-white/10 text-white px-3"
+                  >
+                    <option value={Role.STAFF} className="bg-[#0a111e] text-white">Staff (Check-in e Leitor QR)</option>
+                    <option value={Role.ORGANIZER} className="bg-[#0a111e] text-white">Organizador (Gestor de Eventos e Inscrições)</option>
+                    <option value={Role.ADMIN} className="bg-[#0a111e] text-white">Administrador da Organização</option>
+                    {isSuperAdmin && (
+                      <option value={Role.SUPER_ADMIN} className="bg-[#0a111e] text-white">Super Administrador (Global)</option>
+                    )}
+                    <option value={Role.VIEWER} className="bg-[#0a111e] text-white">Visualizador (Somente Leitura)</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-3 border-t border-white/5">
+                  <Button type="button" variant="outline" onClick={() => setShowEditRoleModal(false)} className="flex-1 h-10 rounded-xl border-white/10 text-white font-bold">
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="flex-1 h-10 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold">
+                    Salvar Cargo
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Criar Organização (Tenant - Super Admin) */}
+      <AnimatePresence>
+        {showCreateTenantModal && (
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 40 }}
+              className="w-full max-w-md bg-[#0a111e] border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-3xl"
+            >
+              <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-purple-400" />
+                    Nova Organização (Tenant)
+                  </h3>
+                  <p className="text-white/40 text-xs mt-0.5">Criar nova entidade multi-tenant isolada.</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setShowCreateTenantModal(false)} className="rounded-full text-white/40 hover:text-white">
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <form onSubmit={handleCreateTenantSubmit} className="p-5 sm:p-6 space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Nome da Organização</label>
+                  <Input
+                    required
+                    placeholder="Ex: Instituto Olhar Jovem"
+                    className="liquid-input h-11 text-sm"
+                    value={newTenant.name}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+                      setNewTenant({ ...newTenant, name, slug: newTenant.slug ? newTenant.slug : slug });
+                    }}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Slug Identificador (URL)</label>
+                  <Input
+                    required
+                    placeholder="ex: olhar-jovem"
+                    className="liquid-input h-11 text-sm"
+                    value={newTenant.slug}
+                    onChange={(e) => setNewTenant({ ...newTenant, slug: e.target.value.toLowerCase().trim() })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Domínio Customizado (Opcional)</label>
+                  <Input
+                    placeholder="eventos.instituto.org"
+                    className="liquid-input h-11 text-sm"
+                    value={newTenant.domain}
+                    onChange={(e) => setNewTenant({ ...newTenant, domain: e.target.value })}
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-3 border-t border-white/5">
+                  <Button type="button" variant="outline" onClick={() => setShowCreateTenantModal(false)} className="flex-1 h-10 rounded-xl border-white/10 text-white font-bold">
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={submittingTenant} className="flex-1 h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold">
+                    {submittingTenant ? <LoadingSpinner size="sm" /> : 'Criar Organização'}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal: Inscrever Aluno no Evento */}
+      <AnimatePresence>
+        {showAddStudentToEventModal && (
+          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 40 }}
+              className="w-full max-w-xl bg-[#0a111e] border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-3xl flex flex-col max-h-[92dvh] custom-scrollbar"
+            >
+              <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg sm:text-xl font-bold text-white">Inscrever Aluno no Evento</h3>
+                  <p className="text-white/40 text-xs mt-0.5">Selecione participantes cadastrados nesta organização.</p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setShowAddStudentToEventModal(false)} className="rounded-full text-white/40 hover:text-white">
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+
+              <div className="p-4 border-b border-white/5">
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                   <Input
                     placeholder="Buscar participante por nome ou código..."
-                    className="liquid-input h-11 w-full text-base md:text-sm pl-11"
+                    className="liquid-input h-10 w-full pl-10 text-xs"
                     value={searchStudentForEvent}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchStudentForEvent(e.target.value)}
-                    autoFocus
+                    onChange={(e) => setSearchStudentForEvent(e.target.value)}
                   />
                 </div>
               </div>
 
-              {/* Lista de Alunos Elegíveis */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5 sm:space-y-3 min-h-[180px] custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-[300px] custom-scrollbar">
                 {studentsNotSubscribed.length === 0 ? (
-                  <div className="text-center py-8 sm:py-10 text-white/30 text-xs sm:text-sm font-medium">
-                    {searchStudentForEvent ? 'Nenhum aluno correspondente encontrado.' : 'Todos os alunos cadastrados já estão inscritos.'}
+                  <div className="text-center py-8 text-white/30 text-xs">
+                    {searchStudentForEvent ? 'Nenhum aluno correspondente.' : 'Todos os alunos da organização já estão inscritos.'}
                   </div>
                 ) : (
                   studentsNotSubscribed.map((student: Participante) => (
                     <div
                       key={student.id}
-                      className="flex items-center justify-between p-3 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-all"
+                      className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all"
                     >
-                      <div className="min-w-0 pr-3 sm:pr-4">
-                        <p className="font-bold text-white truncate text-xs sm:text-sm">{student.nome}</p>
-                        <p className="text-[10px] text-white/40 mt-0.5 truncate">{student.codigo} • {student.escola} • {student.cidade}</p>
+                      <div className="min-w-0 pr-3">
+                        <p className="font-bold text-white truncate text-xs">{student.nome}</p>
+                        <p className="text-[10px] text-white/40 truncate">{student.codigo} • {student.escola} • {student.cidade}</p>
                       </div>
                       <Button
                         onClick={() => handleAddStudentToEvent(student.id)}
-                        className="rounded-xl bg-primary hover:bg-primary/95 text-white font-bold h-8 sm:h-9 px-3 sm:px-4 text-[11px] sm:text-xs shrink-0 touch-press"
+                        className="rounded-lg bg-primary hover:bg-primary/90 text-white font-bold h-8 px-3 text-xs shrink-0"
                       >
                         Inscrever
                       </Button>
@@ -1657,11 +1978,11 @@ export default function Admin() {
                 )}
               </div>
 
-              <div className="p-4 sm:p-5 border-t border-white/5 bg-white/[0.01] flex justify-end">
+              <div className="p-4 border-t border-white/5 flex justify-end">
                 <Button
-                  onClick={() => { setShowAddStudentToEventModal(false); setSearchStudentForEvent(''); }}
+                  onClick={() => setShowAddStudentToEventModal(false)}
                   variant="outline"
-                  className="rounded-xl border-white/10 text-white/60 hover:text-white text-xs h-10 px-5 sm:px-6 font-bold touch-press"
+                  className="rounded-xl border-white/10 text-white text-xs h-9 px-5 font-bold"
                 >
                   Fechar
                 </Button>
@@ -1693,16 +2014,16 @@ function StatCard({
       className="h-full"
     >
       <Card className="glass-card border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.08] transition-all bg-white/[0.02] h-full flex flex-col justify-between">
-        <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between p-5 pb-2">
           <CardTitle className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/30 leading-none">
             {title}
           </CardTitle>
-          <div className="p-2.5 bg-white/5 rounded-xl border border-white/10">
+          <div className="p-2 bg-white/5 rounded-xl border border-white/10">
             {icon}
           </div>
         </CardHeader>
-        <CardContent className="p-6 pt-0 mt-4">
-          <div className="text-3xl font-display font-bold text-white tracking-tighter mb-1">{value}</div>
+        <CardContent className="p-5 pt-0 mt-3">
+          <div className="text-3xl font-display font-bold text-white tracking-tighter mb-0.5">{value}</div>
           <p className="text-[10px] text-white/30 font-medium italic">{description}</p>
         </CardContent>
       </Card>

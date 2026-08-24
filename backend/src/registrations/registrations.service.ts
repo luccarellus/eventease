@@ -20,13 +20,13 @@ export class RegistrationsService {
     private redis: RedisService,
   ) {}
 
-  async create(data: Prisma.InscricaoEventoUncheckedCreateInput) {
-    const evento = await this.prisma.evento.findUnique({
-      where: { id: data.eventoId },
+  async create(tenantId: string, data: Omit<Prisma.InscricaoEventoUncheckedCreateInput, 'tenantId'>) {
+    const evento = await this.prisma.evento.findFirst({
+      where: { id: data.eventoId, tenantId },
     });
 
     if (!evento) {
-      throw new NotFoundException('Evento não encontrado.');
+      throw new NotFoundException('Evento não encontrado nesta organização.');
     }
 
     if (!evento.publicado) {
@@ -48,12 +48,12 @@ export class RegistrationsService {
       );
     }
 
-    const participante = await this.prisma.participante.findUnique({
-      where: { id: data.participanteId },
+    const participante = await this.prisma.participante.findFirst({
+      where: { id: data.participanteId, tenantId },
     });
 
     if (!participante) {
-      throw new NotFoundException('Participante não encontrado.');
+      throw new NotFoundException('Participante não encontrado nesta organização.');
     }
 
     const existing = await this.prisma.inscricaoEvento.findUnique({
@@ -71,27 +71,32 @@ export class RegistrationsService {
       );
     }
 
-    const inscricao = await this.prisma.inscricaoEvento.create({ data });
-    await this.redis.del(CACHE_KEYS.registrationsByEvent(data.eventoId));
+    const inscricao = await this.prisma.inscricaoEvento.create({
+      data: {
+        ...data,
+        tenantId,
+      },
+    });
+
+    await this.redis.del(CACHE_KEYS.registrationsByEvent(tenantId, data.eventoId));
     await this.redis.del(
-      CACHE_KEYS.registrationCheck(data.eventoId, data.participanteId),
+      CACHE_KEYS.registrationCheck(tenantId, data.eventoId, data.participanteId),
     );
     return inscricao;
   }
 
-  async checkRegistration(eventoId: string, participanteId: string) {
-    const key = CACHE_KEYS.registrationCheck(eventoId, participanteId);
+  async checkRegistration(tenantId: string, eventoId: string, participanteId: string) {
+    const key = CACHE_KEYS.registrationCheck(tenantId, eventoId, participanteId);
     const cached = safeParse<{ registered: boolean }>(
       await this.redis.get(key),
     );
     if (cached) return cached;
 
-    const reg = await this.prisma.inscricaoEvento.findUnique({
+    const reg = await this.prisma.inscricaoEvento.findFirst({
       where: {
-        unique_evento_participante: {
-          eventoId,
-          participanteId,
-        },
+        tenantId,
+        eventoId,
+        participanteId,
       },
     });
     const result = { registered: !!reg };
@@ -99,8 +104,9 @@ export class RegistrationsService {
     return result;
   }
 
-  async findAll() {
+  async findAll(tenantId: string) {
     return this.prisma.inscricaoEvento.findMany({
+      where: { tenantId },
       include: {
         participante: true,
         evento: true,
@@ -109,8 +115,8 @@ export class RegistrationsService {
     });
   }
 
-  async findByEvent(eventoId: string): Promise<InscricaoComParticipante[]> {
-    const key = CACHE_KEYS.registrationsByEvent(eventoId);
+  async findByEvent(tenantId: string, eventoId: string): Promise<InscricaoComParticipante[]> {
+    const key = CACHE_KEYS.registrationsByEvent(tenantId, eventoId);
 
     const cached = safeParse<InscricaoComParticipante[]>(
       await this.redis.get(key),
@@ -118,7 +124,7 @@ export class RegistrationsService {
     if (cached) return cached;
 
     const inscricoes = await this.prisma.inscricaoEvento.findMany({
-      where: { eventoId },
+      where: { tenantId, eventoId },
       include: { participante: true },
     });
 
@@ -130,7 +136,15 @@ export class RegistrationsService {
     return inscricoes;
   }
 
-  async checkIn(id: string) {
+  async checkIn(tenantId: string, id: string) {
+    const existing = await this.prisma.inscricaoEvento.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Inscrição não encontrada nesta organização.');
+    }
+
     const inscricao = await this.prisma.inscricaoEvento.update({
       where: { id },
       data: {
@@ -143,27 +157,42 @@ export class RegistrationsService {
       },
     });
 
-    // Check-in muda o estado da lista de inscritos do evento
-    await this.redis.del(CACHE_KEYS.registrationsByEvent(inscricao.eventoId));
+    await this.redis.del(CACHE_KEYS.registrationsByEvent(tenantId, inscricao.eventoId));
     return inscricao;
   }
 
-  async update(id: string, data: Prisma.InscricaoEventoUpdateInput) {
+  async update(tenantId: string, id: string, data: Prisma.InscricaoEventoUpdateInput) {
+    const existing = await this.prisma.inscricaoEvento.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Inscrição não encontrada nesta organização.');
+    }
+
     const inscricao = await this.prisma.inscricaoEvento.update({
       where: { id },
       data,
     });
 
-    await this.redis.del(CACHE_KEYS.registrationsByEvent(inscricao.eventoId));
+    await this.redis.del(CACHE_KEYS.registrationsByEvent(tenantId, inscricao.eventoId));
     return inscricao;
   }
 
-  async remove(id: string) {
+  async remove(tenantId: string, id: string) {
+    const existing = await this.prisma.inscricaoEvento.findFirst({
+      where: { id, tenantId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException('Inscrição não encontrada nesta organização.');
+    }
+
     const inscricao = await this.prisma.inscricaoEvento.delete({
       where: { id },
     });
 
-    await this.redis.del(CACHE_KEYS.registrationsByEvent(inscricao.eventoId));
+    await this.redis.del(CACHE_KEYS.registrationsByEvent(tenantId, inscricao.eventoId));
     return inscricao;
   }
 }

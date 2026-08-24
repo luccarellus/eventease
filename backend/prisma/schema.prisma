@@ -6,53 +6,84 @@ datasource db {
   provider = "postgresql"
 }
 
+// ==========================================
+// Tenants / Organizações (Multi-Tenancy)
+// ==========================================
+model Tenant {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  slug        String   @unique
+  domain      String?  @unique
+  logoUrl     String?  @map("logo_url")
+  isActive    Boolean  @default(true) @map("is_active")
+
+  createdAt   DateTime @default(now()) @db.Timestamptz @map("created_at")
+  updatedAt   DateTime @updatedAt @db.Timestamptz @map("updated_at")
+
+  users         AdminUser[]
+  eventos       Evento[]
+  participantes Participante[]
+  inscricoes    InscricaoEvento[]
+
+  @@map("tenants")
+}
 
 // ==========================================
-// Admin Users (autenticação local com bcrypt)
+// Admin Users (autenticação local com bcrypt & RBAC)
 // ==========================================
 model AdminUser {
   id            String    @id @db.Uuid
   email         String    @unique
   fullName      String?   @map("full_name")
-  role          String    @default("admin")
+  role          String    @default("admin") // 'super_admin' | 'admin' | 'organizer' | 'staff' | 'viewer' | 'user'
+  tenantId      String?   @db.Uuid @map("tenant_id")
   passwordHash  String?   @map("password_hash")
   
   createdAt     DateTime  @default(now()) @db.Timestamptz @map("created_at")
   updatedAt     DateTime  @updatedAt @db.Timestamptz @map("updated_at")
 
+  tenant        Tenant?   @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
   @@map("admin_users")
 }
 
 // ==========================================
-// Participantes
+// Participantes (Isolados por Tenant)
 // ==========================================
 model Participante {
-  id              String    @id @default(uuid()) @db.Uuid
-  nome            String
-  email           String    @unique
-  telefone        String
-  empresa         String?   // 'Instituição' no UI
-  cidade          String
-  escola          String
-  gremio          String?
-  codigo          String    @unique
+  id                String    @id @default(uuid()) @db.Uuid
+  tenantId          String    @db.Uuid @map("tenant_id")
+  nome              String
+  email             String
+  telefone          String
+  empresa           String?   // 'Instituição' no UI
+  cidade            String
+  escola            String
+  gremio            String?
+  codigo            String
   
-  aceitou_termos  Boolean   @default(false)
+  aceitou_termos    Boolean   @default(false)
   termos_aceitos_em DateTime? @db.Timestamptz
 
-  createdAt       DateTime  @default(now()) @db.Timestamptz @map("created_at")
+  createdAt         DateTime  @default(now()) @db.Timestamptz @map("created_at")
 
-  inscricoes      InscricaoEvento[]
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inscricoes        InscricaoEvento[]
 
+  @@unique([tenantId, email], name: "unique_tenant_email")
+  @@unique([tenantId, codigo], name: "unique_tenant_codigo")
+  @@index([tenantId])
   @@index([codigo])
   @@map("participantes")
 }
 
 // ==========================================
-// Eventos
+// Eventos (Isolados por Tenant)
 // ==========================================
 model Evento {
   id                  String    @id @default(uuid()) @db.Uuid
+  tenantId            String    @db.Uuid @map("tenant_id")
   titulo              String
   descricao           String?
   data                DateTime  @db.Timestamptz
@@ -64,17 +95,20 @@ model Evento {
   
   createdAt           DateTime  @default(now()) @db.Timestamptz @map("created_at")
 
+  tenant              Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   inscricoes          InscricaoEvento[]
 
+  @@index([tenantId])
   @@index([publicado])
   @@map("eventos")
 }
 
 // ==========================================
-// Inscrições de Eventos
+// Inscrições de Eventos (Isoladas por Tenant)
 // ==========================================
 model InscricaoEvento {
   id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @db.Uuid @map("tenant_id")
   eventoId        String    @db.Uuid @map("evento_id")
   participanteId  String    @db.Uuid @map("participante_id")
   presente        Boolean   @default(false)
@@ -82,10 +116,12 @@ model InscricaoEvento {
   
   createdAt       DateTime  @default(now()) @db.Timestamptz @map("created_at")
 
-  evento          Evento    @relation(fields: [eventoId], references: [id], onDelete: Cascade)
+  tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  evento          Evento       @relation(fields: [eventoId], references: [id], onDelete: Cascade)
   participante    Participante @relation(fields: [participanteId], references: [id], onDelete: Cascade)
 
   @@unique([eventoId, participanteId], name: "unique_evento_participante")
+  @@index([tenantId])
   @@index([eventoId])
   @@index([participanteId])
   @@map("inscricoes_evento")

@@ -12,16 +12,21 @@ export class EventsService {
     private redis: RedisService,
   ) {}
 
-  async create(data: Prisma.EventoCreateInput) {
-    const evento = await this.prisma.evento.create({ data });
-    await this.invalidateListCache();
+  async create(tenantId: string, data: Omit<Prisma.EventoUncheckedCreateInput, 'tenantId'>) {
+    const evento = await this.prisma.evento.create({
+      data: {
+        ...data,
+        tenantId,
+      },
+    });
+    await this.invalidateListCache(tenantId);
     return evento;
   }
 
-  async findAll(publishedOnly: boolean = false): Promise<Evento[]> {
+  async findAll(tenantId: string, publishedOnly: boolean = false): Promise<Evento[]> {
     const key = publishedOnly
-      ? CACHE_KEYS.eventsPublished
-      : CACHE_KEYS.eventsAll;
+      ? CACHE_KEYS.eventsPublished(tenantId)
+      : CACHE_KEYS.eventsAll(tenantId);
     const ttl = publishedOnly ? CACHE_TTL.events : CACHE_TTL.eventsAdmin;
 
     try {
@@ -32,7 +37,10 @@ export class EventsService {
     }
 
     const events = await this.prisma.evento.findMany({
-      where: publishedOnly ? { publicado: true } : undefined,
+      where: {
+        tenantId,
+        ...(publishedOnly ? { publicado: true } : {}),
+      },
       orderBy: { data: 'asc' },
     });
 
@@ -43,13 +51,13 @@ export class EventsService {
     return events;
   }
 
-  async findOne(id: string) {
-    const key = CACHE_KEYS.eventById(id);
+  async findOne(tenantId: string, id: string) {
+    const key = CACHE_KEYS.eventById(tenantId, id);
     const cached = safeParse<Evento>(await this.redis.get(key));
     if (cached) return cached;
 
-    const evento = await this.prisma.evento.findUnique({
-      where: { id },
+    const evento = await this.prisma.evento.findFirst({
+      where: { id, tenantId },
     });
     if (!evento) throw new NotFoundException('Evento não encontrado');
 
@@ -57,29 +65,33 @@ export class EventsService {
     return evento;
   }
 
-  async update(id: string, data: Prisma.EventoUpdateInput) {
+  async update(tenantId: string, id: string, data: Prisma.EventoUpdateInput) {
+    await this.findOne(tenantId, id);
+
     const evento = await this.prisma.evento.update({
       where: { id },
       data,
     });
-    await this.invalidateListCache(id);
+    await this.invalidateListCache(tenantId, id);
     return evento;
   }
 
-  async remove(id: string) {
+  async remove(tenantId: string, id: string) {
+    await this.findOne(tenantId, id);
+
     const evento = await this.prisma.evento.delete({
       where: { id },
     });
-    await this.invalidateListCache(id);
+    await this.invalidateListCache(tenantId, id);
     return evento;
   }
 
-  /** Invalida as listas e detalhes de eventos sempre que algo muda. */
-  private async invalidateListCache(id?: string) {
-    await this.redis.del(CACHE_KEYS.eventsPublished);
-    await this.redis.del(CACHE_KEYS.eventsAll);
+  /** Invalida as listas e detalhes de eventos do tenant especificado. */
+  private async invalidateListCache(tenantId: string, id?: string) {
+    await this.redis.del(CACHE_KEYS.eventsPublished(tenantId));
+    await this.redis.del(CACHE_KEYS.eventsAll(tenantId));
     if (id) {
-      await this.redis.del(CACHE_KEYS.eventById(id));
+      await this.redis.del(CACHE_KEYS.eventById(tenantId, id));
     }
   }
 }

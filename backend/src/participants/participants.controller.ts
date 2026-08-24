@@ -31,6 +31,8 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { RecaptchaService } from '../common/recaptcha.service';
+import { TenantId } from '../common/decorators/tenant.decorator';
+import { Role } from '../auth/rbac.constants';
 
 class ParticipantListQueryDto {
   @IsOptional()
@@ -61,18 +63,20 @@ export class ParticipantsController {
 
   /**
    * Endpoint público para criar participante (inscrição inicial no evento).
-   * Não requer autenticação pois é usado pelo formulário de inscrição público.
    */
   @Post()
   @HttpCode(HttpStatus.OK)
-  async create(@Body() data: CreateParticipantDto, @Req() request: Request) {
+  async create(
+    @TenantId() tenantId: string,
+    @Body() data: CreateParticipantDto,
+    @Req() request: Request,
+  ) {
     await this.recaptchaService.verify(
       data.recaptchaToken,
       'participant_create',
       request.ip,
     );
 
-    // LGPD: o consentimento é obrigatório para cadastro público.
     if (data.aceitou_termos !== true) {
       throw new BadRequestException(
         'É obrigatório aceitar os termos de uso e a política de privacidade.',
@@ -80,16 +84,16 @@ export class ParticipantsController {
     }
 
     const { recaptchaToken: _recaptchaToken, ...participant } = data;
-    return this.participantsService.create(participant);
+    return this.participantsService.create(tenantId, participant);
   }
 
   /**
-   * Busca pública por e-mail — retorna apenas os dados mínimos necessários (id, nome, codigo).
-   * Usado para verificar cadastro antes de inscrição e buscar credencial.
+   * Busca pública por e-mail no tenant atual.
    */
   @Get('email/:email')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async findByEmail(
+    @TenantId() tenantId: string,
     @Param() params: ParticipantEmailLookupDto,
     @Headers('x-recaptcha-token') recaptchaToken: string | undefined,
     @Req() request: Request,
@@ -99,16 +103,16 @@ export class ParticipantsController {
         .verify(recaptchaToken, 'participant_lookup', request.ip)
         .catch(() => {});
     }
-    return this.participantsService.findByEmailPublic(params.email);
+    return this.participantsService.findByEmailPublic(tenantId, params.email);
   }
 
   /**
-   * Busca pública por código — retorna apenas os dados mínimos necessários (id, nome, codigo).
-   * Usado no check-in e na recuperação de credencial.
+   * Busca pública por código no tenant atual.
    */
   @Get('code/:code')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async findByCode(
+    @TenantId() tenantId: string,
     @Param() params: ParticipantCodeLookupDto,
     @Headers('x-recaptcha-token') recaptchaToken: string | undefined,
     @Req() request: Request,
@@ -118,31 +122,41 @@ export class ParticipantsController {
         .verify(recaptchaToken, 'participant_lookup', request.ip)
         .catch(() => {});
     }
-    return this.participantsService.findByCodePublic(params.code);
+    return this.participantsService.findByCodePublic(tenantId, params.code);
   }
 
   /**
-   * Busca de participante por e-mail restrita a administradores — retorna perfil completo.
+   * Busca restrita por e-mail — perfil completo.
    */
   @Get('admin/email/:email')
-  @AdminRoute()
-  async findByEmailAdmin(@Param('email') email: string) {
-    return this.participantsService.findByEmail(email);
+  @AdminRoute(Role.SUPER_ADMIN, Role.ADMIN, Role.ORGANIZER, Role.STAFF)
+  async findByEmailAdmin(
+    @TenantId() tenantId: string,
+    @Param('email') email: string,
+  ) {
+    return this.participantsService.findByEmail(tenantId, email);
   }
 
   /**
-   * Busca de participante por código restrita a administradores — retorna perfil completo.
+   * Busca restrita por código — perfil completo.
    */
   @Get('admin/code/:code')
-  @AdminRoute()
-  async findByCodeAdmin(@Param('code') code: string) {
-    return this.participantsService.findByCode(code);
+  @AdminRoute(Role.SUPER_ADMIN, Role.ADMIN, Role.ORGANIZER, Role.STAFF)
+  async findByCodeAdmin(
+    @TenantId() tenantId: string,
+    @Param('code') code: string,
+  ) {
+    return this.participantsService.findByCode(tenantId, code);
   }
 
   @Get()
-  @AdminRoute()
-  findAll(@Query() query: ParticipantListQueryDto) {
+  @AdminRoute(Role.SUPER_ADMIN, Role.ADMIN, Role.ORGANIZER, Role.STAFF, Role.VIEWER)
+  findAll(
+    @TenantId() tenantId: string,
+    @Query() query: ParticipantListQueryDto,
+  ) {
     return this.participantsService.findPage(
+      tenantId,
       query.page,
       query.limit,
       query.search,
@@ -150,8 +164,11 @@ export class ParticipantsController {
   }
 
   @Delete(':id')
-  @AdminRoute()
-  remove(@Param('id') id: string) {
-    return this.participantsService.remove(id);
+  @AdminRoute(Role.SUPER_ADMIN, Role.ADMIN)
+  remove(
+    @TenantId() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.participantsService.remove(tenantId, id);
   }
 }

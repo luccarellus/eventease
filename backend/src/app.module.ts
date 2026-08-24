@@ -4,7 +4,7 @@ import * as path from 'path';
 dotenv.config();
 dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -16,9 +16,11 @@ import { AuthModule } from './auth/auth.module';
 import { EventsModule } from './events/events.module';
 import { ParticipantsModule } from './participants/participants.module';
 import { RegistrationsModule } from './registrations/registrations.module';
+import { TenantsModule } from './tenants/tenants.module';
 import { RecaptchaModule } from './common/recaptcha.module';
 import { NevaProModule } from './common/nevapro.module';
 import { RedisModule } from './common/redis.module';
+import { TenantMiddleware } from './common/middleware/tenant.middleware';
 
 @Module({
   imports: [
@@ -38,6 +40,7 @@ import { RedisModule } from './common/redis.module';
     RecaptchaModule,
     NevaProModule,
     AuthModule,
+    TenantsModule,
     EventsModule,
     ParticipantsModule,
     RegistrationsModule,
@@ -51,4 +54,8 @@ import { RedisModule } from './common/redis.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TenantMiddleware).forRoutes('*');
+  }
+}

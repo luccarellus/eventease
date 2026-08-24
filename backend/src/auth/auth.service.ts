@@ -4,12 +4,16 @@ import {
   OnModuleInit,
   ServiceUnavailableException,
   UnauthorizedException,
+  ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { requireJwtRefreshSecret } from '../common/env.util';
 import { isNetworkError } from '../common/network.util';
 import { NevaProService } from '../common/nevapro.service';
+import { Role, getRolePermissions } from './rbac.constants';
+import { CreateUserDto } from './dto/create-user.dto';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 
@@ -25,8 +29,6 @@ export class AuthService implements OnModuleInit {
     try {
       await this.cleanupExpiredRefreshTokens();
     } catch (error) {
-      // Não derruba a API no boot se o banco estiver momentaneamente
-      // indisponível — a limpeza é reexecutada a cada novo refresh token.
       console.error(
         '[AuthService] Falha ao limpar refresh tokens no boot:',
         error instanceof Error ? error.message : error,
@@ -42,7 +44,33 @@ export class AuthService implements OnModuleInit {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 
-  async updateUserRole(userId: string, role: string) {
+  private async getDefaultTenantId(): Promise<string> {
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { OR: [{ slug: 'default' }, { slug: 'olhar-jovem' }] },
+    });
+    if (tenant) return tenant.id;
+
+    const anyTenant = await this.prisma.tenant.findFirst({
+      orderBy: { createdAt: 'asc' },
+    });
+    if (anyTenant) return anyTenant.id;
+
+    const created = await this.prisma.tenant.create({
+      data: {
+        name: 'Instituto Olhar Jovem',
+        slug: 'olhar-jovem',
+        isActive: true,
+      },
+    });
+    return created.id;
+  }
+
+  async updateUserRole(
+    userId: string,
+    role: string,
+    requesterRole?: string,
+    requesterTenantId?: string | null,
+  ) {
     const user = await this.prisma.adminUser.findUnique({
       where: { id: userId },
     });
@@ -51,9 +79,27 @@ export class AuthService implements OnModuleInit {
       throw new NotFoundException(`Usuário com ID ${userId} não encontrado.`);
     }
 
+    if (
+      requesterRole !== Role.SUPER_ADMIN &&
+      requesterTenantId &&
+      user.tenantId !== requesterTenantId
+    ) {
+      throw new ForbiddenException(
+        'Você não tem permissão para alterar usuários de outra organização.',
+      );
+    }
+
+    // Apenas super_admin pode promover alguém a super_admin
+    if (role === Role.SUPER_ADMIN && requesterRole !== Role.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Apenas um Super Administrador pode atribuir a função de Super Administrador.',
+      );
+    }
+
     const updated = await this.prisma.adminUser.update({
       where: { id: userId },
       data: { role },
+      include: { tenant: true },
     });
 
     await this.revokeAllUserRefreshTokens(userId);
@@ -61,15 +107,24 @@ export class AuthService implements OnModuleInit {
     return {
       id: updated.id,
       email: updated.email,
+      fullName: updated.fullName,
       role: updated.role,
+      tenantId: updated.tenantId,
+      tenant: updated.tenant,
     };
   }
 
-  generateTokens(user: { id: string; email: string; role: string }) {
+  generateTokens(user: {
+    id: string;
+    email: string;
+    role: string;
+    tenantId?: string | null;
+  }) {
     const accessPayload = {
       sub: user.id,
       email: user.email,
       role: user.role,
+      tenantId: user.tenantId,
       tokenType: 'access',
     };
     const refreshPayload = { sub: user.id, tokenType: 'refresh' };
@@ -102,6 +157,9 @@ export class AuthService implements OnModuleInit {
     id: string;
     email: string;
     role: string;
+    fullName?: string | null;
+    tenantId?: string | null;
+    permissions: string[];
     newAccessToken: string;
     newRefreshToken: string;
   }> {
@@ -147,6 +205,7 @@ export class AuthService implements OnModuleInit {
 
     const user = await this.prisma.adminUser.findUnique({
       where: { id: storedToken.userId },
+      include: { tenant: true },
     });
     if (!user) {
       throw new UnauthorizedException('Usuário não encontrado.');
@@ -157,10 +216,9 @@ export class AuthService implements OnModuleInit {
         id: user.id,
         email: user.email,
         role: user.role,
+        tenantId: user.tenantId,
       });
 
-    // Revoga o token antigo e armazena o novo em uma única transação,
-    // evitando emissão concorrente de tokens a partir do mesmo refresh token.
     await this.prisma.$transaction([
       this.prisma.refreshToken.update({
         where: { id: storedToken.id },
@@ -179,6 +237,9 @@ export class AuthService implements OnModuleInit {
       id: user.id,
       email: user.email,
       role: user.role,
+      fullName: user.fullName,
+      tenantId: user.tenantId,
+      permissions: getRolePermissions(user.role),
       newAccessToken,
       newRefreshToken,
     };
@@ -207,12 +268,16 @@ export class AuthService implements OnModuleInit {
     email: string;
     role: string;
     fullName: string | null;
+    tenantId: string | null;
+    tenant?: unknown;
+    permissions: string[];
   } | null> {
     const normalizedEmail = this.normalizeEmail(email);
 
     try {
       const user = await this.prisma.adminUser.findUnique({
         where: { email: normalizedEmail },
+        include: { tenant: true },
       });
 
       if (!user || !user.passwordHash) {
@@ -229,6 +294,9 @@ export class AuthService implements OnModuleInit {
         email: user.email,
         role: user.role,
         fullName: user.fullName ?? null,
+        tenantId: user.tenantId,
+        tenant: user.tenant,
+        permissions: getRolePermissions(user.role),
       };
     } catch (error) {
       if (isNetworkError(error)) {
@@ -241,7 +309,12 @@ export class AuthService implements OnModuleInit {
     }
   }
 
-  async registerUser(email: string, pass: string, fullName?: string) {
+  async registerUser(
+    email: string,
+    pass: string,
+    fullName?: string,
+    tenantId?: string,
+  ) {
     const normalizedEmail = this.normalizeEmail(email);
 
     try {
@@ -251,21 +324,25 @@ export class AuthService implements OnModuleInit {
 
       const passwordHash = await bcrypt.hash(pass, 10);
 
-      // Se o usuário já existe mas não tem password_hash,
-      // permite "reivindicar" a conta definindo a senha localmente.
+      const targetTenantId = tenantId || (await this.getDefaultTenantId());
+
       if (existing && !existing.passwordHash) {
         const updated = await this.prisma.adminUser.update({
           where: { id: existing.id },
           data: {
             passwordHash,
             fullName: fullName ?? existing.fullName,
+            tenantId: existing.tenantId || targetTenantId,
           },
+          include: { tenant: true },
         });
 
         return {
           id: updated.id,
           email: updated.email,
           role: updated.role,
+          tenantId: updated.tenantId,
+          tenant: updated.tenant,
           claimed: true,
         };
       }
@@ -274,22 +351,21 @@ export class AuthService implements OnModuleInit {
         throw new UnauthorizedException('E-mail já cadastrado.');
       }
 
-      // Se não existe nenhum admin, o primeiro usuário registrado vira admin
-      const adminCount = await this.prisma.adminUser.count({
-        where: { role: 'admin' },
-      });
+      const totalUsers = await this.prisma.adminUser.count();
+      const role = totalUsers === 0 ? Role.SUPER_ADMIN : Role.USER;
 
       const user = await this.prisma.adminUser.create({
         data: {
           id: crypto.randomUUID(),
           email: normalizedEmail,
           fullName: fullName ?? null,
-          role: adminCount === 0 ? 'admin' : 'user',
+          role,
+          tenantId: targetTenantId,
           passwordHash,
         },
+        include: { tenant: true },
       });
 
-      // 🚀 Dispara a sincronização automática com o NevaPro (fire-and-forget)
       void this.nevaProService.sync({
         email: user.email,
         fullName: fullName ?? undefined,
@@ -299,6 +375,8 @@ export class AuthService implements OnModuleInit {
         id: user.id,
         email: user.email,
         role: user.role,
+        tenantId: user.tenantId,
+        tenant: user.tenant,
       };
     } catch (error) {
       if (isNetworkError(error)) {
@@ -309,6 +387,122 @@ export class AuthService implements OnModuleInit {
 
       throw error;
     }
+  }
+
+  async createUserForTenant(
+    dto: CreateUserDto,
+    requesterRole: string,
+    requesterTenantId?: string | null,
+  ) {
+    const normalizedEmail = this.normalizeEmail(dto.email);
+
+    const existing = await this.prisma.adminUser.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (existing) {
+      throw new ConflictException('E-mail já cadastrado no sistema.');
+    }
+
+    let targetTenantId = dto.tenantId;
+    if (requesterRole !== Role.SUPER_ADMIN) {
+      targetTenantId = requesterTenantId || (await this.getDefaultTenantId());
+    } else if (!targetTenantId) {
+      targetTenantId = await this.getDefaultTenantId();
+    }
+
+    const assignedRole = dto.role || Role.STAFF;
+    if (assignedRole === Role.SUPER_ADMIN && requesterRole !== Role.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Apenas Super Administradores podem criar outro Super Administrador.',
+      );
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+
+    const user = await this.prisma.adminUser.create({
+      data: {
+        id: crypto.randomUUID(),
+        email: normalizedEmail,
+        fullName: dto.fullName || null,
+        role: assignedRole,
+        tenantId: targetTenantId,
+        passwordHash,
+      },
+      include: { tenant: true },
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      tenantId: user.tenantId,
+      tenant: user.tenant,
+    };
+  }
+
+  async getUsersByTenant(
+    tenantId: string,
+    requesterRole: string,
+    requesterTenantId?: string | null,
+  ) {
+    const where =
+      requesterRole === Role.SUPER_ADMIN
+        ? tenantId === 'all'
+          ? {}
+          : { tenantId }
+        : { tenantId: requesterTenantId || tenantId };
+
+    return this.prisma.adminUser.findMany({
+      where,
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        tenantId: true,
+        createdAt: true,
+        tenant: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async removeUser(
+    userId: string,
+    requesterRole: string,
+    requesterTenantId?: string | null,
+  ) {
+    const user = await this.prisma.adminUser.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    if (
+      requesterRole !== Role.SUPER_ADMIN &&
+      requesterTenantId &&
+      user.tenantId !== requesterTenantId
+    ) {
+      throw new ForbiddenException(
+        'Você não pode remover usuários de outra organização.',
+      );
+    }
+
+    await this.revokeAllUserRefreshTokens(userId);
+
+    return this.prisma.adminUser.delete({
+      where: { id: userId },
+    });
   }
 
   async cleanupExpiredRefreshTokens(userId?: string) {

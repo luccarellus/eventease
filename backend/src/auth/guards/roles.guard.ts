@@ -1,6 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
+import { Role } from '../rbac.constants';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -11,7 +12,7 @@ export class RolesGuard implements CanActivate {
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
     );
-    if (!requiredRoles) {
+    if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }
     const request = context
@@ -21,6 +22,10 @@ export class RolesGuard implements CanActivate {
 
     if (!user || !user.role) {
       return false;
+    }
+
+    if (user.role === Role.SUPER_ADMIN) {
+      return true;
     }
 
     return requiredRoles.includes(user.role);
