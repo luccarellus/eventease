@@ -108,7 +108,7 @@ export default function Admin() {
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'eventos' | 'alunos' | 'equipe' | 'organizacoes'>('eventos');
+  const [activeTab, setActiveTab] = useState<'eventos' | 'alunos' | 'organizacoes'>('eventos');
 
   // Evento selecionado para exibição de detalhes/inscritos
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
@@ -129,22 +129,6 @@ export default function Admin() {
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showAddStudentToEventModal, setShowAddStudentToEventModal] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
-
-  // Gestão de Equipe & RBAC
-  const [teamUsers, setTeamUsers] = useState<AdminUserRecord[]>([]);
-  const [loadingTeam, setLoadingTeam] = useState(false);
-  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
-  const [showEditRoleModal, setShowEditRoleModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<AdminUserRecord | null>(null);
-  const [selectedRole, setSelectedRole] = useState<Role>(Role.STAFF);
-  const [submittingUser, setSubmittingUser] = useState(false);
-  const [newUser, setNewUser] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    role: Role.STAFF,
-    tenantId: '',
-  });
 
   // Gestão de Organizações (Tenants - Super Admin)
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
@@ -247,22 +231,27 @@ export default function Admin() {
     }
   }, [itemsPerPage]);
 
-  const fetchTeamUsers = useCallback(async () => {
-    if (!isAdmin && !isSuperAdmin) return;
-    setLoadingTeam(true);
-    try {
-      const res = await api.get('/auth/users');
-      if (res.ok) {
-        const data = await res.json();
-        setTeamUsers(Array.isArray(data) ? data : []);
-      }
-    } catch (error) {
-      console.error('Error fetching team users:', error);
-      toast.error('Erro ao carregar lista da equipe.');
-    } finally {
-      setLoadingTeam(false);
+  useEffect(() => {
+    void fetchData();
+    if (activeTab === 'alunos') {
+      void fetchParticipantes(currentPage, searchTerm);
     }
-  }, [isAdmin, isSuperAdmin]);
+
+    const handleSync = () => {
+      void fetchData();
+      if (activeTab === 'alunos') {
+        void fetchParticipantes(currentPage, searchTerm);
+      }
+    };
+
+    window.addEventListener('sync-data', handleSync);
+    window.addEventListener('tenant-changed', handleSync);
+
+    return () => {
+      window.removeEventListener('sync-data', handleSync);
+      window.removeEventListener('tenant-changed', handleSync);
+    };
+  }, [fetchData, fetchParticipantes, activeTab, currentPage, searchTerm]);
 
   // Buscar inscrições do evento selecionado
   const fetchInscritosEvento = async (eventoId: string) => {
@@ -285,32 +274,6 @@ export default function Admin() {
       setLoadingInscritos(false);
     }
   };
-
-  useEffect(() => {
-    void fetchData();
-    if (activeTab === 'alunos') {
-      void fetchParticipantes(currentPage, searchTerm);
-    } else if (activeTab === 'equipe') {
-      void fetchTeamUsers();
-    }
-
-    const handleSync = () => {
-      void fetchData();
-      if (activeTab === 'alunos') {
-        void fetchParticipantes(currentPage, searchTerm);
-      } else if (activeTab === 'equipe') {
-        void fetchTeamUsers();
-      }
-    };
-
-    window.addEventListener('sync-data', handleSync);
-    window.addEventListener('tenant-changed', handleSync);
-
-    return () => {
-      window.removeEventListener('sync-data', handleSync);
-      window.removeEventListener('tenant-changed', handleSync);
-    };
-  }, [fetchData, fetchParticipantes, fetchTeamUsers, activeTab, currentPage, searchTerm]);
 
   // Efeito para recarregar inscritos quando o evento selecionado mudar
   useEffect(() => {
@@ -484,81 +447,7 @@ export default function Admin() {
     }
   };
 
-  // --- Ações de Equipe & RBAC ---
-  const handleCreateUserSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmittingUser(true);
-    try {
-      const res = await api.post('/auth/users', {
-        fullName: newUser.fullName.trim() || undefined,
-        email: newUser.email.trim().toLowerCase(),
-        password: newUser.password,
-        role: newUser.role,
-        tenantId: newUser.tenantId || (currentTenant?.id ?? undefined),
-      });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao criar membro');
-      }
-
-      toast.success('Membro da equipe adicionado com sucesso!');
-      setShowCreateUserModal(false);
-      setNewUser({
-        fullName: '',
-        email: '',
-        password: '',
-        role: Role.STAFF,
-        tenantId: '',
-      });
-      void fetchTeamUsers();
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao criar usuário');
-    } finally {
-      setSubmittingUser(false);
-    }
-  };
-
-  const handleUpdateRoleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingUser) return;
-    try {
-      const res = await api.post('/auth/set-role', {
-        userId: editingUser.id,
-        role: selectedRole,
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao alterar cargo');
-      }
-
-      toast.success(`Cargo de ${editingUser.fullName || editingUser.email} atualizado para ${ROLE_LABELS[selectedRole]}!`);
-      setShowEditRoleModal(false);
-      setEditingUser(null);
-      void fetchTeamUsers();
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar cargo');
-    }
-  };
-
-  const handleDeleteUser = async (userRecord: AdminUserRecord) => {
-    if (userRecord.id === user?.id) {
-      toast.error('Você não pode excluir sua própria conta.');
-      return;
-    }
-    if (!confirm(`Tem certeza que deseja remover o usuário ${userRecord.fullName || userRecord.email} da equipe?`)) return;
-
-    try {
-      const res = await api.delete(`/auth/users/${userRecord.id}`);
-      if (!res.ok) throw new Error('Falha ao excluir usuário');
-
-      toast.success('Membro removido da equipe.');
-      void fetchTeamUsers();
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao remover usuário');
-    }
-  };
 
   // --- Ações de Organizações (Tenants - Super Admin) ---
   const handleCreateTenantSubmit = async (e: React.FormEvent) => {
@@ -738,7 +627,8 @@ export default function Admin() {
             Gestão <span className="text-primary">EventEase</span>
           </h1>
           <p className="text-white/40 text-sm md:text-base font-medium">
-            Gerencie eventos, participantes, controle de equipe e acessos RBAC em um só lugar.
+            Gerencie eventos, participantes, equipe e acessos em um só lugar.
+
           </p>
         </motion.div>
       </div>
@@ -792,20 +682,6 @@ export default function Admin() {
             >
               Base de Alunos
             </button>
-            {(isAdmin || isSuperAdmin) && (
-              <button
-                onClick={() => { setActiveTab('equipe'); setSearchTerm(''); }}
-                className={cn(
-                  "px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-[11px] sm:text-xs uppercase tracking-widest border-b-2 transition-all whitespace-nowrap touch-press flex items-center gap-1.5",
-                  activeTab === 'equipe'
-                    ? "border-primary text-white"
-                    : "border-transparent text-white/40 hover:text-white/60"
-                )}
-              >
-                <Shield className="w-3.5 h-3.5 text-blue-400" />
-                Equipe & Cargos (RBAC)
-              </button>
-            )}
             {isSuperAdmin && (
               <button
                 onClick={() => { setActiveTab('organizacoes'); setSearchTerm(''); }}
@@ -1106,134 +982,7 @@ export default function Admin() {
               </motion.div>
             )}
 
-            {/* ABA 3: EQUIPE & ACESSOS RBAC */}
-            {activeTab === 'equipe' && (isAdmin || isSuperAdmin) && (
-              <motion.div
-                key="tab-equipe"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                className="space-y-6"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-blue-400" />
-                      Membros da Equipe & Papéis (RBAC)
-                    </h2>
-                    <p className="text-white/40 text-xs mt-0.5">
-                      Controle quem tem acesso à organização e atribua funções granulares.
-                    </p>
-                  </div>
-                  <HasPermission permission={Permission.USERS_WRITE}>
-                    <Button
-                      onClick={() => {
-                        setNewUser({
-                          fullName: '',
-                          email: '',
-                          password: '',
-                          role: Role.STAFF,
-                          tenantId: currentTenant?.id || '',
-                        });
-                        setShowCreateUserModal(true);
-                      }}
-                      className="bg-primary hover:bg-primary-dark text-white font-bold h-11 px-5 rounded-2xl shadow-lg shadow-primary/20 text-xs uppercase tracking-widest transition-all touch-press flex items-center gap-2"
-                    >
-                      <UserPlus className="w-4 h-4" />
-                      Adicionar Membro
-                    </Button>
-                  </HasPermission>
-                </div>
 
-                <Card className="glass-card border-white/5 overflow-hidden rounded-2xl sm:rounded-3xl">
-                  <div className="overflow-x-auto custom-scrollbar">
-                    <Table>
-                      <TableHeader className="bg-white/[0.02]">
-                        <TableRow className="border-white/5">
-                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Membro</TableHead>
-                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Cargo / Papel</TableHead>
-                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Organização</TableHead>
-                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider">Criado em</TableHead>
-                          <TableHead className="text-white/40 font-bold text-[10px] uppercase tracking-wider text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {teamUsers.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={5} className="text-center py-12 text-white/30 text-sm">
-                              {loadingTeam ? 'Carregando membros...' : 'Nenhum membro encontrado.'}
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          teamUsers.map((membro) => {
-                            const roleKey = (membro.role as Role) || Role.USER;
-                            const badge = ROLE_BADGE_STYLES[roleKey] || ROLE_BADGE_STYLES[Role.USER];
-                            const label = ROLE_LABELS[roleKey] || membro.role;
-
-                            return (
-                              <TableRow key={membro.id} className="border-white/5 hover:bg-white/[0.02] transition-colors">
-                                <TableCell>
-                                  <div className="font-bold text-white text-xs">{membro.fullName || 'Sem nome'}</div>
-                                  <div className="text-[10px] text-white/40">{membro.email}</div>
-                                </TableCell>
-                                <TableCell>
-                                  <span
-                                    className={cn(
-                                      "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border",
-                                      badge.bg,
-                                      badge.text,
-                                      badge.border,
-                                    )}
-                                  >
-                                    <KeyRound className="w-3 h-3" />
-                                    {label}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="text-xs text-white/60">
-                                  {membro.tenant?.name || 'Todas (Global)'}
-                                </TableCell>
-                                <TableCell className="text-xs text-white/40">
-                                  {formatOptionalDate(membro.createdAt)}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    <HasPermission permission={Permission.USERS_ROLES}>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                          setEditingUser(membro);
-                                          setSelectedRole((membro.role as Role) || Role.STAFF);
-                                          setShowEditRoleModal(true);
-                                        }}
-                                        className="h-8 px-2.5 text-xs text-white/60 hover:text-white hover:bg-white/10 rounded-lg"
-                                      >
-                                        Alterar Cargo
-                                      </Button>
-                                    </HasPermission>
-                                    <HasPermission permission={Permission.USERS_DELETE}>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleDeleteUser(membro)}
-                                        disabled={membro.id === user?.id}
-                                        className="h-8 w-8 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </Button>
-                                    </HasPermission>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </Card>
-              </motion.div>
-            )}
 
             {/* ABA 4: ORGANIZAÇÕES (MULTI-TENANCY - SUPER ADMIN) */}
             {activeTab === 'organizacoes' && isSuperAdmin && (
@@ -1703,143 +1452,7 @@ export default function Admin() {
                   </Button>
                   <Button type="submit" disabled={submittingEvent} className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold">
                     {submittingEvent ? <LoadingSpinner size="sm" /> : editingEventId ? 'Salvar Alterações' : 'Criar Evento'}
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Modal: Adicionar Membro da Equipe (RBAC) */}
-      <AnimatePresence>
-        {showCreateUserModal && (
-          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 40 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 40 }}
-              className="w-full max-w-lg bg-[#0a111e] border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-3xl"
-            >
-              <div className="p-5 sm:p-7 border-b border-white/5 flex items-center justify-between">
-                <div>
-                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                    <UserPlus className="w-5 h-5 text-blue-400" />
-                    Adicionar Membro à Equipe
-                  </h3>
-                  <p className="text-white/40 text-xs mt-0.5">Cadastre um colaborador e defina seu nível de acesso.</p>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => setShowCreateUserModal(false)} className="rounded-full text-white/40 hover:text-white">
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-
-              <form onSubmit={handleCreateUserSubmit} className="p-5 sm:p-7 space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Nome Completo</label>
-                  <Input
-                    required
-                    className="liquid-input h-11 text-sm"
-                    value={newUser.fullName}
-                    onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">E-mail de Acesso</label>
-                  <Input
-                    type="email"
-                    required
-                    className="liquid-input h-11 text-sm"
-                    value={newUser.email}
-                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Senha Temporária</label>
-                  <Input
-                    type="password"
-                    required
-                    placeholder="Mínimo 10 caracteres com maiúscula, número e símbolo"
-                    className="liquid-input h-11 text-sm"
-                    value={newUser.password}
-                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Função / Cargo (RBAC)</label>
-                  <select
-                    value={newUser.role}
-                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as Role })}
-                    className="liquid-input h-11 w-full text-sm rounded-xl bg-white/[0.05] border-white/10 text-white px-3"
-                  >
-                    <option value={Role.STAFF} className="bg-[#0a111e] text-white">Staff (Check-in e Leitor QR)</option>
-                    <option value={Role.ORGANIZER} className="bg-[#0a111e] text-white">Organizador (Gestor de Eventos e Inscrições)</option>
-                    <option value={Role.ADMIN} className="bg-[#0a111e] text-white">Administrador da Organização</option>
-                    {isSuperAdmin && (
-                      <option value={Role.SUPER_ADMIN} className="bg-[#0a111e] text-white">Super Administrador (Global)</option>
-                    )}
-                    <option value={Role.VIEWER} className="bg-[#0a111e] text-white">Visualizador (Somente Leitura)</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-3 pt-4 border-t border-white/5">
-                  <Button type="button" variant="outline" onClick={() => setShowCreateUserModal(false)} className="flex-1 h-11 rounded-xl border-white/10 text-white font-bold">
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={submittingUser} className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold">
-                    {submittingUser ? <LoadingSpinner size="sm" /> : 'Criar Membro'}
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Modal: Alterar Cargo RBAC */}
-      <AnimatePresence>
-        {showEditRoleModal && editingUser && (
-          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 40 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 40 }}
-              className="w-full max-w-md bg-[#0a111e] border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-3xl"
-            >
-              <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-white">Alterar Função RBAC</h3>
-                  <p className="text-white/40 text-xs mt-0.5">{editingUser.fullName || editingUser.email}</p>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => setShowEditRoleModal(false)} className="rounded-full text-white/40 hover:text-white">
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-
-              <form onSubmit={handleUpdateRoleSubmit} className="p-5 sm:p-6 space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Selecione o Novo Cargo</label>
-                  <select
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value as Role)}
-                    className="liquid-input h-11 w-full text-sm rounded-xl bg-white/[0.05] border-white/10 text-white px-3"
-                  >
-                    <option value={Role.STAFF} className="bg-[#0a111e] text-white">Staff (Check-in e Leitor QR)</option>
-                    <option value={Role.ORGANIZER} className="bg-[#0a111e] text-white">Organizador (Gestor de Eventos e Inscrições)</option>
-                    <option value={Role.ADMIN} className="bg-[#0a111e] text-white">Administrador da Organização</option>
-                    {isSuperAdmin && (
-                      <option value={Role.SUPER_ADMIN} className="bg-[#0a111e] text-white">Super Administrador (Global)</option>
-                    )}
-                    <option value={Role.VIEWER} className="bg-[#0a111e] text-white">Visualizador (Somente Leitura)</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-3 pt-3 border-t border-white/5">
-                  <Button type="button" variant="outline" onClick={() => setShowEditRoleModal(false)} className="flex-1 h-10 rounded-xl border-white/10 text-white font-bold">
-                    Cancelar
-                  </Button>
-                  <Button type="submit" className="flex-1 h-10 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold">
-                    Salvar Cargo
+        Salvar Cargo
                   </Button>
                 </div>
               </form>
