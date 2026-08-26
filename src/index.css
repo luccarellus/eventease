@@ -168,3 +168,40 @@
   }
 }
 
+/* Sonner Toast Pill Custom Styling */
+[data-sonner-toaster] {
+  top: 4.5rem !important; /* Posiciona abaixo da navbar superior de 4rem */
+  right: 1.25rem !important;
+  z-index: 9999 !important;
+}
+
+[data-sonner-toast] {
+  border-radius: 9999px !important; /* Formato de Pílula */
+  padding: 8px 18px !important;
+  background: rgba(10, 17, 30, 0.95) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7) !important;
+  width: max-content !important;
+  max-width: calc(100vw - 2.5rem) !important;
+  min-height: 38px !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+[data-sonner-toast] [data-icon] {
+  margin-right: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+[data-sonner-toast] [data-content] {
+  display: flex !important;
+  align-items: center !important;
+}
+
