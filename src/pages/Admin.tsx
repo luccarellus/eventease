@@ -1489,7 +1489,7 @@ export default function Admin() {
                   <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Nome da Organização</label>
                   <Input
                     required
-                    placeholder="Ex: Instituto Olhar Jovem"
+                    placeholder="Ex: Minha Organização"
                     className="liquid-input h-11 text-sm"
                     value={newTenant.name}
                     onChange={(e) => {
@@ -1503,7 +1503,7 @@ export default function Admin() {
                   <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Slug Identificador (URL)</label>
                   <Input
                     required
-                    placeholder="ex: olhar-jovem"
+                    placeholder="ex: minha-organizacao"
                     className="liquid-input h-11 text-sm"
                     value={newTenant.slug}
                     onChange={(e) => setNewTenant({ ...newTenant, slug: e.target.value.toLowerCase().trim() })}
@@ -1512,7 +1512,7 @@ export default function Admin() {
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Domínio Customizado (Opcional)</label>
                   <Input
-                    placeholder="eventos.instituto.org"
+                    placeholder="eventos.minhaempresa.com"
                     className="liquid-input h-11 text-sm"
                     value={newTenant.domain}
                     onChange={(e) => setNewTenant({ ...newTenant, domain: e.target.value })}

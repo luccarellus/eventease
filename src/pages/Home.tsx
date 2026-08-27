@@ -592,7 +592,7 @@ export default function Home() {
           <span className="text-white drop-shadow-sm">EventEase</span>
           <span className="mx-1.5 sm:mx-4 text-white/15 font-light text-xl sm:text-3xl md:text-5xl align-middle">/</span>
           <span className="bg-gradient-to-r from-primary via-primary to-primary-dark bg-clip-text text-transparent font-black tracking-tighter">
-            Instituto Olhar Jovem
+            Gestão de Eventos
           </span>
         </motion.h1>
 

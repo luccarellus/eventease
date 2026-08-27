@@ -30,17 +30,17 @@ function generateSecurePassword(length = 32): string {
 async function main() {
   console.log('🌱 Inicializando seed com Multi-Tenancy e RBAC...');
 
-  // 1. Garantir existência do Tenant padrão ("Instituto Olhar Jovem")
+  // 1. Garantir existência do Tenant padrão ("EventEase")
   let defaultTenant = await prisma.tenant.findFirst({
-    where: { OR: [{ slug: 'default' }, { slug: 'olhar-jovem' }] },
+    where: { OR: [{ slug: 'default' }, { slug: 'eventease' }, { slug: 'olhar-jovem' }] },
   });
 
   if (!defaultTenant) {
-    console.log('🏢 Criando organização principal (Instituto Olhar Jovem)...');
+    console.log('🏢 Criando organização principal (EventEase)...');
     defaultTenant = await prisma.tenant.create({
       data: {
-        name: 'Instituto Olhar Jovem',
-        slug: 'olhar-jovem',
+        name: 'EventEase',
+        slug: 'eventease',
         isActive: true,
       },
     });

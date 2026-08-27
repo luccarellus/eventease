@@ -1,6 +1,6 @@
 {
-  "name": "Olhar Jovem - Gestão de Eventos",
-  "description": "Plataforma moderna para gestão de presença e check-in de eventos para o projeto Olhar Jovem.",
+  "name": "EventEase - Gestão de Eventos",
+  "description": "Plataforma moderna para gestão de presença e check-in de eventos.",
   "requestFramePermissions": [
     "camera"
   ],

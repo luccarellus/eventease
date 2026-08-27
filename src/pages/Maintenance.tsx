@@ -98,7 +98,7 @@ export default function Maintenance() {
       {/* Footer Branding */}
       <div className="mt-8 text-center text-xs text-white/40 flex items-center gap-2">
         <Sparkles className="w-3.5 h-3.5 text-primary" />
-        <span>EventEase &bull; Plataforma Oficial Olhar Jovem</span>
+        <span>EventEase &bull; Plataforma Oficial de Gestão de Eventos</span>
       </div>
     </div>
   );

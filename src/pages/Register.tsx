@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
-import { Lock, Mail, ArrowRight, User } from 'lucide-react';
+import { Lock, Mail, ArrowRight, User, Calendar } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 export default function Register() {
@@ -91,11 +91,14 @@ export default function Register() {
         className="w-full max-w-md flex flex-col items-center mb-4 sm:mb-8 space-y-2 sm:space-y-4"
       >
         <div className="w-full flex items-center justify-center">
-          <img
-            src="/logo_oficial.png"
-            alt="Instituto Olhar Jovem"
-            className="h-12 sm:h-24 w-auto max-w-[85vw] object-contain -translate-x-3 sm:-translate-x-6"
-          />
+          <div className="flex items-center gap-3.5 group">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-emerald-400 flex items-center justify-center shadow-xl shadow-primary/25">
+              <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+            </div>
+            <span className="font-display font-black text-2xl sm:text-4xl tracking-tight text-white">
+              EventEase
+            </span>
+          </div>
         </div>
       </motion.div>
 
@@ -193,7 +196,7 @@ export default function Register() {
             <Link to="/politica-de-privacidade" className="hover:text-white/40 transition-colors">Privacidade</Link>
             <Link to="/termos" className="hover:text-white/40 transition-colors">Cookies</Link>
           </div>
-          <span>© 2026 Instituto Olhar Jovem</span>
+          <span>© 2026 EventEase</span>
         </motion.div>
       </motion.div>
     </div>

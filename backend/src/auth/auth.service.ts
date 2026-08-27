@@ -46,7 +46,7 @@ export class AuthService implements OnModuleInit {
 
   private async getDefaultTenantId(): Promise<string> {
     const tenant = await this.prisma.tenant.findFirst({
-      where: { OR: [{ slug: 'default' }, { slug: 'olhar-jovem' }] },
+      where: { OR: [{ slug: 'default' }, { slug: 'eventease' }, { slug: 'olhar-jovem' }] },
     });
     if (tenant) return tenant.id;
 
@@ -57,8 +57,8 @@ export class AuthService implements OnModuleInit {
 
     const created = await this.prisma.tenant.create({
       data: {
-        name: 'Instituto Olhar Jovem',
-        slug: 'olhar-jovem',
+        name: 'EventEase',
+        slug: 'eventease',
         isActive: true,
       },
     });

@@ -21,7 +21,7 @@ CREATE TABLE "tenants" (
 
 -- Criar tenant padrão (usado como fallback pelo TenantMiddleware)
 INSERT INTO "tenants" ("id", "name", "slug", "is_active", "created_at", "updated_at")
-VALUES ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'Instituto Olhar Jovem', 'olhar-jovem', true, NOW(), NOW())
+VALUES ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'EventEase', 'eventease', true, NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- Unique constraints na tabela tenants

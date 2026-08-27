@@ -57,7 +57,7 @@ export async function downloadCredentialImage({
     ctx.fillStyle = '#10b981';
     ctx.font = 'bold 16px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('• OLHAR JOVEM • EVENTEASE •', width / 2, 80);
+    ctx.fillText('• EVENTEASE • GESTÃO DE EVENTOS •', width / 2, 80);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 36px sans-serif';

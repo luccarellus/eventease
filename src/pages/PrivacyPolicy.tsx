@@ -33,7 +33,7 @@ export default function PrivacyPolicy() {
         <section className="mb-10">
           <h2 className="text-2xl font-bold text-white mb-4">1. Coleta de Dados Pessoais</h2>
           <p className="mb-4">
-            O EventEase (Olhar Jovem Eventos) coleta dados pessoais estritamente necessários para o funcionamento do sistema de credenciamento e gestão de eventos. Os dados coletados incluem:
+            O EventEase coleta dados pessoais estritamente necessários para o funcionamento do sistema de credenciamento e gestão de eventos. Os dados coletados incluem:
           </p>
           <ul className="list-disc pl-6 mb-4 space-y-2">
             <li><strong>Nome Completo:</strong> Para identificação na credencial do evento.</li>

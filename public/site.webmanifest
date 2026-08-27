@@ -1,5 +1,5 @@
 {
-  "name": "EventEase Olhar Jovem",
+  "name": "EventEase",
   "short_name": "EventEase",
   "description": "Sistema de gestão e confirmação de ingressos de eventos.",
   "start_url": "/",
@@ -9,15 +9,9 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/favicon.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/logo_oficial.png",
+      "src": "/favicon.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]

@@ -1,4 +1,4 @@
-# EventEase - Olhar Jovem Eventos
+# EventEase - Gestão de Eventos
 
 Plataforma moderna e integrada de gestão de eventos, inscrição de participantes, controle de presença via QR Code e painel administrativo (Dashboard) em tempo real.
 
@@ -126,8 +126,6 @@ Acesse o sistema localmente em: `http://localhost:3000`
 
 ---
 
-
-
 ## 🧪 Testes Automatizados (Backend)
 
 O backend possui testes de ponta-a-ponta (E2E) robustos que validam segurança de rotas, LGPD, auth por cookies e persistência de dados. Para executá-los:
@@ -174,7 +172,7 @@ frontend estático e Nginx (proxy). Tudo está containerizado.
    ADMIN_SEED_PASSWORD="sua-senha" docker compose exec api npx prisma db seed
    ```
 
-5. **DNS**: aponte o domínio (ex.: `eventease.olharjovem.org`) para o IP da VPS.
+5. **DNS**: aponte o domínio (ex.: `eventease.com`) para o IP da VPS.
    Para HTTPS, descomente o bloco SSL em `docker/nginx/conf.d/default.conf` e
    gere o certificado com o Certbot.
 
@@ -182,7 +180,7 @@ frontend estático e Nginx (proxy). Tudo está containerizado.
 
 - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` — credenciais do PostgreSQL
 - `JWT_SECRET`, `JWT_REFRESH_SECRET`, `COOKIE_SECRET` — chaves de segurança
-- `FRONTEND_URL` — domínio final (ex.: `https://eventease.olharjovem.org`)
+- `FRONTEND_URL` — domínio final (ex.: `https://eventease.com`)
 - `VITE_RECAPTCHA_SITE_KEY`, `RECAPTCHA_SECRET_KEY`, `RECAPTCHA_MIN_SCORE`
 - `NEVAPRO_WEBHOOK_URL`, `NEVAPRO_WEBHOOK_SECRET`
 - `VITE_MAINTENANCE_MODE` (opcional; `false` para o site ficar online)

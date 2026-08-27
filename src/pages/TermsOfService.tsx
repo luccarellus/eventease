@@ -33,7 +33,7 @@ export default function TermsOfService() {
         <section className="mb-10">
           <h2 className="text-2xl font-bold text-white mb-4">1. Aceitação dos Termos</h2>
           <p className="mb-4">
-            Ao acessar e utilizar o portal Olhar Jovem Eventos (EventEase), você concorda integralmente com estes Termos de Uso. Caso não concorde com qualquer condição estabelecida, por favor, não utilize nossos serviços de credenciamento.
+            Ao acessar e utilizar a plataforma EventEase, você concorda integralmente com estes Termos de Uso. Caso não concorde com qualquer condição estabelecida, por favor, não utilize nossos serviços de credenciamento.
           </p>
         </section>
 
