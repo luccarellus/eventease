@@ -115,14 +115,11 @@ export default function Login() {
         className="w-full max-w-md flex flex-col items-center mb-4 sm:mb-8 space-y-2 sm:space-y-4"
       >
         <div className="w-full flex items-center justify-center">
-          <div className="flex items-center gap-3.5 group">
-            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-primary via-primary/90 to-emerald-400 flex items-center justify-center shadow-xl shadow-primary/25">
-              <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
-            </div>
-            <span className="font-display font-black text-2xl sm:text-4xl tracking-tight text-white">
-              EventEase
-            </span>
-          </div>
+          <img
+            src="/logo.png"
+            alt="EventEase"
+            className="h-12 sm:h-16 w-auto object-contain"
+          />
         </div>
       </motion.div>
 
