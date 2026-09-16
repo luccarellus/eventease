@@ -4,7 +4,6 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { Participante, Evento, InscricaoEvento, AdminUserRecord } from '@/types/index';
-import { Tenant } from '@/types/tenant';
 import {
   Role,
   Permission,
@@ -58,7 +57,6 @@ import {
   EyeOff,
   UserPlus,
   CheckCircle2,
-  Building2,
   Shield,
   ShieldCheck,
   KeyRound,
@@ -108,7 +106,7 @@ export default function Admin() {
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'eventos' | 'alunos' | 'organizacoes'>('eventos');
+  const [activeTab, setActiveTab] = useState<'eventos' | 'alunos'>('eventos');
 
   // Evento selecionado para exibição de detalhes/inscritos
   const [selectedEvento, setSelectedEvento] = useState<Evento | null>(null);
@@ -129,15 +127,6 @@ export default function Admin() {
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [showAddStudentToEventModal, setShowAddStudentToEventModal] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
-
-  // Gestão de Organizações (Tenants - Super Admin)
-  const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
-  const [submittingTenant, setSubmittingTenant] = useState(false);
-  const [newTenant, setNewTenant] = useState({
-    name: '',
-    slug: '',
-    domain: '',
-  });
 
   // States dos formulários
   const [newStudent, setNewStudent] = useState({
@@ -173,7 +162,7 @@ export default function Admin() {
 
   const navigate = useNavigate();
   const { user, isSuperAdmin, isAdmin, hasPermission } = useAuth();
-  const { currentTenant, tenantList, switchTenant, refreshTenants } = useTenant();
+  const { currentTenant } = useTenant();
 
   const formatOptionalDate = (value?: string | null, fallback = 'Não Informado') => {
     if (!value) return fallback;
@@ -449,33 +438,6 @@ export default function Admin() {
 
 
 
-  // --- Ações de Organizações (Tenants - Super Admin) ---
-  const handleCreateTenantSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmittingTenant(true);
-    try {
-      const res = await api.post('/tenants', {
-        name: newTenant.name.trim(),
-        slug: newTenant.slug.trim().toLowerCase(),
-        domain: newTenant.domain.trim() || undefined,
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Falha ao criar organização');
-      }
-
-      toast.success('Organização criada com sucesso!');
-      setShowCreateTenantModal(false);
-      setNewTenant({ name: '', slug: '', domain: '' });
-      void refreshTenants();
-    } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Erro ao criar organização');
-    } finally {
-      setSubmittingTenant(false);
-    }
-  };
-
   // --- Estatísticas ---
   const statsGlobal = useMemo(() => {
     const totalEventos = eventos.length;
@@ -682,20 +644,6 @@ export default function Admin() {
             >
               Base de Alunos
             </button>
-            {isSuperAdmin && (
-              <button
-                onClick={() => { setActiveTab('organizacoes'); setSearchTerm(''); }}
-                className={cn(
-                  "px-4 sm:px-6 py-2.5 sm:py-3 font-bold text-[11px] sm:text-xs uppercase tracking-widest border-b-2 transition-all whitespace-nowrap touch-press flex items-center gap-1.5",
-                  activeTab === 'organizacoes'
-                    ? "border-primary text-white"
-                    : "border-transparent text-white/40 hover:text-white/60"
-                )}
-              >
-                <Building2 className="w-3.5 h-3.5 text-purple-400" />
-                Organizações (Multi-Tenancy)
-              </button>
-            )}
           </div>
 
           {/* CONTEÚDO DAS ABAS */}
@@ -984,99 +932,6 @@ export default function Admin() {
 
 
 
-            {/* ABA 4: ORGANIZAÇÕES (MULTI-TENANCY - SUPER ADMIN) */}
-            {activeTab === 'organizacoes' && isSuperAdmin && (
-              <motion.div
-                key="tab-organizacoes"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                className="space-y-6"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                      <Building2 className="w-5 h-5 text-purple-400" />
-                      Organizações do Sistema (Multi-Tenancy)
-                    </h2>
-                    <p className="text-white/40 text-xs mt-0.5">
-                      Crie e alterne entre instâncias isoladas de clientes e parceiros.
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => setShowCreateTenantModal(true)}
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold h-11 px-5 rounded-2xl shadow-lg shadow-purple-600/20 text-xs uppercase tracking-widest transition-all touch-press flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Nova Organização
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {tenantList.map((tenant: Tenant) => {
-                    const isSelected = tenant.id === currentTenant?.id;
-                    return (
-                      <Card
-                        key={tenant.id}
-                        className={cn(
-                          "glass-card border-white/10 transition-all p-5 flex flex-col justify-between",
-                          isSelected ? "border-purple-500/40 bg-purple-500/[0.04]" : "hover:border-white/20"
-                        )}
-                      >
-                        <div>
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex items-center gap-2">
-                              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                                <Building2 className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <h3 className="font-bold text-white text-sm">{tenant.name}</h3>
-                                <p className="text-[11px] text-white/40">@{tenant.slug}</p>
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                Ativa
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/5 text-center">
-                            <div className="p-2 rounded-lg bg-white/[0.02]">
-                              <p className="text-[10px] text-white/40 uppercase">Eventos</p>
-                              <p className="font-bold text-white text-sm">{tenant._count?.eventos ?? '-'}</p>
-                            </div>
-                            <div className="p-2 rounded-lg bg-white/[0.02]">
-                              <p className="text-[10px] text-white/40 uppercase">Alunos</p>
-                              <p className="font-bold text-white text-sm">{tenant._count?.participantes ?? '-'}</p>
-                            </div>
-                            <div className="p-2 rounded-lg bg-white/[0.02]">
-                              <p className="text-[10px] text-white/40 uppercase">Equipe</p>
-                              <p className="font-bold text-white text-sm">{tenant._count?.users ?? '-'}</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-5 pt-3 border-t border-white/5">
-                          {isSelected ? (
-                            <Button disabled variant="outline" className="w-full h-9 rounded-xl border-purple-500/30 text-purple-300 text-xs font-bold">
-                              Organização Selecionada
-                            </Button>
-                          ) : (
-                            <Button
-                              onClick={() => void switchTenant(tenant.id)}
-                              className="w-full h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
-                            >
-                              Alternar para esta Organização
-                            </Button>
-                          )}
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
           </AnimatePresence>
         </>
       ) : (
@@ -1453,78 +1308,6 @@ export default function Admin() {
                   <Button type="submit" disabled={submittingEvent} className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold">
                     {submittingEvent ? <LoadingSpinner size="sm" /> : editingEventId ? 'Salvar Alterações' : 'Criar Evento'}
         Salvar Cargo
-                  </Button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Modal: Criar Organização (Tenant - Super Admin) */}
-      <AnimatePresence>
-        {showCreateTenantModal && (
-          <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 pt-6 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 40 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 40 }}
-              className="w-full max-w-md bg-[#0a111e] border border-white/10 rounded-t-[2rem] md:rounded-[2.5rem] mt-auto md:mt-0 overflow-hidden shadow-3xl"
-            >
-              <div className="p-5 sm:p-6 border-b border-white/5 flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-purple-400" />
-                    Nova Organização (Tenant)
-                  </h3>
-                  <p className="text-white/40 text-xs mt-0.5">Criar nova entidade multi-tenant isolada.</p>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => setShowCreateTenantModal(false)} className="rounded-full text-white/40 hover:text-white">
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
-
-              <form onSubmit={handleCreateTenantSubmit} className="p-5 sm:p-6 space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Nome da Organização</label>
-                  <Input
-                    required
-                    placeholder="Ex: Minha Organização"
-                    className="liquid-input h-11 text-sm"
-                    value={newTenant.name}
-                    onChange={(e) => {
-                      const name = e.target.value;
-                      const slug = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-                      setNewTenant({ ...newTenant, name, slug: newTenant.slug ? newTenant.slug : slug });
-                    }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Slug Identificador (URL)</label>
-                  <Input
-                    required
-                    placeholder="ex: minha-organizacao"
-                    className="liquid-input h-11 text-sm"
-                    value={newTenant.slug}
-                    onChange={(e) => setNewTenant({ ...newTenant, slug: e.target.value.toLowerCase().trim() })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-white/40 tracking-widest">Domínio Customizado (Opcional)</label>
-                  <Input
-                    placeholder="eventos.minhaempresa.com"
-                    className="liquid-input h-11 text-sm"
-                    value={newTenant.domain}
-                    onChange={(e) => setNewTenant({ ...newTenant, domain: e.target.value })}
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-3 border-t border-white/5">
-                  <Button type="button" variant="outline" onClick={() => setShowCreateTenantModal(false)} className="flex-1 h-10 rounded-xl border-white/10 text-white font-bold">
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={submittingTenant} className="flex-1 h-10 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold">
-                    {submittingTenant ? <LoadingSpinner size="sm" /> : 'Criar Organização'}
                   </Button>
                 </div>
               </form>

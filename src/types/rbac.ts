@@ -101,7 +101,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
 };
 
 export const ROLE_LABELS: Record<Role, string> = {
-  [Role.SUPER_ADMIN]: 'Super Admin',
+  [Role.SUPER_ADMIN]: 'Staff',
   [Role.ADMIN]: 'Administrador',
   [Role.ORGANIZER]: 'Organizador',
   [Role.STAFF]: 'Staff / Check-in',
@@ -111,9 +111,9 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export const ROLE_BADGE_STYLES: Record<Role, { bg: string; text: string; border: string }> = {
   [Role.SUPER_ADMIN]: {
-    bg: 'bg-purple-500/15',
-    text: 'text-purple-400',
-    border: 'border-purple-500/30',
+    bg: 'bg-yellow-500/15',
+    text: 'text-yellow-400',
+    border: 'border-yellow-500/30',
   },
   [Role.ADMIN]: {
     bg: 'bg-blue-500/15',
