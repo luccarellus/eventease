@@ -118,7 +118,7 @@ export default function Login() {
           <img
             src="/logo.png"
             alt="EventEase"
-            className="h-12 sm:h-16 w-auto object-contain"
+            className="h-24 sm:h-32 w-auto object-contain drop-shadow-[0_0_25px_rgba(255,255,255,0.15)]"
           />
         </div>
       </motion.div>
