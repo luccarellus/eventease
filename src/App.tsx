@@ -96,12 +96,11 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
-              <img src="/logo.png" alt="EventEase" className="w-full h-full object-cover" />
-            </div>
-            <span className="font-display font-black text-lg md:text-xl tracking-tight text-white transition-colors group-hover:text-primary">
-              EventEase
-            </span>
+            <img
+              src="/logo.png"
+              alt="EventEase"
+              className="h-8 md:h-10 w-auto object-contain transition-transform group-hover:scale-105"
+            />
           </Link>
           {isMember && (
             <div
@@ -320,12 +319,11 @@ function AppContent() {
         <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/50 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
           <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl overflow-hidden flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-105">
-                <img src="/logo.png" alt="EventEase" className="w-full h-full object-cover" />
-              </div>
-              <span className="font-display font-black text-lg md:text-xl tracking-tight text-white transition-colors group-hover:text-primary">
-                EventEase
-              </span>
+              <img
+                src="/logo.png"
+                alt="EventEase"
+                className="h-8 md:h-10 w-auto object-contain transition-transform group-hover:scale-105"
+              />
             </Link>
           </div>
         </nav>
