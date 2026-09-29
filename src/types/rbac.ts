@@ -111,9 +111,9 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export const ROLE_BADGE_STYLES: Record<Role, { bg: string; text: string; border: string }> = {
   [Role.SUPER_ADMIN]: {
-    bg: 'bg-yellow-500/15',
-    text: 'text-yellow-400',
-    border: 'border-yellow-500/30',
+    bg: 'bg-primary/15',
+    text: 'text-primary',
+    border: 'border-primary/30',
   },
   [Role.ADMIN]: {
     bg: 'bg-blue-500/15',

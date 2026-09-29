@@ -8,14 +8,15 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { Toaster } from './components/ui/event-toaster';
 import CookieBanner from '@/components/CookieBanner';
 import { motion } from 'motion/react';
-import { Calendar, UserCheck, LayoutDashboard, LogOut, RefreshCcw, Shield } from 'lucide-react';
+import { Calendar, UserCheck, LayoutDashboard, LogOut, RefreshCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { TenantProvider } from '@/contexts/TenantContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import { Role, ROLE_LABELS, ROLE_BADGE_STYLES } from '@/types/rbac';
+import { Role } from '@/types/rbac';
+import { RoleBadge } from '@/components/rbac/RoleBadge';
 import { initRecaptcha } from '@/lib/recaptcha';
 import { LoadingSpinner as CustomSpinner } from '@/components/ui/LoadingSpinner';
 import { useSecurityProtection } from '@/hooks/useSecurityProtection';
@@ -88,8 +89,6 @@ function Navbar() {
   const navItems = isMember ? memberNavItems : PUBLIC_NAV_ITEMS;
 
   const currentRole = (user?.role as Role) || Role.USER;
-  const badgeStyle = ROLE_BADGE_STYLES[currentRole] || ROLE_BADGE_STYLES[Role.USER];
-  const roleLabel = ROLE_LABELS[currentRole] || user?.role;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#020610]/85 backdrop-blur-xl pt-[env(safe-area-inset-top)]">
@@ -103,18 +102,7 @@ function Navbar() {
             />
           </Link>
           {isMember && (
-            <div
-              className={cn(
-                'hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border',
-                badgeStyle.bg,
-                badgeStyle.text,
-                badgeStyle.border,
-              )}
-              title={`Cargo atual: ${roleLabel}`}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span>{roleLabel}</span>
-            </div>
+            <RoleBadge role={currentRole} className="hidden lg:inline-flex" />
           )}
         </div>
 
@@ -160,18 +148,7 @@ function Navbar() {
         {/* Mobile Top Actions for Members */}
         {isMember && (
           <div className="flex md:hidden items-center gap-1.5">
-            <div
-              className={cn(
-                'flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border',
-                badgeStyle.bg,
-                badgeStyle.text,
-                badgeStyle.border,
-              )}
-              title={`Cargo atual: ${roleLabel}`}
-            >
-              <Shield className="w-3 h-3" />
-              <span className="truncate max-w-[100px]">{roleLabel}</span>
-            </div>
+            <RoleBadge role={currentRole} size="sm" />
             <Button
               variant="ghost"
               size="icon"

@@ -1315,7 +1315,6 @@ export default function Admin() {
                   </Button>
                   <Button type="submit" disabled={submittingEvent} className="flex-1 h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold">
                     {submittingEvent ? <LoadingSpinner size="sm" /> : editingEventId ? 'Salvar Alterações' : 'Criar Evento'}
-        Salvar Cargo
                   </Button>
                 </div>
               </form>
