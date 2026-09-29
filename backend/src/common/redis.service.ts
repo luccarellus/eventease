@@ -95,10 +95,10 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
       retryStrategy(times: number) {
-        if (times > 2) {
-          return null; // Desiste rápido para tentar o próximo candidato
-        }
-        return Math.min(times * 200, 1000);
+        // Reconexão contínua com backoff (máx. 5s entre tentativas).
+        // Antes o cliente desistia após 2 tentativas e nunca mais reconectava,
+        // deixando o health como 'redis: error' mesmo com o Redis de volta.
+        return Math.min(times * 500, 5000);
       },
     });
 
