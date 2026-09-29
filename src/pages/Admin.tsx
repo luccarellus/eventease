@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '@/lib/api';
+import { api, extractApiError } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTenant } from '@/contexts/TenantContext';
 import { Participante, Evento, InscricaoEvento, AdminUserRecord } from '@/types/index';
@@ -300,7 +300,13 @@ export default function Admin() {
         recaptchaToken,
       });
 
-      if (!res.ok) throw new Error('Falha ao adicionar participante');
+      if (!res.ok) {
+        const detail = await extractApiError(
+          res,
+          'Falha ao adicionar participante',
+        );
+        throw new Error(detail);
+      }
 
       toast.success('Participante cadastrado com sucesso!');
       setShowAddStudentModal(false);
@@ -314,8 +320,10 @@ export default function Admin() {
       });
       void fetchData();
       void fetchParticipantes(currentPage, searchTerm);
-    } catch {
-      toast.error('Erro ao realizar cadastro.');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Erro ao realizar cadastro.';
+      toast.error(message, { duration: 8000 });
     }
   };
 

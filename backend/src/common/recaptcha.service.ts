@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { getEnv, requireEnv } from './env.util';
@@ -15,6 +16,8 @@ interface RecaptchaResponse {
 
 @Injectable()
 export class RecaptchaService {
+  private readonly logger = new Logger(RecaptchaService.name);
+
   async verify(
     token: string | undefined,
     expectedAction: string,
@@ -53,6 +56,11 @@ export class RecaptchaService {
     const validScore =
       typeof result.score === 'number' && result.score >= minimumScore;
     if (!result.success || result.action !== expectedAction || !validScore) {
+      // Loga os detalhes da resposta do Google para diagnóstico em produção
+      // (ex.: invalid-input-secret, hostname-mismatch, timeout-or-duplicate)
+      this.logger.warn(
+        `reCAPTCHA recusado: action=${result.action ?? 'n/a'} score=${result.score ?? 'n/a'} hostname=${result.hostname ?? 'n/a'} erros=${JSON.stringify(result['error-codes'] ?? [])}`,
+      );
       throw new ForbiddenException(
         'Verificação reCAPTCHA recusada. Tente novamente.',
       );

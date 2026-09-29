@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useSearchParams, Link } from 'react-router-dom';
-import { api } from '@/lib/api';
+import { api, extractApiError } from '@/lib/api';
 import { generateCredentialCode } from '@/lib/credential-code';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -367,7 +367,11 @@ export default function Home() {
         });
 
         if (!createRes.ok) {
-          throw new Error('Falha ao criar participante');
+          const detail = await extractApiError(
+            createRes,
+            'Falha ao criar participante',
+          );
+          throw new Error(detail);
         }
 
         const rawPart = await createRes.json();
