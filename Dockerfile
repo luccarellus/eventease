@@ -68,8 +68,25 @@ ENV REDIS_PORT=6379
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 
 # 2. Configura o Nginx (Frontend no /, Backend no /api)
+# - gzip ativo para JS/CSS/JSON/SVG (bundle 467KB -> ~149KB na transferência)
+# - cache agressivo para /assets (nomes com hash: imutáveis)
+# - HTML sem cache (garante deploy imediato de novas versões)
 RUN echo 'server {' > /etc/nginx/http.d/default.conf && \
     echo '    listen 80;' >> /etc/nginx/http.d/default.conf && \
+    echo '    gzip on;' >> /etc/nginx/http.d/default.conf && \
+    echo '    gzip_vary on;' >> /etc/nginx/http.d/default.conf && \
+    echo '    gzip_min_length 1024;' >> /etc/nginx/http.d/default.conf && \
+    echo '    gzip_comp_level 6;' >> /etc/nginx/http.d/default.conf && \
+    echo '    gzip_types text/plain text/css text/javascript application/javascript application/json application/xml image/svg+xml;' >> /etc/nginx/http.d/default.conf && \
+    echo '    location /assets/ {' >> /etc/nginx/http.d/default.conf && \
+    echo '        root /usr/share/nginx/html;' >> /etc/nginx/http.d/default.conf && \
+    echo '        expires 1y;' >> /etc/nginx/http.d/default.conf && \
+    echo '        add_header Cache-Control "public, immutable";' >> /etc/nginx/http.d/default.conf && \
+    echo '    }' >> /etc/nginx/http.d/default.conf && \
+    echo '    location = /index.html {' >> /etc/nginx/http.d/default.conf && \
+    echo '        root /usr/share/nginx/html;' >> /etc/nginx/http.d/default.conf && \
+    echo '        add_header Cache-Control "no-cache";' >> /etc/nginx/http.d/default.conf && \
+    echo '    }' >> /etc/nginx/http.d/default.conf && \
     echo '    location / {' >> /etc/nginx/http.d/default.conf && \
     echo '        root /usr/share/nginx/html;' >> /etc/nginx/http.d/default.conf && \
     echo '        index index.html;' >> /etc/nginx/http.d/default.conf && \

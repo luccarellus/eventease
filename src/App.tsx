@@ -96,8 +96,10 @@ function Navbar() {
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <img
-              src="/logo.png"
+              src="/logo.webp"
               alt="EventEase"
+              width="160"
+              height="160"
               className="h-8 md:h-10 w-auto object-contain transition-transform group-hover:scale-105"
             />
           </Link>
@@ -297,8 +299,10 @@ function AppContent() {
           <div className="max-w-7xl mx-auto px-4 md:px-6 h-14 md:h-16 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
-                src="/logo.png"
+                src="/logo.webp"
                 alt="EventEase"
+                width="160"
+                height="160"
                 className="h-8 md:h-10 w-auto object-contain transition-transform group-hover:scale-105"
               />
             </Link>

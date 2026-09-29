@@ -11,6 +11,20 @@ export default defineConfig(({mode}) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          // Separa libs de vendor em chunks próprios: mudam raramente e ficam
+          // em cache no browser mesmo após deploys com novas versões do app.
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-motion': ['motion/react'],
+            'vendor-charts': ['recharts'],
+            'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          },
+        },
+      },
+    },
     server: {
       proxy: {
         // A API do backend já expõe as rotas sob o prefixo /api
