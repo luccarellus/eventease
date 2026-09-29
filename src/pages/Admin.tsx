@@ -594,7 +594,7 @@ export default function Admin() {
             <span>Painel Administrativo • {currentTenant?.name || 'Organização'}</span>
           </div>
           <h1 className="heading-display text-3xl md:text-4xl mb-1.5 text-white leading-tight">
-            Gestão <span className="text-primary">EventEase</span>
+            Portal do <span className="text-primary">Staff</span>
           </h1>
           <p className="text-white/40 text-sm md:text-base font-medium">
             Gerencie eventos, participantes, equipe e acessos em um só lugar.
