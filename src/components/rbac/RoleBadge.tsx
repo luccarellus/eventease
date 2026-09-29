@@ -9,7 +9,7 @@ export interface RoleBadgeProps {
 }
 
 /**
- * Badge de cargo com ponto pulsante + label.
+ * Identificação de cargo: ponto pulsante + label, sem contêiner/fundo.
  * As cores por cargo vêm de ROLE_BADGE_STYLES (rbac.ts).
  *
  * Padrão visual do sistema (mesmo do badge "Aberto" dos eventos):
@@ -28,12 +28,9 @@ export function RoleBadge({ role, size = 'md', className }: RoleBadgeProps) {
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1.5 border font-semibold',
-        isSmall ? 'px-2.5 py-1 rounded-lg' : 'px-3 py-1.5 rounded-xl',
+        'inline-flex items-center gap-1.5 font-semibold',
         textSize,
-        style.bg,
         style.text,
-        style.border,
         className,
       )}
       title={`Cargo: ${label}`}
