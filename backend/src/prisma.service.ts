@@ -75,9 +75,9 @@ export class PrismaService
 
     const pool = new pg.Pool({
       connectionString,
-      max: 2, // Limite de conexões seguro por container serverless
-      idleTimeoutMillis: 15000, // Fecha conexões inativas mais rapidamente (15s)
-      connectionTimeoutMillis: 5000, // Timeout para evitar travar o lambda
+      max: 10, // Pool otimizado para alta concorrência na VPS
+      idleTimeoutMillis: 30000, // Mantém conexões quentes abertas por 30s
+      connectionTimeoutMillis: 5000, // Timeout para evitar travar requisições
     });
 
     pool.on('error', (err) => {

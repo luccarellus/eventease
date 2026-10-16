@@ -1,17 +1,34 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import type { Response, NextFunction } from 'express';
 import { PrismaService } from '../../prisma.service';
+import { RedisService } from '../redis.service';
+import { CACHE_KEYS, CACHE_TTL, safeParse } from '../cache.keys';
 import type { MultiTenantRequest } from '../decorators/tenant.decorator';
+import type { Tenant } from '@prisma/client';
 
 @Injectable()
 export class TenantMiddleware implements NestMiddleware {
   private defaultTenantId: string | null = null;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   private async getOrCreateDefaultTenant(): Promise<string> {
     if (this.defaultTenantId) {
       return this.defaultTenantId;
+    }
+
+    // Tenta obter do Redis
+    try {
+      const cached = await this.redis.get(CACHE_KEYS.defaultTenantId);
+      if (cached) {
+        this.defaultTenantId = cached;
+        return cached;
+      }
+    } catch {
+      // Ignora erro do Redis
     }
 
     try {
@@ -36,10 +53,13 @@ export class TenantMiddleware implements NestMiddleware {
       }
 
       this.defaultTenantId = defaultTenant.id;
+      await this.redis
+        .set(CACHE_KEYS.defaultTenantId, defaultTenant.id, CACHE_TTL.tenantLookup)
+        .catch(() => {});
       return defaultTenant.id;
     } catch {
       // Fallback em caso de indisponibilidade transitória
-      return '00000000-0000-0000-0000-000000000000';
+      return 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
     }
   }
 
@@ -58,8 +78,20 @@ export class TenantMiddleware implements NestMiddleware {
       resolvedTenantId = queryTenant.trim();
     }
 
-    // Se temos um UUID ou slug especificado, valida/carrega o tenant
+    // Se temos um UUID ou slug especificado, valida/carrega o tenant com cache Redis
     if (resolvedTenantId) {
+      const cacheKey = CACHE_KEYS.tenantLookup(resolvedTenantId);
+      try {
+        const cachedTenant = safeParse<Tenant>(await this.redis.get(cacheKey));
+        if (cachedTenant) {
+          req.tenantId = cachedTenant.id;
+          req.tenant = cachedTenant;
+          return next();
+        }
+      } catch {
+        // Ignora erro do Redis
+      }
+
       try {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
           resolvedTenantId,
@@ -74,6 +106,9 @@ export class TenantMiddleware implements NestMiddleware {
         if (tenant) {
           req.tenantId = tenant.id;
           req.tenant = tenant;
+          await this.redis
+            .set(cacheKey, JSON.stringify(tenant), CACHE_TTL.tenantLookup)
+            .catch(() => {});
           return next();
         }
       } catch {

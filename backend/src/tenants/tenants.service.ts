@@ -4,12 +4,17 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { RedisService } from '../common/redis.service';
+import { CACHE_KEYS, CACHE_TTL, safeParse } from '../common/cache.keys';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 
 @Injectable()
 export class TenantsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   async create(data: CreateTenantDto) {
     const existingSlug = await this.prisma.tenant.findUnique({
@@ -56,6 +61,14 @@ export class TenantsService {
   }
 
   async findOne(idOrSlug: string) {
+    const cacheKey = CACHE_KEYS.tenantLookup(idOrSlug);
+    try {
+      const cached = safeParse<any>(await this.redis.get(cacheKey));
+      if (cached) return cached;
+    } catch {
+      // Ignora erro do Redis
+    }
+
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
       idOrSlug,
     );
@@ -96,11 +109,17 @@ export class TenantsService {
       throw new NotFoundException('Organização não encontrada.');
     }
 
+    // Armazena no cache pelo id e pelo slug
+    await Promise.allSettled([
+      this.redis.set(CACHE_KEYS.tenantLookup(tenant.id), JSON.stringify(tenant), CACHE_TTL.tenantLookup),
+      this.redis.set(CACHE_KEYS.tenantLookup(tenant.slug), JSON.stringify(tenant), CACHE_TTL.tenantLookup),
+    ]);
+
     return tenant;
   }
 
   async update(id: string, data: UpdateTenantDto) {
-    await this.findOne(id);
+    const existingTenant = await this.findOne(id);
 
     if (data.slug) {
       const existing = await this.prisma.tenant.findFirst({
@@ -126,7 +145,7 @@ export class TenantsService {
       }
     }
 
-    return this.prisma.tenant.update({
+    const updated = await this.prisma.tenant.update({
       where: { id },
       data: {
         name: data.name ? data.name.trim() : undefined,
@@ -136,12 +155,31 @@ export class TenantsService {
         isActive: data.isActive !== undefined ? data.isActive : undefined,
       },
     });
+
+    // Invalida cache
+    await Promise.allSettled([
+      this.redis.del(CACHE_KEYS.tenantLookup(id)),
+      this.redis.del(CACHE_KEYS.tenantLookup(existingTenant.slug)),
+      data.slug ? this.redis.del(CACHE_KEYS.tenantLookup(data.slug)) : Promise.resolve(),
+      this.redis.del(CACHE_KEYS.defaultTenantId),
+    ]);
+
+    return updated;
   }
 
   async remove(id: string) {
-    await this.findOne(id);
-    return this.prisma.tenant.delete({
+    const existing = await this.findOne(id);
+    const result = await this.prisma.tenant.delete({
       where: { id },
     });
+
+    // Invalida cache
+    await Promise.allSettled([
+      this.redis.del(CACHE_KEYS.tenantLookup(id)),
+      this.redis.del(CACHE_KEYS.tenantLookup(existing.slug)),
+      this.redis.del(CACHE_KEYS.defaultTenantId),
+    ]);
+
+    return result;
   }
 }

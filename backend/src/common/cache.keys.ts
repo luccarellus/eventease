@@ -16,6 +16,8 @@ export const CACHE_KEYS = {
     `${tenantId}:registrations:event:${eventoId}`,
   registrationCheck: (tenantId: string, eventoId: string, participanteId: string) =>
     `${tenantId}:registration:check:${eventoId}:${participanteId}`,
+  tenantLookup: (idOrSlug: string) => `tenant:lookup:${idOrSlug.toLowerCase()}`,
+  defaultTenantId: 'tenant:default:id',
 } as const;
 
 export const CACHE_TTL = {
@@ -29,6 +31,8 @@ export const CACHE_TTL = {
   participantsCount: 30,
   /** Inscritos do evento selecionado no dashboard */
   registrationsByEvent: 30,
+  /** Resolução de Tenants — 5 minutos */
+  tenantLookup: 300,
 } as const;
 
 /** Faz parse seguro de um valor vindo do Redis; retorna null se ausente/corrompido. */
