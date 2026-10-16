@@ -41,7 +41,7 @@ export function configureApp(app: INestApplication) {
       allowedOrigins.length > 0 ? allowedOrigins : isProduction ? false : true,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Accept, Authorization, X-Recaptcha-Token',
+    allowedHeaders: 'Content-Type, Accept, Authorization, X-Recaptcha-Token, X-Tenant-Id, x-tenant-id',
   });
 
   // Logging simples de requisições (observabilidade)

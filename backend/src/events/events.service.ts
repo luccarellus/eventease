@@ -36,19 +36,25 @@ export class EventsService {
       // Ignora erro de leitura do Redis
     }
 
-    const events = await this.prisma.evento.findMany({
-      where: {
-        tenantId,
-        ...(publishedOnly ? { publicado: true } : {}),
-      },
-      orderBy: { data: 'asc' },
-    });
+    try {
+      const events = await this.prisma.evento.findMany({
+        where: {
+          tenantId,
+          ...(publishedOnly ? { publicado: true } : {}),
+        },
+        orderBy: { data: 'asc' },
+      });
 
-    if (events && events.length > 0) {
-      await this.redis.set(key, JSON.stringify(events), ttl).catch(() => {});
+      if (events && events.length > 0) {
+        await this.redis.set(key, JSON.stringify(events), ttl).catch(() => {});
+      }
+
+      return events;
+    } catch (err) {
+      // Se as tabelas ainda não foram criadas ou o banco está indisponível,
+      // retorna lista vazia para evitar quebrar a tela inicial pública com 500
+      return [];
     }
-
-    return events;
   }
 
   async findOne(tenantId: string, id: string) {

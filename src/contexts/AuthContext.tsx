@@ -45,11 +45,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (userData.tenantId) {
           setActiveTenantId(userData.tenantId);
         }
+        try {
+          localStorage.setItem('eventease_has_session', 'true');
+        } catch {}
         return;
       }
 
-      // Se 401, tenta renovar o access token via refresh token
-      if (res.status === 401) {
+      // Se 401 e o usuário possuía uma sessão anterior ativa, tenta renovar via refresh token.
+      // Se for um visitante anônimo (nunca logou), não dispara requisição redundante.
+      const hasPreviousSession = typeof window !== 'undefined' && localStorage.getItem('eventease_has_session') === 'true';
+      if (res.status === 401 && hasPreviousSession) {
         const refreshRes = await api.post('/auth/refresh', {});
         if (refreshRes.ok) {
           const retryRes = await api.get('/auth/me');
@@ -63,6 +68,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
           }
         }
+        try {
+          localStorage.removeItem('eventease_has_session');
+        } catch {}
       }
 
       setUser(null);
@@ -81,6 +89,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await api.post('/auth/logout', {});
     } finally {
+      try {
+        localStorage.removeItem('eventease_has_session');
+      } catch {}
       setUser(null);
     }
   };

@@ -74,6 +74,25 @@ export class TenantsService {
     });
 
     if (!tenant) {
+      // Se o ID especificado não foi encontrado (ex.: cache antigo do navegador),
+      // faz fallback gracioso para o primeiro tenant ativo
+      const fallback = await this.prisma.tenant.findFirst({
+        where: { isActive: true },
+        include: {
+          _count: {
+            select: {
+              users: true,
+              eventos: true,
+              participantes: true,
+            },
+          },
+        },
+      });
+
+      if (fallback) {
+        return fallback;
+      }
+
       throw new NotFoundException('Organização não encontrada.');
     }
 
